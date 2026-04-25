@@ -85,6 +85,14 @@ body {
   animation: shimmer 1.5s infinite;
 }
 
+/* GPS tracking dot */
+@keyframes gps-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(59,130,246,0.7); }
+  70%  { box-shadow: 0 0 0 14px rgba(59,130,246,0); }
+  100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+}
+.gps-dot { animation: gps-ring 1.8s infinite; }
+
 /* Pulse glow for active status */
 @keyframes pulse-glow {
   0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.4); }

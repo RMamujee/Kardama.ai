@@ -210,13 +210,13 @@ export function findRescheduleSlots(stops: RouteStop[]): RescheduleSlot[] {
   // Check end of day
   const last = active[active.length - 1]
   if (last) {
-    const remaining = 17 * 60 - last.endMin
+    const remaining = 16 * 60 - last.endMin
     if (remaining >= MIN_GAP) {
       slots.push({
         afterStopIdx: last.sequence - 1,
         gapMin: remaining,
         windowStart: minToTime(last.endMin + 10),
-        windowEnd: minToTime(17 * 60),
+        windowEnd: minToTime(16 * 60),
       })
     }
   }

@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, CalendarDays, Map, DollarSign, Megaphone,
-  Users, UserCheck, BarChart3, MessageSquare, Send, Sparkles, LogOut, ChevronRight
+  Users, UserCheck, BarChart3, MessageSquare, Send, Sparkles, LogOut, ChevronRight, Bell
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -29,6 +29,7 @@ const NAV_SECTIONS = [
     items: [
       { label: 'Analytics', href: '/analytics', icon: BarChart3 },
       { label: 'Marketing', href: '/marketing', icon: Megaphone },
+      { label: 'Campaigns', href: '/campaigns', icon: Bell },
       { label: 'Inbox', href: '/inbox', icon: MessageSquare },
       { label: 'Messages', href: '/messages', icon: Send },
     ]

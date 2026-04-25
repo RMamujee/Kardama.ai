@@ -169,13 +169,30 @@ export default function MessagesPage() {
     if (selected) setMessage(buildMessage(t, selected))
   }
 
-  function handleSend() {
-    if (!selected || !message.trim()) return
+  async function handleSend() {
+    if (!selected || !message.trim() || !selected.customer?.phone) return
     setSending(true)
-    setTimeout(() => {
+    try {
+      const res = await fetch('/api/sms/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: selected.customer.phone,
+          body: message,
+          jobId: selected.job.id,
+          customerId: selected.customer.id,
+          template: activeTemplate,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Send failed')
       setSentSet(prev => new Set(prev).add(`${selected.job.id}-${activeTemplate}`))
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Unknown error'
+      alert(`Failed to send SMS: ${msg}`)
+    } finally {
       setSending(false)
-    }, 1200)
+    }
   }
 
   const sentKey = selected ? `${selected.job.id}-${activeTemplate}` : ''

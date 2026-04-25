@@ -38,8 +38,12 @@ function buildMsg(t: MsgTemplate, stop: RouteStop, teamName: string): string {
 
 // ─── Timeline bar ─────────────────────────────────────────────────────────────
 function TimelineBar({ stops, color }: { stops: RouteStop[]; color: string }) {
-  const pct = (m: number) => `${Math.max(0, Math.min(100, ((m - DAY_START) / DAY_SPAN) * 100)).toFixed(2)}%`
+  const [expanded, setExpanded] = useState(false)
+
+  const pct  = (m: number) => `${Math.max(0, Math.min(100, ((m - DAY_START) / DAY_SPAN) * 100)).toFixed(2)}%`
   const wPct = (a: number, b: number) => `${Math.max(0, ((Math.min(b, DAY_END) - Math.max(a, DAY_START)) / DAY_SPAN) * 100).toFixed(2)}%`
+  // Numeric width (0–100) used to decide whether to show labels
+  const wNum = (a: number, b: number) => Math.max(0, ((Math.min(b, DAY_END) - Math.max(a, DAY_START)) / DAY_SPAN) * 100)
 
   const DRIVE_BG: Record<string, string> = {
     heavy: 'rgba(239,68,68,0.35)', moderate: 'rgba(251,191,36,0.4)', clear: 'rgba(52,211,153,0.3)',
@@ -48,13 +52,25 @@ function TimelineBar({ stops, color }: { stops: RouteStop[]; color: string }) {
 
   return (
     <div className="px-3 pb-2.5">
-      {/* Hour labels */}
-      <div className="relative flex justify-between text-[9px] text-slate-500 mb-0.5 px-0.5">
-        <span>8am</span><span>10</span><span>noon</span><span>2pm</span><span>4pm</span>
+      {/* Hour labels + expand toggle */}
+      <div className="flex items-center mb-0.5">
+        <div className="flex-1 flex justify-between text-[9px] text-slate-500 px-0.5">
+          <span>8am</span><span>10</span><span>noon</span><span>2pm</span><span>4pm</span>
+        </div>
+        <button
+          onClick={() => setExpanded(v => !v)}
+          className="ml-2 flex items-center gap-0.5 rounded px-1 py-0.5 text-[9px] text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors"
+          title={expanded ? 'Collapse timeline' : 'Expand timeline'}
+        >
+          {expanded ? <ChevronUp className="h-2.5 w-2.5" /> : <ChevronDown className="h-2.5 w-2.5" />}
+        </button>
       </div>
 
       {/* Timeline track */}
-      <div className="relative h-5 rounded bg-[#1a2537] overflow-hidden">
+      <div
+        className="relative rounded bg-[#1a2537] overflow-hidden transition-all duration-300"
+        style={{ height: expanded ? '88px' : '20px' }}
+      >
         {/* Hour grid lines */}
         {[9,10,11,12,13,14,15].map(h => (
           <div key={h} className="absolute top-0 bottom-0 w-px bg-[#2d3f55]"
@@ -73,16 +89,50 @@ function TimelineBar({ stops, color }: { stops: RouteStop[]; color: string }) {
         })}
 
         {/* Job blocks */}
-        {active.map(stop => (
-          <div key={stop.job.id}
-            className="absolute top-0.5 bottom-0.5 rounded-sm"
-            style={{ left: pct(stop.startMin), width: wPct(stop.startMin, stop.endMin), background: color }}
-            title={`${stop.startTime} · ${stop.job.address.split(',')[0]} · ${stop.job.estimatedDuration} min`}
-          />
-        ))}
+        {active.map(stop => {
+          const blockW = wNum(stop.startMin, stop.endMin)
+          return (
+            <div key={stop.job.id}
+              className="absolute overflow-hidden"
+              style={{
+                left: pct(stop.startMin),
+                width: wPct(stop.startMin, stop.endMin),
+                top: expanded ? '4px' : '2px',
+                bottom: expanded ? '4px' : '2px',
+                background: color,
+                borderRadius: '3px',
+              }}
+              title={`Stop ${stop.sequence} · ${stop.startTime}–${stop.arrivalTime} · ${stop.job.address.split(',')[0]} · ${stop.job.estimatedDuration}min`}
+            >
+              {expanded && (
+                <div className="flex flex-col justify-between h-full px-1.5 py-1 select-none">
+                  {/* Top row: number + time */}
+                  <div className="flex items-center gap-1 min-w-0">
+                    <span className="inline-flex items-center justify-center h-3.5 w-3.5 rounded-full bg-white/25 text-[7px] font-bold text-white flex-shrink-0">
+                      {stop.sequence}
+                    </span>
+                    {blockW > 12 && (
+                      <span className="text-[8px] font-semibold text-white/90 truncate">{stop.startTime}</span>
+                    )}
+                  </div>
+                  {/* Middle: address */}
+                  {blockW > 10 && (
+                    <p className="text-[7px] text-white/75 truncate leading-tight">
+                      {stop.job.address.split(',')[0]}
+                    </p>
+                  )}
+                  {/* Bottom: duration */}
+                  {blockW > 14 && (
+                    <p className="text-[7px] text-white/60 truncate">{stop.job.estimatedDuration}min · {SERVICE_LABEL[stop.job.serviceType]}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })}
 
-        {/* Wait gaps (lighter overlay) */}
-        {active.map((stop) => stop.waitMin > 0 ? (
+        {/* Wait gaps */}
+        {active.map(stop => stop.waitMin > 0 ? (
           <div key={`w${stop.job.id}`}
             className="absolute top-0 h-full bg-slate-600/20"
             style={{ left: pct(stop.arrivalMin), width: wPct(stop.arrivalMin, stop.startMin) }}

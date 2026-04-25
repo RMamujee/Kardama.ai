@@ -1,0 +1,21 @@
+﻿[T1] Waiting to start...
+[T1] FILE 1 globals.css - written
+[T1] FILE 2 card.tsx - written
+[T1] FILE 3 button.tsx - written
+[T1] FILE 4 badge.tsx - written
+[T1] FILE 5 input.tsx - written
+[T1] FILE 6 label.tsx - written
+[T1] FILE 7 select.tsx - written
+[T1] FILE 8 tabs.tsx - written
+[T1] FILE 9 dialog.tsx - written
+[T1] FILE 10 progress.tsx - written
+[T1] FILE 11 separator.tsx - written
+[T1] FILE 12 avatar.tsx - written
+[T1] FILE 13 skeleton.tsx - written
+[T1] FILE 14 tooltip.tsx - created (new)
+[T1] FILE 15 Sidebar.tsx - written
+[T1] FILE 16 Topbar.tsx - written
+[T1] FILE 17 DashboardShell.tsx - written
+[T1] FILE 18 Providers.tsx - written
+[T1] FILE 19 layout.tsx - written
+[T1] COMPLETE - Dark theme core files done

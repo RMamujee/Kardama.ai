@@ -1,14 +1,22 @@
 'use client'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Sparkles, Calendar, Users, BarChart2, Zap } from 'lucide-react'
+import {
+  Sparkles, Calendar, Users, BarChart2, Zap,
+  Eye, Send, Copy, TrendingUp,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { useMarketingStore } from '@/store/useMarketingStore'
+import { useSocialStore } from '@/store/useSocialStore'
 import { AiPostGenerator } from '@/components/marketing/AiPostGenerator'
 import { GroupScheduler } from '@/components/marketing/GroupScheduler'
+import { LeadMonitor } from '@/components/marketing/LeadMonitor'
+import { PostComposer } from '@/components/marketing/PostComposer'
+import { ResponseTemplates } from '@/components/marketing/ResponseTemplates'
 import { formatDate, cn } from '@/lib/utils'
 import { getWeek } from 'date-fns'
 
@@ -27,7 +35,7 @@ const THEME_COLORS: Record<string, string> = {
 
 const STATUS_COLORS = { draft: 'neutral', scheduled: 'default', sent: 'success' } as const
 
-export default function MarketingPage() {
+function OverviewTab() {
   const { posts, generateAllPosts, generatingAll, generateAllProgress, selectedGroupIds, groups } = useMarketingStore()
   const [expandedWeek, setExpandedWeek] = useState<number | null>(null)
   const currentWeek = getWeek(new Date())
@@ -37,13 +45,13 @@ export default function MarketingPage() {
   const totalReach = groups.filter(g => selectedGroupIds.has(g.id)).reduce((s, g) => s + g.memberCount, 0)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Stats row */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
           { label: 'Posts Sent', value: sentCount, icon: BarChart2, color: 'text-emerald-400', glow: 'shadow-[0_0_20px_rgba(16,185,129,0.12)]' },
           { label: 'Scheduled', value: scheduledCount, icon: Calendar, color: 'text-indigo-400', glow: 'shadow-[0_0_20px_rgba(99,102,241,0.12)]' },
-          { label: 'Groups Selected', value: selectedGroupIds.size, icon: Users, color: 'text-violet-400', glow: 'shadow-[0_0_20px_rgba(139,92,246,0.12)]' },
+          { label: 'Groups', value: selectedGroupIds.size, icon: Users, color: 'text-violet-400', glow: 'shadow-[0_0_20px_rgba(139,92,246,0.12)]' },
           { label: 'Est. Reach', value: `${(totalReach/1000).toFixed(0)}k`, icon: Zap, color: 'text-amber-400', glow: 'shadow-[0_0_20px_rgba(245,158,11,0.12)]' },
         ].map((s, i) => (
           <motion.div key={s.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>
@@ -63,7 +71,7 @@ export default function MarketingPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-        {/* 52-Week Calendar (left, 3 cols) */}
+        {/* 52-Week Calendar */}
         <div className="lg:col-span-3 space-y-4">
           <Card>
             <CardHeader>
@@ -92,10 +100,7 @@ export default function MarketingPage() {
                   return (
                     <div
                       key={post.id}
-                      className={cn(
-                        'border-b border-[#1e2a3a] last:border-0 transition-colors',
-                        isCurrent && 'bg-indigo-500/[0.04]'
-                      )}
+                      className={cn('border-b border-[#1e2a3a] last:border-0 transition-colors', isCurrent && 'bg-indigo-500/[0.04]')}
                     >
                       <button
                         onClick={() => setExpandedWeek(isExpanded ? null : post.weekNumber)}
@@ -104,9 +109,7 @@ export default function MarketingPage() {
                         <span className={cn('w-8 text-xs font-mono font-bold', isCurrent ? 'text-indigo-400' : 'text-slate-600')}>
                           W{post.weekNumber}
                         </span>
-                        <span className="text-xs text-slate-500 w-24 flex-shrink-0">
-                          {formatDate(post.scheduledDate)}
-                        </span>
+                        <span className="text-xs text-slate-500 w-24 flex-shrink-0">{formatDate(post.scheduledDate)}</span>
                         <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-medium flex-shrink-0', THEME_COLORS[post.theme] || 'bg-[#1a2537] text-slate-400')}>
                           {post.theme.replace(/-/g, ' ')}
                         </span>
@@ -149,12 +152,84 @@ export default function MarketingPage() {
           </Card>
         </div>
 
-        {/* Right side (2 cols) */}
+        {/* Right side */}
         <div className="lg:col-span-2 space-y-4">
           <AiPostGenerator />
           <GroupScheduler />
         </div>
       </div>
+    </div>
+  )
+}
+
+export default function MarketingPage() {
+  const { leads } = useSocialStore()
+  const newLeads = leads.filter(l => l.status === 'new').length
+  const urgentLeads = leads.filter(l => l.status === 'new' && l.urgency === 'high').length
+
+  return (
+    <div className="space-y-6">
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-white">Social Media Marketing</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Find leads, post to groups, and manage your social presence</p>
+        </div>
+        {urgentLeads > 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2.5"
+          >
+            <div className="h-2 w-2 rounded-full bg-red-400 animate-pulse" />
+            <span className="text-sm font-medium text-red-300">
+              {urgentLeads} urgent lead{urgentLeads > 1 ? 's' : ''} waiting
+            </span>
+          </motion.div>
+        )}
+      </div>
+
+      <Tabs defaultValue="leads">
+        <TabsList className="w-full sm:w-auto">
+          <TabsTrigger value="leads" className="relative">
+            <Eye className="h-3.5 w-3.5 mr-1.5" />
+            Lead Monitor
+            {newLeads > 0 && (
+              <span className="ml-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                {newLeads}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="compose">
+            <Send className="h-3.5 w-3.5 mr-1.5" />
+            Compose &amp; Schedule
+          </TabsTrigger>
+          <TabsTrigger value="templates">
+            <Copy className="h-3.5 w-3.5 mr-1.5" />
+            Templates
+          </TabsTrigger>
+          <TabsTrigger value="overview">
+            <TrendingUp className="h-3.5 w-3.5 mr-1.5" />
+            Content Calendar
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="leads">
+          <LeadMonitor />
+        </TabsContent>
+
+        <TabsContent value="compose">
+          <PostComposer />
+        </TabsContent>
+
+        <TabsContent value="templates">
+          <ResponseTemplates />
+        </TabsContent>
+
+        <TabsContent value="overview">
+          <OverviewTab />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

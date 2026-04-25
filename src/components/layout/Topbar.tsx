@@ -14,6 +14,7 @@ const PAGE_TITLES: Record<string, { title: string; sub: string }> = {
   '/marketing': { title: 'Marketing', sub: 'Automation & scheduling' },
   '/inbox': { title: 'Inbox', sub: 'AI-powered messages' },
   '/messages': { title: 'Messages', sub: 'Client communications' },
+  '/campaigns': { title: 'Campaigns', sub: '3-week nurturing & booking links' },
 }
 
 export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {

@@ -12,21 +12,30 @@ export function Tabs({ defaultValue, onValueChange, children, className }: { def
 }
 
 export function TabsList({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn('flex gap-1 rounded-lg bg-[#0d1321] border border-[#1e2a3a] p-1', className)}>{children}</div>
+  return (
+    <div
+      className={cn('flex gap-1 rounded-[10px] p-1', className)}
+      style={{ background: 'var(--bg-soft)', border: '1px solid var(--ink-100)' }}
+    >
+      {children}
+    </div>
+  )
 }
 
 export function TabsTrigger({ value, children, className }: { value: string; children: React.ReactNode; className?: string }) {
   const { active, setActive } = React.useContext(TabsContext)
+  const isActive = active === value
   return (
     <button
       onClick={() => setActive(value)}
-      className={cn(
-        'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-150',
-        active === value
-          ? 'bg-indigo-600 text-white shadow-[0_2px_8px_rgba(99,102,241,0.3)]'
-          : 'text-slate-400 hover:text-slate-200 hover:bg-[#1a2537]',
-        className
-      )}
+      className={cn('flex-1 rounded-lg px-3 py-1.5 text-[13px] font-medium transition-all duration-150', className)}
+      style={{
+        background: isActive ? 'linear-gradient(180deg, var(--blue-500), var(--blue-600))' : 'transparent',
+        color: isActive ? '#fff' : 'var(--ink-500)',
+        boxShadow: isActive ? '0 2px 8px rgba(139,133,242,0.3)' : 'none',
+      }}
+      onMouseEnter={(e) => { if (!isActive) { (e.currentTarget as HTMLElement).style.color = 'var(--ink-700)'; (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' } }}
+      onMouseLeave={(e) => { if (!isActive) { (e.currentTarget as HTMLElement).style.color = 'var(--ink-500)'; (e.currentTarget as HTMLElement).style.background = 'transparent' } }}
     >
       {children}
     </button>

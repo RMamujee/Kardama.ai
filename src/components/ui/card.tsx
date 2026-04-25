@@ -2,14 +2,17 @@ import * as React from 'react'
 import { cn } from '@/lib/utils'
 
 export const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
+  ({ className, style, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn(
-        'rounded-xl border border-[#1e2a3a] bg-[#111827] shadow-[0_4px_24px_rgba(0,0,0,0.4)]',
-        'transition-all duration-200',
-        className
-      )}
+      className={cn('transition-all duration-[150ms]', className)}
+      style={{
+        background: 'var(--bg-card)',
+        border: '1px solid var(--ink-100)',
+        borderRadius: 'var(--r-md)',
+        boxShadow: 'var(--shadow-sm)',
+        ...style,
+      }}
       {...props}
     />
   )
@@ -20,12 +23,16 @@ export const CardHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDiv
   <div className={cn('p-5 pb-3', className)} {...props} />
 )
 
-export const CardTitle = ({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
-  <h3 className={cn('text-base font-semibold text-slate-100', className)} {...props} />
+export const CardTitle = ({ className, style, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
+  <h3
+    className={cn('', className)}
+    style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--ink-900)', letterSpacing: '-0.01em', ...style }}
+    {...props}
+  />
 )
 
-export const CardDescription = ({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) => (
-  <p className={cn('text-sm text-slate-400', className)} {...props} />
+export const CardDescription = ({ className, style, ...props }: React.HTMLAttributes<HTMLParagraphElement>) => (
+  <p className={cn('', className)} style={{ fontSize: 12, color: 'var(--ink-400)', marginTop: 2, ...style }} {...props} />
 )
 
 export const CardContent = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (

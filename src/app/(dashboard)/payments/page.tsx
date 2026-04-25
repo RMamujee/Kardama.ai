@@ -15,10 +15,10 @@ import { CUSTOMERS, JOBS } from '@/lib/mock-data'
 import { formatCurrency, formatDate, cn } from '@/lib/utils'
 import { getMtdRevenue, getYtdRevenue } from '@/lib/payment-utils'
 
-const METHOD_COLORS = {
-  zelle: { bg: 'bg-indigo-500/15', text: 'text-indigo-300', dot: 'bg-indigo-500' },
-  venmo: { bg: 'bg-violet-500/15', text: 'text-violet-300', dot: 'bg-violet-500' },
-  cash: { bg: 'bg-emerald-500/15', text: 'text-emerald-300', dot: 'bg-emerald-500' },
+const METHOD_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
+  zelle: { bg: 'rgba(139,133,242,0.15)', text: '#8B85F2', dot: '#8B85F2' },
+  venmo: { bg: 'rgba(167,139,250,0.15)', text: '#A78BFA', dot: '#A78BFA' },
+  cash:  { bg: 'rgba(52,211,153,0.15)',  text: '#34D399', dot: '#34D399' },
 }
 
 const STATUS_VARIANT = {
@@ -121,10 +121,13 @@ export default function PaymentsPage() {
                         <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
                           <td className="px-4 py-3 text-sm text-slate-500">{p.receivedAt.split('T')[0]}</td>
                           <td className="px-4 py-3 text-sm font-medium text-slate-200">{customer?.name || 'Unknown'}</td>
-                          <td className="px-4 py-3 text-sm font-bold text-emerald-400">{formatCurrency(p.amount)}</td>
+                          <td className="px-4 py-3 text-sm font-bold tnum" style={{ color: 'var(--green-500)' }}>{formatCurrency(p.amount)}</td>
                           <td className="px-4 py-3">
-                            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${mc.bg} ${mc.text}`}>
-                              <span className={`h-1.5 w-1.5 rounded-full ${mc.dot}`} />
+                            <span
+                              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium"
+                              style={{ background: mc.bg, color: mc.text }}
+                            >
+                              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: mc.dot }} />
                               {p.method.charAt(0).toUpperCase() + p.method.slice(1)}
                             </span>
                           </td>

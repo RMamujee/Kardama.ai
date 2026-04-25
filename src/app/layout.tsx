@@ -3,7 +3,11 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { Providers } from '@/components/layout/Providers'
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-inter',
+})
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -18,7 +22,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} font-sans bg-[#070b14] text-slate-100 antialiased`}>
+      <body className={`${inter.variable} font-sans antialiased`} style={{ background: 'var(--bg-page)', color: 'var(--ink-900)' }}>
         <Providers>{children}</Providers>
       </body>
     </html>

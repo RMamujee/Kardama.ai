@@ -8,7 +8,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#070b14]">
+    <div className="flex h-screen overflow-hidden" style={{ background: 'var(--bg-page)' }}>
       {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
@@ -28,7 +28,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
       <div className="flex flex-1 flex-col overflow-hidden min-w-0">
         <Topbar onMenuToggle={() => setSidebarOpen(o => !o)} />
-        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 bg-[#070b14]">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 anim-fade-in" style={{ background: 'var(--bg-page)' }}>
           {children}
         </main>
       </div>

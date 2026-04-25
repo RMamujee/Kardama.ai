@@ -3,36 +3,36 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, CalendarDays, Map, DollarSign, Megaphone,
-  Users, UserCheck, BarChart3, MessageSquare, Send, Sparkles, LogOut, ChevronRight, Bell
+  Users, UserCheck, BarChart3, MessageSquare, Send, Bell, Sparkles, LogOut
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const NAV_SECTIONS = [
   {
-    label: null,
+    label: 'AI Field Service',
     items: [
-      { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { label: 'Dashboard',  href: '/dashboard',  icon: LayoutDashboard },
       { label: 'Scheduling', href: '/scheduling', icon: CalendarDays },
-      { label: 'Live Map', href: '/map', icon: Map },
-    ]
+      { label: 'Live Map',   href: '/map',        icon: Map },
+    ],
   },
   {
-    label: 'OPERATIONS',
+    label: 'CRM',
     items: [
       { label: 'Customers', href: '/customers', icon: Users },
-      { label: 'Team', href: '/team', icon: UserCheck },
-      { label: 'Payments', href: '/payments', icon: DollarSign },
-    ]
+      { label: 'Team',      href: '/team',      icon: UserCheck },
+      { label: 'Payments',  href: '/payments',  icon: DollarSign },
+    ],
   },
   {
-    label: 'GROWTH',
+    label: 'Growth',
     items: [
-      { label: 'Analytics', href: '/analytics', icon: BarChart3 },
-      { label: 'Marketing', href: '/marketing', icon: Megaphone },
-      { label: 'Campaigns', href: '/campaigns', icon: Bell },
-      { label: 'Inbox', href: '/inbox', icon: MessageSquare },
-      { label: 'Messages', href: '/messages', icon: Send },
-    ]
+      { label: 'Analytics',  href: '/analytics',  icon: BarChart3 },
+      { label: 'Marketing',  href: '/marketing',  icon: Megaphone },
+      { label: 'Campaigns',  href: '/campaigns',  icon: Bell },
+      { label: 'Inbox',      href: '/inbox',      icon: MessageSquare, badge: 2 },
+      { label: 'Messages',   href: '/messages',   icon: Send },
+    ],
   },
 ]
 
@@ -40,27 +40,50 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname()
 
   return (
-    <div className="flex h-screen w-64 flex-col bg-[#0a0f1c] border-r border-[#1e2a3a] flex-shrink-0">
+    <div
+      className="flex h-screen flex-shrink-0 flex-col"
+      style={{
+        width: 220,
+        background: 'var(--bg-rail)',
+        borderRight: '1px solid var(--ink-100)',
+      }}
+    >
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-4 py-4 border-b border-[#1e2a3a]">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 shadow-[0_4px_12px_rgba(99,102,241,0.4)]">
-          <Sparkles className="h-4 w-4 text-white" />
+      <div className="flex items-center gap-2.5 px-4" style={{ padding: '18px 16px 14px' }}>
+        <div
+          className="flex h-7 w-7 items-center justify-center rounded-lg"
+          style={{ background: 'linear-gradient(135deg, var(--blue-500), var(--blue-700))' }}
+        >
+          <Sparkles className="h-3.5 w-3.5 text-white" />
         </div>
         <div>
-          <span className="text-base font-bold text-white tracking-tight">Kardama</span>
-          <div className="text-[10px] text-indigo-400 font-medium -mt-0.5">AI Field Service</div>
+          <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ink-900)' }}>
+            Kardama
+          </div>
+          <div style={{ fontSize: 9.5, color: 'var(--blue-400)', fontWeight: 600, marginTop: -1, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+            AI Field Service
+          </div>
         </div>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto p-3 space-y-4">
-        {NAV_SECTIONS.map((section, si) => (
-          <div key={si}>
-            {section.label && (
-              <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-600">{section.label}</p>
-            )}
-            <div className="space-y-0.5">
-              {section.items.map(({ label, href, icon: Icon }) => {
+      <nav className="flex-1 overflow-y-auto" style={{ padding: '0 8px' }}>
+        {NAV_SECTIONS.map((section) => (
+          <div key={section.label} style={{ marginBottom: 12 }}>
+            <p
+              style={{
+                padding: '8px 12px 6px',
+                fontSize: 9.5,
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                color: 'var(--ink-400)',
+                textTransform: 'uppercase',
+              }}
+            >
+              {section.label}
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {section.items.map(({ label, href, icon: Icon, badge }) => {
                 const active = pathname === href || pathname.startsWith(href + '/')
                 return (
                   <Link
@@ -68,15 +91,48 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
                     href={href}
                     onClick={onClose}
                     className={cn(
-                      'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150',
-                      active
-                        ? 'bg-indigo-500/12 text-indigo-400 shadow-[inset_2px_0_0_#6366f1]'
-                        : 'text-slate-500 hover:text-slate-200 hover:bg-white/[0.04]'
+                      'group flex items-center gap-2.5 rounded-lg transition-all duration-[120ms]',
                     )}
+                    style={{
+                      padding: '7px 12px',
+                      borderRadius: 8,
+                      background: active ? 'var(--blue-50)' : 'transparent',
+                      color: active ? 'var(--blue-400)' : 'var(--ink-500)',
+                      fontSize: 13,
+                      fontWeight: active ? 600 : 500,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!active) {
+                        (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'
+                        ;(e.currentTarget as HTMLElement).style.color = 'var(--ink-700)'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!active) {
+                        (e.currentTarget as HTMLElement).style.background = 'transparent'
+                        ;(e.currentTarget as HTMLElement).style.color = 'var(--ink-500)'
+                      }
+                    }}
                   >
-                    <Icon className={cn('h-4 w-4 flex-shrink-0 transition-colors', active ? 'text-indigo-400' : 'text-slate-600 group-hover:text-slate-300')} />
+                    <Icon
+                      className="h-4 w-4 flex-shrink-0"
+                      style={{ color: active ? 'var(--blue-400)' : 'var(--ink-400)', strokeWidth: 1.8 }}
+                    />
                     <span className="flex-1">{label}</span>
-                    {active && <ChevronRight className="h-3 w-3 text-indigo-500 opacity-60" />}
+                    {badge != null && (
+                      <span
+                        style={{
+                          background: 'var(--blue-500)',
+                          color: '#fff',
+                          fontSize: 9.5,
+                          fontWeight: 700,
+                          padding: '1px 6px',
+                          borderRadius: 99,
+                        }}
+                      >
+                        {badge}
+                      </span>
+                    )}
                   </Link>
                 )
               })}
@@ -86,14 +142,24 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
       </nav>
 
       {/* User section */}
-      <div className="border-t border-[#1e2a3a] p-3">
-        <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-white/[0.04] transition-colors cursor-pointer">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-xs font-bold text-white shadow-[0_2px_8px_rgba(16,185,129,0.3)]">DC</div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-slate-200 truncate">David Chen</p>
-            <p className="text-xs text-slate-500 truncate">Owner · Long Beach</p>
+      <div style={{ borderTop: '1px solid var(--ink-100)', padding: 12 }}>
+        <div
+          className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 transition-colors"
+          style={{ borderRadius: 8 }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+        >
+          <div
+            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
+            style={{ background: 'linear-gradient(135deg, #34D399, #10B981)', color: 'var(--bg-page)' }}
+          >
+            DC
           </div>
-          <LogOut className="h-4 w-4 text-slate-600 hover:text-slate-300 transition-colors flex-shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-700)' }} className="truncate">David Chen</p>
+            <p style={{ fontSize: 11, color: 'var(--ink-400)' }} className="truncate">Owner · Long Beach</p>
+          </div>
+          <LogOut className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--ink-300)' }} />
         </div>
       </div>
     </div>

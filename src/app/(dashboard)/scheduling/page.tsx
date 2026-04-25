@@ -12,12 +12,12 @@ import { formatTime, getServiceLabel, cn, formatCurrency } from '@/lib/utils'
 import { BookingWizard } from '@/components/scheduling/BookingWizard'
 import { Job } from '@/types'
 
-const SERVICE_COLORS: Record<string, string> = {
-  standard: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30 hover:bg-indigo-500/30',
-  deep: 'bg-violet-500/20 text-violet-300 border-violet-500/30 hover:bg-violet-500/30',
-  'move-out': 'bg-amber-500/20 text-amber-300 border-amber-500/30 hover:bg-amber-500/30',
-  'post-construction': 'bg-red-500/20 text-red-300 border-red-500/30 hover:bg-red-500/30',
-  airbnb: 'bg-teal-500/20 text-teal-300 border-teal-500/30 hover:bg-teal-500/30',
+const SERVICE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  standard:           { bg: 'rgba(139,133,242,0.18)', text: '#8B85F2', border: 'rgba(139,133,242,0.3)' },
+  deep:               { bg: 'rgba(167,139,250,0.18)', text: '#A78BFA', border: 'rgba(167,139,250,0.3)' },
+  'move-out':         { bg: 'rgba(244,114,182,0.18)', text: '#F472B6', border: 'rgba(244,114,182,0.3)' },
+  'post-construction':{ bg: 'rgba(248,113,113,0.18)', text: '#F87171', border: 'rgba(248,113,113,0.3)' },
+  airbnb:             { bg: 'rgba(45,212,191,0.18)',  text: '#2DD4BF', border: 'rgba(45,212,191,0.3)'  },
 }
 
 const HOURS = Array.from({ length: 11 }, (_, i) => i + 7) // 7am to 5pm
@@ -126,10 +126,11 @@ export default function SchedulingPage() {
                           <button
                             key={job.id}
                             onClick={() => setSelectedJob(job)}
-                            className={cn(
-                              'w-full rounded-md border p-1.5 text-left text-xs transition-all',
-                              SERVICE_COLORS[job.serviceType] || SERVICE_COLORS.standard
-                            )}
+                            className="w-full rounded-md border p-1.5 text-left text-xs transition-all"
+                            style={(() => {
+                              const sc = SERVICE_COLORS[job.serviceType] ?? SERVICE_COLORS.standard
+                              return { background: sc.bg, color: sc.text, borderColor: sc.border }
+                            })()}
                           >
                             <p className="font-semibold truncate">{job.address.split(',')[0]}</p>
                             <p className="text-[10px] opacity-75">{formatTime(job.scheduledTime)} · {cleaners.map(c=>c.initials).join('+')}</p>

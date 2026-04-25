@@ -1,56 +1,99 @@
 'use client'
 import { useState, use, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CheckCircle2, Sparkles, Clock, MapPin, Calendar, Users, ChevronRight, Phone } from 'lucide-react'
-import { decodeBookingToken, getAvailableSlots } from '@/lib/campaign-engine'
-import { CUSTOMERS, CLEANERS } from '@/lib/mock-data'
+import {
+  CheckCircle2, Sparkles, Clock, MapPin, Calendar, Users,
+  ChevronRight, Phone, Zap, Route, AlertCircle
+} from 'lucide-react'
+import { CLEANERS } from '@/lib/mock-data'
 import { BookingSlot } from '@/types'
 import { cn } from '@/lib/utils'
 
+interface CustomerInfo {
+  id: string
+  name: string
+  firstName: string
+  city: string
+  phone: string
+}
+
+interface SlotsResponse {
+  customer: CustomerInfo
+  slots: BookingSlot[]
+  expires: string
+}
+
+interface ConfirmedBooking {
+  bookingId: string
+  customerName: string
+  slot: BookingSlot
+  cleanerNames: string[]
+  confirmedAt: string
+}
+
 export default function PublicBookingPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = use(params)
-  const [slots, setSlots] = useState<BookingSlot[]>([])
+  const [data, setData] = useState<SlotsResponse | null>(null)
   const [selected, setSelected] = useState<BookingSlot | null>(null)
-  const [booked, setBooked] = useState(false)
+  const [confirmed, setConfirmed] = useState<ConfirmedBooking | null>(null)
   const [loading, setLoading] = useState(true)
-  const [customerName, setCustomerName] = useState('')
-  const [customerCity, setCustomerCity] = useState('')
-  const [invalid, setInvalid] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const decoded = decodeBookingToken(token)
-    if (!decoded) { setInvalid(true); setLoading(false); return }
-
-    const customer = CUSTOMERS.find(c => c.id === decoded.customerId)
-    if (!customer) { setInvalid(true); setLoading(false); return }
-
-    setCustomerName(customer.name.split(' ')[0])
-    setCustomerCity(customer.city)
-
-    // Simulate async slot fetch
-    setTimeout(() => {
-      const available = getAvailableSlots(decoded.customerId)
-      setSlots(available)
-      setLoading(false)
-    }, 800)
+    fetch(`/api/bookings/slots?token=${encodeURIComponent(token)}`)
+      .then(async r => {
+        if (!r.ok) {
+          const j = await r.json().catch(() => ({}))
+          throw new Error(j.error || 'Could not load booking slots')
+        }
+        return r.json() as Promise<SlotsResponse>
+      })
+      .then(d => setData(d))
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false))
   }, [token])
 
-  function handleBook() {
-    if (!selected) return
-    setBooked(true)
+  async function handleConfirm() {
+    if (!selected || submitting) return
+    setSubmitting(true)
+    try {
+      const r = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, slot: selected }),
+      })
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}))
+        throw new Error(j.error || 'Booking failed')
+      }
+      const result = await r.json() as ConfirmedBooking
+      setConfirmed(result)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Booking failed')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
-  if (invalid) {
+  // ── Invalid / expired ──────────────────────────────────────────────────────
+  if (!loading && (error || !data)) {
     return (
       <div className="min-h-screen bg-[#070b14] flex items-center justify-center p-4">
-        <div className="text-center space-y-3">
+        <div className="text-center space-y-4 max-w-sm">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500/20 mx-auto">
             <Clock className="h-8 w-8 text-red-400" />
           </div>
-          <h2 className="text-xl font-bold text-white">Link Expired</h2>
-          <p className="text-slate-400 text-sm">This booking link is no longer valid. Please contact us for a new link.</p>
-          <a href="tel:+15625550000" className="inline-flex items-center gap-2 mt-4 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 transition-colors">
-            <Phone className="h-4 w-4" /> Call Us
+          <h2 className="text-xl font-bold text-white">
+            {error === 'Link expired' ? 'Link Expired' : 'Link Unavailable'}
+          </h2>
+          <p className="text-slate-400 text-sm">
+            {error === 'Link expired'
+              ? 'This booking link has expired. Contact us for a fresh one.'
+              : (error || 'This link is no longer active.')}
+          </p>
+          <a href="tel:+15625550000" className="inline-flex items-center gap-2 mt-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors">
+            <Phone className="h-4 w-4" /> Call Us to Book
           </a>
         </div>
       </div>
@@ -60,21 +103,23 @@ export default function PublicBookingPage({ params }: { params: Promise<{ token:
   return (
     <div className="min-h-screen bg-[#070b14] flex flex-col items-center justify-start px-4 py-10">
       <div className="w-full max-w-md space-y-6">
+
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-[0_4px_20px_rgba(99,102,241,0.35)] mx-auto">
             <Sparkles className="h-6 w-6 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-white">Book Your Cleaning</h1>
-          {customerName && (
+          {data && (
             <p className="text-slate-400 text-sm">
-              Hey {customerName}! Pick a time that works for you in {customerCity}.
+              Hey {data.customer.firstName}! Pick a time that works for you in {data.customer.city}.
             </p>
           )}
         </div>
 
         <AnimatePresence mode="wait">
-          {booked ? (
+          {/* ── Confirmed ────────────────────────────────────────────────────── */}
+          {confirmed ? (
             <motion.div
               key="confirmed"
               initial={{ opacity: 0, scale: 0.95 }}
@@ -86,56 +131,70 @@ export default function PublicBookingPage({ params }: { params: Promise<{ token:
               </div>
               <div>
                 <h2 className="text-xl font-bold text-white">You're booked!</h2>
-                <p className="text-sm text-slate-400 mt-1">{selected?.label}</p>
+                <p className="text-sm text-slate-400 mt-1">{confirmed.slot.label}</p>
               </div>
               <div className="rounded-xl bg-[#0d1321] border border-[#1e2a3a] p-4 text-left space-y-3">
                 <div className="flex items-center gap-2 text-sm">
                   <Calendar className="h-4 w-4 text-indigo-400" />
-                  <span className="text-slate-300">{selected?.label}</span>
+                  <span className="text-slate-300">{confirmed.slot.label}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Users className="h-4 w-4 text-violet-400" />
                   <span className="text-slate-300">
-                    {CLEANERS.filter(c => selected?.cleanerIds.includes(c.id)).map(c => c.name.split(' ')[0]).join(' & ')}
+                    {confirmed.cleanerNames.map(n => n.split(' ')[0]).join(' & ')}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <MapPin className="h-4 w-4 text-emerald-400" />
-                  <span className="text-slate-300">{customerCity} area</span>
+                  <span className="text-slate-300">{data?.customer.city} area</span>
                 </div>
               </div>
               <p className="text-xs text-slate-500">
-                We'll send you a confirmation text shortly. See you then! 🧹✨
+                Booking ID: <span className="font-mono text-slate-400">{confirmed.bookingId}</span>
+              </p>
+              <p className="text-xs text-slate-500">
+                We'll send you a confirmation text. See you then! 🧹✨
               </p>
             </motion.div>
+
           ) : loading ? (
+            /* ── Loading skeleton ──────────────────────────────────────────── */
             <motion.div key="loading" className="space-y-3">
               {Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="h-20 rounded-xl bg-[#0d1321] animate-pulse" />
               ))}
             </motion.div>
-          ) : (
-            <motion.div key="slots" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-              <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">
-                Available Times — Next 7 Days
-              </p>
 
-              {slots.length === 0 ? (
-                <div className="rounded-xl bg-[#0d1321] border border-[#1e2a3a] p-6 text-center text-sm text-slate-500">
-                  No available slots found. Please call us to schedule.
+          ) : (
+            /* ── Slot picker ─────────────────────────────────────────────────── */
+            <motion.div key="slots" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">
+                  Available Times — Next 7 Days
+                </p>
+                <div className="flex items-center gap-1 text-[10px] text-emerald-400">
+                  <Route className="h-3 w-3" /> Route-optimized
+                </div>
+              </div>
+
+              {data?.slots.length === 0 ? (
+                <div className="rounded-xl bg-[#0d1321] border border-[#1e2a3a] p-6 text-center">
+                  <AlertCircle className="h-6 w-6 text-slate-600 mx-auto mb-2" />
+                  <p className="text-sm text-slate-500">No slots available this week. Please call us.</p>
                 </div>
               ) : (
-                slots.map((slot, i) => {
+                data?.slots.map((slot, i) => {
                   const cleaners = CLEANERS.filter(c => slot.cleanerIds.includes(c.id))
                   const isSelected = selected?.date === slot.date && selected?.time === slot.time
-                  const efficiency = slot.routeScore >= 70 ? '⚡ Route-efficient' : slot.routeScore >= 40 ? '✓ Good slot' : null
+                  const isOnRoute = slot.routeScore >= 70
+                  const isGood = slot.routeScore >= 40
 
                   return (
                     <motion.button
                       key={`${slot.date}-${slot.time}`}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.04 }}
+                      transition={{ delay: i * 0.035 }}
                       onClick={() => setSelected(slot)}
                       className={cn(
                         'w-full rounded-xl border p-4 text-left transition-all',
@@ -144,20 +203,29 @@ export default function PublicBookingPage({ params }: { params: Promise<{ token:
                           : 'border-[#1e2a3a] bg-[#0d1321] hover:border-[#2e3d52]'
                       )}
                     >
-                      <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-white">{slot.label}</p>
-                          <div className="flex items-center gap-3 mt-0.5">
-                            <span className="text-xs text-slate-500">
-                              {cleaners.map(c => c.name.split(' ')[0]).join(' & ')}
-                            </span>
-                            {efficiency && (
-                              <span className="text-[10px] text-emerald-400 font-medium">{efficiency}</span>
-                            )}
-                          </div>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            {cleaners.map(c => c.name.split(' ')[0]).join(' & ')}
+                          </p>
+                          {slot.insertionLabel && (
+                            <div className="flex items-center gap-1 mt-1">
+                              {isOnRoute ? (
+                                <Zap className="h-3 w-3 text-emerald-400 flex-shrink-0" />
+                              ) : isGood ? (
+                                <Route className="h-3 w-3 text-indigo-400 flex-shrink-0" />
+                              ) : null}
+                              <span className={cn('text-[11px] font-medium',
+                                isOnRoute ? 'text-emerald-400' : isGood ? 'text-indigo-400' : 'text-slate-500'
+                              )}>
+                                {slot.insertionLabel}
+                              </span>
+                            </div>
+                          )}
                         </div>
                         <div className={cn(
-                          'flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 transition-all',
+                          'flex h-5 w-5 flex-shrink-0 mt-0.5 items-center justify-center rounded-full border-2 transition-all',
                           isSelected ? 'border-indigo-500 bg-indigo-500' : 'border-[#2e3d52]'
                         )}>
                           {isSelected && <div className="h-2 w-2 rounded-full bg-white" />}
@@ -171,10 +239,14 @@ export default function PublicBookingPage({ params }: { params: Promise<{ token:
               {selected && (
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
                   <button
-                    onClick={handleBook}
-                    className="w-full rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-4 text-sm font-semibold text-white hover:from-indigo-500 hover:to-violet-500 transition-all shadow-[0_4px_20px_rgba(99,102,241,0.3)] flex items-center justify-center gap-2"
+                    onClick={handleConfirm}
+                    disabled={submitting}
+                    className="w-full rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-4 text-sm font-semibold text-white hover:from-indigo-500 hover:to-violet-500 disabled:opacity-60 transition-all shadow-[0_4px_20px_rgba(99,102,241,0.3)] flex items-center justify-center gap-2"
                   >
-                    Confirm Booking <ChevronRight className="h-4 w-4" />
+                    {submitting
+                      ? <><span className="animate-spin">⟳</span> Confirming…</>
+                      : <>Confirm Booking <ChevronRight className="h-4 w-4" /></>
+                    }
                   </button>
                 </motion.div>
               )}

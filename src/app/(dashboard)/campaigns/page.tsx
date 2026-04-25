@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Bell, Send, Link2, Calendar, Clock, CheckCircle2, RefreshCw,
-  Sparkles, Copy, Users, ChevronDown, ChevronRight, MapPin, Star, AlertCircle
+  Sparkles, Copy, Users, ChevronDown, ChevronRight, AlertCircle, Zap, Route
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -12,7 +12,7 @@ import { Avatar } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useCampaignStore } from '@/store/useCampaignStore'
 import { CUSTOMERS, CLEANERS, JOBS } from '@/lib/mock-data'
-import { formatDate, formatTime, cn } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import { NurturingCampaign, BookingSlot } from '@/types'
 
 const AVATAR_COLORS = ['#6366f1','#8b5cf6','#ec4899','#10b981','#f59e0b','#3b82f6','#14b8a6','#f43f5e','#a855f7','#06b6d4','#22c55e','#ef4444']
@@ -145,8 +145,8 @@ function CampaignRow({ campaign }: { campaign: NurturingCampaign }) {
 
 function SlotCard({ slot, onSelect, selected }: { slot: BookingSlot; onSelect: () => void; selected: boolean }) {
   const cleaners = CLEANERS.filter(c => slot.cleanerIds.includes(c.id))
-  const efficiency = slot.routeScore >= 70 ? 'Route-efficient' : slot.routeScore >= 40 ? 'Good fit' : 'Available'
-  const efficiencyColor = slot.routeScore >= 70 ? 'text-emerald-400' : slot.routeScore >= 40 ? 'text-indigo-400' : 'text-slate-400'
+  const isOnRoute = slot.routeScore >= 70
+  const isGood    = slot.routeScore >= 40
 
   return (
     <button
@@ -161,9 +161,25 @@ function SlotCard({ slot, onSelect, selected }: { slot: BookingSlot; onSelect: (
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-slate-200 truncate">{slot.label}</p>
-          <div className="flex items-center gap-3 mt-1">
-            <span className={cn('text-xs font-medium', efficiencyColor)}>{efficiency}</span>
-            <span className="text-xs text-slate-600">{slot.driveTimeMinutes} min drive</span>
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            {slot.insertionLabel ? (
+              <div className="flex items-center gap-1">
+                {isOnRoute
+                  ? <Zap className="h-3 w-3 text-emerald-400" />
+                  : isGood
+                  ? <Route className="h-3 w-3 text-indigo-400" />
+                  : null}
+                <span className={cn('text-xs font-medium',
+                  isOnRoute ? 'text-emerald-400' : isGood ? 'text-indigo-400' : 'text-slate-500'
+                )}>
+                  {slot.insertionLabel}
+                </span>
+              </div>
+            ) : (
+              <span className="text-xs text-slate-500">Available</span>
+            )}
+            <span className="text-[10px] text-slate-700">·</span>
+            <span className="text-xs text-slate-600">{cleaners.map(c => c.name.split(' ')[0]).join(' & ')}</span>
           </div>
         </div>
         <div className="flex -space-x-1.5 flex-shrink-0">

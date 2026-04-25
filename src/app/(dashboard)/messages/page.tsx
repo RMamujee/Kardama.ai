@@ -158,10 +158,12 @@ export default function MessagesPage() {
   )
   const [sentSet, setSentSet] = useState<Set<string>>(new Set())
   const [sending, setSending] = useState(false)
+  const [mobilePanel, setMobilePanel] = useState<'routes' | 'compose' | 'sent'>('routes')
 
   function selectJob(item: EnrichedJob) {
     setSelected(item)
     setMessage(buildMessage(activeTemplate, item))
+    setMobilePanel('compose')
   }
 
   function selectTemplate(t: TemplateKey) {
@@ -199,9 +201,32 @@ export default function MessagesPage() {
   const isSent = sentSet.has(sentKey)
 
   return (
-    <div className="flex h-[calc(100vh-64px)] overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-56px)] overflow-hidden">
+      {/* Mobile tab bar */}
+      <div className="flex md:hidden flex-shrink-0 border-b border-[#1e2a3a] bg-[#0a0f1c]">
+        {(['routes', 'compose', 'sent'] as const).map(panel => (
+          <button
+            key={panel}
+            onClick={() => setMobilePanel(panel)}
+            className={cn(
+              'flex-1 py-2.5 text-xs font-medium capitalize transition-colors',
+              mobilePanel === panel
+                ? 'text-indigo-400 border-b-2 border-indigo-500 bg-indigo-500/5'
+                : 'text-slate-500'
+            )}
+          >
+            {panel === 'routes' ? 'Routes' : panel === 'compose' ? 'Compose' : 'Sent'}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
       {/* Left: Schedule timeline */}
-      <div className="w-80 flex-shrink-0 flex flex-col border-r border-[#1e2a3a] bg-[#0a0f1c]">
+      <div className={cn(
+        'flex-shrink-0 flex flex-col border-[#1e2a3a] bg-[#0a0f1c]',
+        'w-full md:w-80 md:border-r',
+        mobilePanel !== 'routes' ? 'hidden md:flex' : 'flex'
+      )}>
         <div className="p-4 border-b border-[#1e2a3a]">
           <div className="flex items-center gap-2 mb-1">
             <Navigation className="h-4 w-4 text-indigo-400" />
@@ -307,8 +332,11 @@ export default function MessagesPage() {
         </div>
       </div>
 
-      {/* Right: Notification Composer */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      {/* Center: Notification Composer */}
+      <div className={cn(
+        'flex flex-1 flex-col overflow-hidden',
+        mobilePanel !== 'compose' ? 'hidden md:flex' : 'flex'
+      )}>
         {selected ? (
           <AnimatePresence mode="wait">
             <motion.div
@@ -547,7 +575,11 @@ export default function MessagesPage() {
       </div>
 
       {/* Right sidebar: send log */}
-      <div className="w-52 flex-shrink-0 border-l border-[#1e2a3a] bg-[#0a0f1c] p-4">
+      <div className={cn(
+        'flex-shrink-0 border-[#1e2a3a] bg-[#0a0f1c] p-4',
+        'w-full md:w-52 md:border-l',
+        mobilePanel !== 'sent' ? 'hidden md:block' : 'block'
+      )}>
         <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-600 mb-3">Sent Today</p>
 
         {sentSet.size === 0 ? (
@@ -601,6 +633,7 @@ export default function MessagesPage() {
             )}
           </div>
         </div>
+      </div>
       </div>
     </div>
   )

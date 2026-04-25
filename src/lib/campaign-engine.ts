@@ -1,6 +1,6 @@
 import { CUSTOMERS, JOBS, CLEANERS } from './mock-data'
-import { estimateDriveMinutes } from './drive-time'
-import { NurturingCampaign, BookingSlot, BookingLink, CampaignStatus } from '@/types'
+import { computeInsertionCost } from './route-optimizer'
+import { NurturingCampaign, BookingSlot, BookingLink, CampaignStatus, Job } from '@/types'
 import { differenceInDays, addDays, format, parseISO } from 'date-fns'
 
 const TODAY = new Date()
@@ -19,10 +19,9 @@ function parseMinutes(time: string): number {
 }
 
 function customerLastJob(customerId: string) {
-  const completed = JOBS
+  return JOBS
     .filter(j => j.customerId === customerId && j.status === 'completed')
-    .sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate))
-  return completed[0] || null
+    .sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate))[0] ?? null
 }
 
 function buildMessage(customerName: string, daysSince: number, serviceType: string): string {
@@ -33,6 +32,8 @@ function buildMessage(customerName: string, daysSince: number, serviceType: stri
   return `Hi ${first}! ✨ Your home is probably due for another cleaning — it's been about ${Math.round(daysSince / 7)} weeks since your last one. Our team is in your area and we have availability coming up. Tap the link to book your next cleaning — takes less than a minute! 🏠`
 }
 
+// ─── Nurturing detection ──────────────────────────────────────────────────────
+
 export function detectNurturingCandidates(): NurturingCampaign[] {
   const campaigns: NurturingCampaign[] = []
 
@@ -41,8 +42,6 @@ export function detectNurturingCandidates(): NurturingCampaign[] {
     if (!lastJob) continue
 
     const daysSince = differenceInDays(TODAY, parseISO(lastJob.scheduledDate))
-
-    // 3-week window: 21–42 days out (ideally send right around 21 days)
     if (daysSince < 18) continue
 
     const status: CampaignStatus = daysSince > 42 ? 'expired' : 'pending'
@@ -65,64 +64,50 @@ export function detectNurturingCandidates(): NurturingCampaign[] {
   return campaigns.sort((a, b) => a.daysSinceLastJob - b.daysSinceLastJob)
 }
 
-// --- Booking Slot Generation ---
+// ─── Teams map ────────────────────────────────────────────────────────────────
 
 const TEAMS: Record<string, [string, string]> = {
-  'team-a': ['c1', 'c2'],
-  'team-b': ['c3', 'c4'],
-  'team-c': ['c5', 'c6'],
-  'team-d': ['c7', 'c8'],
+  'team-a': ['c1',  'c2'],
+  'team-b': ['c3',  'c4'],
+  'team-c': ['c5',  'c6'],
+  'team-d': ['c7',  'c8'],
+  'team-e': ['c9',  'c10'],
 }
 
 const SLOT_TIMES = ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00']
-const JOB_DURATION = 150 // default 2.5 hours for route scoring
+const DEFAULT_DURATION = 150
 
-function hasConflict(cleanerId: string, date: string, time: string): boolean {
+// ─── Conflict check ───────────────────────────────────────────────────────────
+
+function hasConflict(cleanerId: string, date: string, time: string, allJobs: Job[]): boolean {
   const startMin = parseMinutes(time)
-  const endMin = startMin + JOB_DURATION + 30
-  return JOBS.some(j => {
+  const endMin   = startMin + DEFAULT_DURATION + 30
+  return allJobs.some(j => {
     if (!j.cleanerIds.includes(cleanerId) || j.scheduledDate !== date || j.status === 'cancelled') return false
     const jStart = parseMinutes(j.scheduledTime)
-    const jEnd = jStart + j.estimatedDuration + 30
+    const jEnd   = jStart + (j.estimatedDuration ?? DEFAULT_DURATION) + 30
     return !(endMin <= jStart || startMin >= jEnd)
   })
 }
 
-function routeScore(cleanerIds: string[], date: string, custLat: number, custLng: number): number {
-  // Score how efficient adding this job is — higher means route-efficient
-  const dayJobs = JOBS.filter(j =>
-    j.scheduledDate === date &&
-    j.status !== 'cancelled' &&
-    j.cleanerIds.some(id => cleanerIds.includes(id))
-  )
+// ─── Available slot generation ──────────────────────────────────��─────────────
 
-  if (dayJobs.length === 0) {
-    // Fresh day — score based on proximity to cleaner home area
-    const cleaners = cleanerIds.map(id => CLEANERS.find(c => c.id === id)!).filter(Boolean)
-    const avgDrive = cleaners.reduce((sum, c) => sum + estimateDriveMinutes(c.homeAreaLat, c.homeAreaLng, custLat, custLng), 0) / cleaners.length
-    return Math.max(0, 100 - avgDrive * 1.5)
-  }
-
-  // Score based on proximity to existing day jobs (cluster bonus)
-  const nearbyCount = dayJobs.filter(j => {
-    const km = Math.sqrt(Math.pow((j.lat - custLat) * 111, 2) + Math.pow((j.lng - custLng) * 85, 2))
-    return km < 8 // within 8km
-  }).length
-
-  return Math.min(100, 50 + nearbyCount * 20)
-}
-
-export function getAvailableSlots(customerId: string): BookingSlot[] {
+/**
+ * @param customerId   Customer requesting the booking
+ * @param extraJobs    Additional confirmed bookings to account for (from booking store)
+ */
+export function getAvailableSlots(customerId: string, extraJobs: Job[] = []): BookingSlot[] {
   const customer = CUSTOMERS.find(c => c.id === customerId)
   if (!customer) return []
 
+  const allJobs: Job[] = [...JOBS, ...extraJobs as Job[]]
   const slots: BookingSlot[] = []
 
   for (let dayOffset = 1; dayOffset <= 8; dayOffset++) {
-    const date = fmtDate(addDays(TODAY, dayOffset))
+    const date    = fmtDate(addDays(TODAY, dayOffset))
     const dayName = getDayName(addDays(TODAY, dayOffset))
 
-    for (const [, cleanerIds] of Object.entries(TEAMS)) {
+    for (const [teamId, cleanerIds] of Object.entries(TEAMS)) {
       const cleaners = cleanerIds.map(id => CLEANERS.find(c => c.id === id)!).filter(Boolean)
       if (cleaners.length < 2) continue
 
@@ -131,47 +116,64 @@ export function getAvailableSlots(customerId: string): BookingSlot[] {
         const allAvailable = cleaners.every(c => {
           const hours = c.availableHours[dayName as keyof typeof c.availableHours]
           if (!hours) return false
-          const slotStart = parseMinutes(time)
-          const cleanerStart = parseMinutes(hours.start)
-          const cleanerEnd = parseMinutes(hours.end)
-          return slotStart >= cleanerStart && (slotStart + JOB_DURATION) <= cleanerEnd
+          const slotStart  = parseMinutes(time)
+          const cleanStart = parseMinutes(hours.start)
+          const cleanEnd   = parseMinutes(hours.end)
+          return slotStart >= cleanStart && (slotStart + DEFAULT_DURATION) <= cleanEnd
         })
-
         if (!allAvailable) continue
 
-        // Check no scheduling conflicts
-        const noConflict = cleaners.every(c => !hasConflict(c.id, date, time))
+        // No scheduling conflicts (including confirmed bookings)
+        const noConflict = cleaners.every(c => !hasConflict(c.id, date, time, allJobs))
         if (!noConflict) continue
 
-        // Prefer teams near the customer or already routing that area
-        const avgDrive = cleaners.reduce((sum, c) =>
-          sum + estimateDriveMinutes(c.currentLat, c.currentLng, customer.lat, customer.lng), 0
-        ) / cleaners.length
+        // Filter teams that are too far from the customer
+        const avgDriveMins = cleaners.reduce((sum, c) => {
+          const dx = (c.homeAreaLat - customer.lat) * 111
+          const dy = (c.homeAreaLng - customer.lng) * 85
+          return sum + Math.round(Math.sqrt(dx * dx + dy * dy) * 2)
+        }, 0) / cleaners.length
+        if (avgDriveMins > 55) continue
 
-        // Limit to reasonable drive time
-        if (avgDrive > 45) continue
+        // Compute real cheapest-insertion score using existing team route
+        const teamDayJobs = allJobs.filter(j =>
+          j.scheduledDate === date &&
+          j.status !== 'cancelled' &&
+          j.cleanerIds.some(id => cleanerIds.includes(id))
+        )
 
-        const score = routeScore(cleanerIds as string[], date, customer.lat, customer.lng)
-        const dateObj = addDays(TODAY, dayOffset)
-        const dateLabel = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
-        const [h, m] = time.split(':').map(Number)
-        const ampm = h >= 12 ? 'PM' : 'AM'
-        const h12 = h % 12 || 12
-        const timeLabel = `${h12}:${m.toString().padStart(2, '0')} ${ampm}`
+        const lead = cleaners[0]
+        const result = computeInsertionCost(
+          teamDayJobs,
+          time,
+          customer.lat,
+          customer.lng,
+          lead.homeAreaLat,
+          lead.homeAreaLng
+        )
+
+        const dateObj    = addDays(TODAY, dayOffset)
+        const dateLabel  = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+        const [h, m]     = time.split(':').map(Number)
+        const ampm       = h >= 12 ? 'PM' : 'AM'
+        const timeLabel  = `${h % 12 || 12}:${m.toString().padStart(2, '0')} ${ampm}`
 
         slots.push({
           date,
           time,
           cleanerIds: cleanerIds as string[],
-          driveTimeMinutes: Math.round(avgDrive),
-          routeScore: score,
+          driveTimeMinutes: Math.round(avgDriveMins),
+          routeScore: result.score,
+          insertionKm: result.insertionKm,
+          insertionLabel: result.label,
+          position: result.position,
           label: `${dateLabel} at ${timeLabel}`,
         })
       }
     }
   }
 
-  // Deduplicate (same date+time, keep best route score)
+  // Deduplicate: same date+time, keep lowest insertion cost (most efficient)
   const deduped = new Map<string, BookingSlot>()
   for (const slot of slots) {
     const key = `${slot.date}-${slot.time}`
@@ -181,12 +183,15 @@ export function getAvailableSlots(customerId: string): BookingSlot[] {
 
   return Array.from(deduped.values())
     .sort((a, b) => {
-      const dateCompare = a.date.localeCompare(b.date)
-      if (dateCompare !== 0) return dateCompare
+      // Primary: date; secondary: route efficiency (best first within a day)
+      const dateComp = a.date.localeCompare(b.date)
+      if (dateComp !== 0) return dateComp
       return b.routeScore - a.routeScore
     })
-    .slice(0, 12) // top 12 slots
+    .slice(0, 14)
 }
+
+// ─── Booking link helpers ─────────────────────────────────────────────────────
 
 export function generateBookingToken(customerId: string): string {
   const payload = { customerId, created: fmtDate(TODAY), expires: fmtDate(addDays(TODAY, 7)) }
@@ -204,8 +209,7 @@ export function decodeBookingToken(token: string): { customerId: string; created
 
 export function generateBookingLink(customerId: string): BookingLink {
   const token = generateBookingToken(customerId)
-  const slots = getAvailableSlots(customerId)
-
+  const slots  = getAvailableSlots(customerId)
   return {
     token,
     customerId,

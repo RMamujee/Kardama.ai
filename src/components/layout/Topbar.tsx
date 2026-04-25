@@ -1,5 +1,5 @@
 'use client'
-import { Bell, Search, Zap } from 'lucide-react'
+import { Bell, Menu, Search, Zap } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 
@@ -16,20 +16,28 @@ const PAGE_TITLES: Record<string, { title: string; sub: string }> = {
   '/messages': { title: 'Messages', sub: 'Client communications' },
 }
 
-export function Topbar() {
+export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
   const pathname = usePathname()
   const info = Object.entries(PAGE_TITLES).find(([k]) => pathname.startsWith(k))?.[1] || { title: 'Kardama', sub: '' }
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-[#1e2a3a] bg-[#0a0f1c]/80 backdrop-blur-sm px-6 flex-shrink-0">
-      <div>
+    <header className="flex h-14 items-center justify-between border-b border-[#1e2a3a] bg-[#0a0f1c]/80 backdrop-blur-sm px-4 md:px-6 flex-shrink-0">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onMenuToggle}
+          className="md:hidden flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/[0.06] transition-colors"
+        >
+          <Menu className="h-4 w-4" />
+        </button>
+        <div>
         <h1 className="text-base font-semibold text-slate-100">{info.title}</h1>
         {info.sub && <p className="text-xs text-slate-500 -mt-0.5">{info.sub}</p>}
+        </div>
       </div>
 
       <div className="flex items-center gap-2">
         {/* AI Status pill */}
-        <div className="flex items-center gap-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 text-xs font-medium text-indigo-400">
+        <div className="hidden sm:flex items-center gap-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 text-xs font-medium text-indigo-400">
           <Zap className="h-3 w-3" />
           AI Active
         </div>

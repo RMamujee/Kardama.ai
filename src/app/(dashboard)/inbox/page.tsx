@@ -140,6 +140,7 @@ export default function InboxPage() {
   const [sentIds, setSentIds] = useState<Set<string>>(new Set())
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [mobilePanel, setMobilePanel] = useState<'list' | 'thread' | 'details'>('list')
   const [threads, setThreads] = useState<Record<string, Conversation['thread']>>(
     Object.fromEntries(CONVERSATIONS.map(c => [c.id, c.thread]))
   )
@@ -171,9 +172,32 @@ export default function InboxPage() {
   const currentThread = threads[selected.id] || selected.thread
 
   return (
-    <div className="flex h-[calc(100vh-64px)] overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-56px)] overflow-hidden">
+      {/* Mobile tab bar */}
+      <div className="flex md:hidden flex-shrink-0 border-b border-[#1e2a3a] bg-[#0a0f1c]">
+        {(['list', 'thread', 'details'] as const).map(panel => (
+          <button
+            key={panel}
+            onClick={() => setMobilePanel(panel)}
+            className={cn(
+              'flex-1 py-2.5 text-xs font-medium capitalize transition-colors',
+              mobilePanel === panel
+                ? 'text-indigo-400 border-b-2 border-indigo-500 bg-indigo-500/5'
+                : 'text-slate-500'
+            )}
+          >
+            {panel === 'list' ? 'Inbox' : panel === 'thread' ? 'Thread' : 'Details'}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
       {/* Left: Conversation List */}
-      <div className="w-80 flex-shrink-0 flex flex-col border-r border-[#1e2a3a] bg-[#0a0f1c]">
+      <div className={cn(
+        'flex-shrink-0 flex flex-col border-[#1e2a3a] bg-[#0a0f1c]',
+        'w-full md:w-80 md:border-r',
+        mobilePanel !== 'list' ? 'hidden md:flex' : 'flex'
+      )}>
         {/* Header */}
         <div className="p-4 border-b border-[#1e2a3a]">
           <div className="flex items-center justify-between mb-3">
@@ -225,7 +249,7 @@ export default function InboxPage() {
           {filtered.map(conv => (
             <button
               key={conv.id}
-              onClick={() => { setSelected(conv); setDraft('') }}
+              onClick={() => { setSelected(conv); setDraft(''); setMobilePanel('thread') }}
               className={cn(
                 'w-full flex items-start gap-3 p-3 text-left transition-colors border-b border-[#1e2a3a]/50',
                 selected.id === conv.id ? 'bg-indigo-500/10' : 'hover:bg-white/[0.03]'
@@ -264,8 +288,11 @@ export default function InboxPage() {
         </div>
       </div>
 
-      {/* Right: Thread + Composer */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      {/* Center: Thread + Composer */}
+      <div className={cn(
+        'flex flex-1 flex-col overflow-hidden',
+        mobilePanel !== 'thread' ? 'hidden md:flex' : 'flex'
+      )}>
         <AnimatePresence mode="wait">
           <motion.div
             key={selected.id}
@@ -415,7 +442,11 @@ export default function InboxPage() {
       </div>
 
       {/* Right sidebar: Lead scoring */}
-      <div className="w-56 flex-shrink-0 border-l border-[#1e2a3a] bg-[#0a0f1c] p-4 space-y-4">
+      <div className={cn(
+        'flex-shrink-0 border-[#1e2a3a] bg-[#0a0f1c] p-4 space-y-4',
+        'w-full md:w-56 md:border-l',
+        mobilePanel !== 'details' ? 'hidden md:block' : 'block overflow-y-auto'
+      )}>
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-600 mb-2">AI Lead Score</p>
           <div className="text-center py-3">
@@ -494,6 +525,7 @@ export default function InboxPage() {
             })}
           </div>
         </div>
+      </div>
       </div>
     </div>
   )

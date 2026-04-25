@@ -20,8 +20,26 @@ export interface BookingSlot {
   time: string
   cleanerIds: string[]
   driveTimeMinutes: number
-  routeScore: number
-  label: string
+  routeScore: number          // 0-100, higher = more route-efficient
+  insertionKm?: number        // extra km to add this job to the route
+  insertionLabel?: string     // e.g. "On route (+0.8 km)"
+  position?: 'start-of-day' | 'between-jobs' | 'end-of-day'
+  label: string               // human-readable datetime label
+}
+
+export interface Booking {
+  id: string
+  token: string
+  customerId: string
+  customerName: string
+  customerPhone: string
+  customerAddress: string
+  slot: BookingSlot
+  cleanerIds: string[]
+  cleanerNames: string[]
+  confirmedAt: string
+  status: 'confirmed' | 'cancelled'
+  notes?: string
 }
 
 export interface BookingLink {

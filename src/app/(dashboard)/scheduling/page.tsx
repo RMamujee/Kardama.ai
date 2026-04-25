@@ -82,6 +82,8 @@ export default function SchedulingPage() {
       {/* Week Calendar */}
       <Card className="bg-[#0d1321] border-[#1e2a3a]">
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
+          <div className="min-w-[560px]">
           {/* Day headers */}
           <div className="grid grid-cols-8 border-b border-[#1e2a3a]">
             <div className="border-r border-[#1e2a3a] p-3 text-xs text-slate-600" />
@@ -139,6 +141,8 @@ export default function SchedulingPage() {
                 })}
               </div>
             ))}
+          </div>
+          </div>
           </div>
         </CardContent>
       </Card>

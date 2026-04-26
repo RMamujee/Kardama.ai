@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { decodeBookingToken, getAvailableSlots } from '@/lib/campaign-engine'
+import { verifyToken } from '@/lib/booking-tokens'
+import { getAvailableSlots } from '@/lib/campaign-engine'
 import { getBookedJobsForDate } from '@/lib/booking-store'
 import { CUSTOMERS } from '@/lib/mock-data'
 
@@ -9,33 +10,34 @@ export async function GET(request: Request) {
 
   if (!token) return NextResponse.json({ error: 'Missing token' }, { status: 400 })
 
-  const decoded = decodeBookingToken(token)
+  const decoded = verifyToken(token)
   if (!decoded) return NextResponse.json({ error: 'Invalid token' }, { status: 400 })
 
-  if (new Date(decoded.expires) < new Date()) {
+  // Date-string comparison avoids UTC-midnight timezone off-by-one (LOW-1)
+  const today = new Date().toISOString().split('T')[0]
+  if (decoded.expires < today) {
     return NextResponse.json({ error: 'Link expired' }, { status: 410 })
   }
 
   const customer = CUSTOMERS.find(c => c.id === decoded.customerId)
   if (!customer) return NextResponse.json({ error: 'Customer not found' }, { status: 404 })
 
-  // Collect confirmed bookings across the next 8 days so route scores are accurate
-  const today = new Date()
+  // Include confirmed bookings so route scores and conflict-checks are accurate
   const confirmedJobs = Array.from({ length: 8 }, (_, i) => {
-    const d = new Date(today)
-    d.setDate(today.getDate() + i + 1)
+    const d = new Date()
+    d.setDate(d.getDate() + i + 1)
     return getBookedJobsForDate(d.toISOString().split('T')[0])
   }).flat()
 
-  const slots = getAvailableSlots(decoded.customerId, confirmedJobs as any)
+  const slots = getAvailableSlots(decoded.customerId, confirmedJobs as never[])
 
+  // phone intentionally omitted — client never displays it (HIGH-3)
   return NextResponse.json({
     customer: {
       id: customer.id,
       name: customer.name,
       firstName: customer.name.split(' ')[0],
       city: customer.city,
-      phone: customer.phone,
     },
     slots,
     expires: decoded.expires,

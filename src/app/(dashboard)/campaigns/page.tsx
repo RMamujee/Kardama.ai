@@ -44,10 +44,13 @@ function CampaignRow({ campaign }: { campaign: NurturingCampaign }) {
   const status = STATUS_CONFIG[campaign.status] || STATUS_CONFIG.pending
   const isSending = sending === campaign.id
 
-  const existingLink = bookingLinks.find(l => l.customerId === campaign.customerId && campaign.bookingLinkToken)
-  const bookingUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/book/${campaign.bookingLinkToken}`
+  const generatedLink = bookingLinks.find(l => l.customerId === campaign.customerId)
+  const bookingUrl = generatedLink
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/book/${generatedLink.token}`
+    : null
 
   function handleCopy() {
+    if (!bookingUrl) return
     navigator.clipboard.writeText(bookingUrl)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
@@ -95,7 +98,7 @@ function CampaignRow({ campaign }: { campaign: NurturingCampaign }) {
               </div>
 
               {/* Booking link */}
-              {campaign.bookingLinkToken && (
+              {bookingUrl && (
                 <div className="flex items-center gap-2 rounded-lg bg-[#0d1321] border border-[#1e2a3a] p-3">
                   <Link2 className="h-3.5 w-3.5 text-indigo-400 flex-shrink-0" />
                   <span className="flex-1 text-xs text-slate-400 font-mono truncate">{bookingUrl}</span>
@@ -123,7 +126,7 @@ function CampaignRow({ campaign }: { campaign: NurturingCampaign }) {
                       <><Send className="h-3.5 w-3.5" /> Send via SMS</>
                     )}
                   </Button>
-                  <Button size="sm" variant="outline" onClick={handleCopy} className="flex-1">
+                  <Button size="sm" variant="outline" onClick={handleCopy} disabled={!bookingUrl} className="flex-1">
                     <Copy className="h-3.5 w-3.5" /> Copy Link
                   </Button>
                 </div>
@@ -209,9 +212,9 @@ export default function CampaignsPage() {
 
   const activeLink = bookingLinks.find(l => l.customerId === bookingCustomerId)
 
-  function handleGenerateLink() {
+  async function handleGenerateLink() {
     selectCustomer(bookingCustomerId)
-    generateLink(bookingCustomerId)
+    await generateLink(bookingCustomerId)
   }
 
   function handleCopyLink(token: string) {

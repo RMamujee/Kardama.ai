@@ -1,9 +1,24 @@
 import { NextResponse } from 'next/server'
 import { getBooking } from '@/lib/booking-store'
 
-export async function GET(_request: Request, { params }: { params: Promise<{ bookingId: string }> }) {
+// Requires the original booking token as proof of ownership (CRIT-5)
+export async function GET(request: Request, { params }: { params: Promise<{ bookingId: string }> }) {
   const { bookingId } = await params
+  const token = new URL(request.url).searchParams.get('token')
+
   const booking = getBooking(bookingId)
-  if (!booking) return NextResponse.json({ error: 'Booking not found' }, { status: 404 })
-  return NextResponse.json(booking)
+  if (!booking) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  if (!token || booking.token !== token) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  // Return only what the confirmation page needs — no raw PII
+  return NextResponse.json({
+    bookingId: booking.id,
+    slot: booking.slot,
+    cleanerNames: booking.cleanerNames,
+    confirmedAt: booking.confirmedAt,
+    status: booking.status,
+  })
 }

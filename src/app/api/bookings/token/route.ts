@@ -1,0 +1,21 @@
+import { NextResponse } from 'next/server'
+import { signToken } from '@/lib/booking-tokens'
+import { CUSTOMERS } from '@/lib/mock-data'
+
+export async function POST(request: Request) {
+  const body = await request.json().catch(() => ({})) as { customerId?: string }
+  const { customerId } = body
+
+  if (!customerId) return NextResponse.json({ error: 'Missing customerId' }, { status: 400 })
+
+  const customer = CUSTOMERS.find(c => c.id === customerId)
+  if (!customer) return NextResponse.json({ error: 'Customer not found' }, { status: 404 })
+
+  try {
+    const token = signToken(customerId)
+    return NextResponse.json({ token }, { status: 201 })
+  } catch (err) {
+    console.error('[bookings/token]', err)
+    return NextResponse.json({ error: 'Token generation unavailable' }, { status: 500 })
+  }
+}

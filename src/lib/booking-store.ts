@@ -5,6 +5,7 @@
  * All functions are synchronous so they can be replaced with async versions
  * when wiring in a real database without changing the call sites.
  */
+import { randomBytes } from 'crypto'
 import { BookingSlot } from '@/types'
 import { Job } from '@/types'
 
@@ -35,8 +36,9 @@ export interface Booking {
 // ─── In-memory store ──────────────────────────────────────────────────────────
 // Module-level Maps persist for the lifetime of the Next.js server process.
 
-const linkStore  = new Map<string, StoredBookingLink>()
+const linkStore    = new Map<string, StoredBookingLink>()
 const bookingStore = new Map<string, Booking>()
+const usedTokens   = new Set<string>()
 
 // Pre-seed one booking link token so the public /book/:token page always works
 // in development without having to generate one first.
@@ -54,6 +56,9 @@ export function getBookingLink(token: string): StoredBookingLink | undefined {
 export function listBookingLinks(): StoredBookingLink[] {
   return Array.from(linkStore.values())
 }
+
+export function isTokenUsed(token: string): boolean { return usedTokens.has(token) }
+export function markTokenUsed(token: string): void   { usedTokens.add(token) }
 
 // ─── Booking CRUD ─────────────────────────────────────────────────────────────
 
@@ -99,5 +104,5 @@ export function getBookedJobsForDate(date: string): Pick<Job, 'cleanerIds' | 'sc
 
 // ─── ID generator ─────────────────────────────────────────────────────────────
 export function newBookingId(): string {
-  return `bk-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
+  return `bk-${randomBytes(12).toString('base64url')}`
 }

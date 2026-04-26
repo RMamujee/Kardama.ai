@@ -1,18 +1,29 @@
 import { NextResponse } from 'next/server'
-import { sendSms } from '@/lib/twilio'
+import { sendSms, toE164 } from '@/lib/twilio'
+import { CUSTOMERS } from '@/lib/mock-data'
 
 export async function POST(request: Request) {
-  const { to, body, jobId, customerId, template } = await request.json()
+  const { to, body } = await request.json() as { to?: string; body?: string }
 
   if (!to || !body) {
     return NextResponse.json({ error: 'Missing required fields: to, body' }, { status: 400 })
   }
 
+  if (body.length > 480) {
+    return NextResponse.json({ error: 'Message body too long' }, { status: 400 })
+  }
+
+  // Restrict recipients to known customers — prevents use as an open SMS relay (CRIT-1)
+  const e164 = toE164(to)
+  if (!e164 || !CUSTOMERS.some(c => toE164(c.phone) === e164)) {
+    return NextResponse.json({ error: 'Recipient not permitted' }, { status: 403 })
+  }
+
   try {
     const { sid } = await sendSms(to, body)
     return NextResponse.json({ success: true, sid })
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to send SMS'
-    return NextResponse.json({ error: message }, { status: 500 })
+  } catch (err) {
+    console.error('[sms/send]', err)
+    return NextResponse.json({ error: 'Failed to send message' }, { status: 500 })  // MED-5
   }
 }

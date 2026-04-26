@@ -102,8 +102,8 @@ const CONVERSATIONS: Conversation[] = [
   },
 ]
 
-function generateDraft(conv: Conversation): string {
-  const last = conv.thread[conv.thread.length - 1].text.toLowerCase()
+function generateDraft(conv: Conversation, thread: Conversation['thread']): string {
+  const last = thread[thread.length - 1].text.toLowerCase()
   const firstName = conv.name.split(' ')[0]
   if (last.includes('how much') || last.includes('charge') || last.includes('price')) {
     return `Hi ${firstName}! Thanks for reaching out 😊 For a 3BD/2BA, our standard clean is $155–$175 and deep clean is $235–$265. We're local to ${conv.city} and availability is usually within the week. Want to set up a recurring bi-weekly schedule? Regulars get priority booking!`
@@ -156,7 +156,7 @@ export default function InboxPage() {
   function handleAiDraft() {
     setAiGenerating(true)
     setTimeout(() => {
-      setDraft(generateDraft(selected))
+      setDraft(generateDraft(selected, threads[selected.id] || selected.thread))
       setAiGenerating(false)
     }, 900)
   }

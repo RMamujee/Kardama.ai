@@ -24,6 +24,7 @@ async function fetchLeg(
   from: { lat: number; lng: number },
   to:   { lat: number; lng: number },
   token: string,
+  signal?: AbortSignal,
 ): Promise<RoadSegment[]> {
   const url =
     `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/` +
@@ -31,7 +32,7 @@ async function fetchLeg(
     `?access_token=${token}` +
     `&geometries=geojson&overview=full&annotations=congestion&steps=false`
 
-  const res = await fetch(url)
+  const res = await fetch(url, { signal })
   if (!res.ok) throw new Error(`Mapbox ${res.status}`)
   const data = await res.json()
 
@@ -71,13 +72,14 @@ export async function fetchTeamRoute(
   teamId: string,
   waypoints: Array<{ lat: number; lng: number }>,
   token: string,
+  signal?: AbortSignal,
 ): Promise<RealRoute | null> {
   if (waypoints.length < 2) return null
 
   try {
     // Fetch each leg in parallel for speed
     const legResults = await Promise.all(
-      waypoints.slice(0, -1).map((from, i) => fetchLeg(from, waypoints[i + 1], token))
+      waypoints.slice(0, -1).map((from, i) => fetchLeg(from, waypoints[i + 1], token, signal))
     )
 
     return {

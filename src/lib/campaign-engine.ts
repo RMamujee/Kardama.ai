@@ -3,7 +3,7 @@ import { computeInsertionCost } from './route-optimizer'
 import { NurturingCampaign, BookingSlot, BookingLink, CampaignStatus, Job } from '@/types'
 import { differenceInDays, addDays, format, parseISO } from 'date-fns'
 
-const TODAY = new Date()
+function getToday(): Date { return new Date() }
 
 function fmtDate(d: Date): string {
   return format(d, 'yyyy-MM-dd')
@@ -41,7 +41,7 @@ export function detectNurturingCandidates(): NurturingCampaign[] {
     const lastJob = customerLastJob(customer.id)
     if (!lastJob) continue
 
-    const daysSince = differenceInDays(TODAY, parseISO(lastJob.scheduledDate))
+    const daysSince = differenceInDays(getToday(), parseISO(lastJob.scheduledDate))
     if (daysSince < 18) continue
 
     const status: CampaignStatus = daysSince > 42 ? 'expired' : 'pending'
@@ -104,8 +104,8 @@ export function getAvailableSlots(customerId: string, extraJobs: Job[] = []): Bo
   const slots: BookingSlot[] = []
 
   for (let dayOffset = 1; dayOffset <= 8; dayOffset++) {
-    const date    = fmtDate(addDays(TODAY, dayOffset))
-    const dayName = getDayName(addDays(TODAY, dayOffset))
+    const date    = fmtDate(addDays(getToday(), dayOffset))
+    const dayName = getDayName(addDays(getToday(), dayOffset))
 
     for (const [teamId, cleanerIds] of Object.entries(TEAMS)) {
       const cleaners = cleanerIds.map(id => CLEANERS.find(c => c.id === id)!).filter(Boolean)
@@ -152,7 +152,7 @@ export function getAvailableSlots(customerId: string, extraJobs: Job[] = []): Bo
           lead.homeAreaLng
         )
 
-        const dateObj    = addDays(TODAY, dayOffset)
+        const dateObj    = addDays(getToday(), dayOffset)
         const dateLabel  = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
         const [h, m]     = time.split(':').map(Number)
         const ampm       = h >= 12 ? 'PM' : 'AM'
@@ -178,7 +178,7 @@ export function getAvailableSlots(customerId: string, extraJobs: Job[] = []): Bo
   for (const slot of slots) {
     const key = `${slot.date}-${slot.time}`
     const existing = deduped.get(key)
-    if (!existing || slot.routeScore > existing.routeScore) deduped.set(key, slot)
+    if (!existing || slot.routeScore < existing.routeScore) deduped.set(key, slot)
   }
 
   return Array.from(deduped.values())
@@ -186,7 +186,7 @@ export function getAvailableSlots(customerId: string, extraJobs: Job[] = []): Bo
       // Primary: date; secondary: route efficiency (best first within a day)
       const dateComp = a.date.localeCompare(b.date)
       if (dateComp !== 0) return dateComp
-      return b.routeScore - a.routeScore
+      return a.routeScore - b.routeScore
     })
     .slice(0, 14)
 }
@@ -194,7 +194,7 @@ export function getAvailableSlots(customerId: string, extraJobs: Job[] = []): Bo
 // ─── Booking link helpers ─────────────────────────────────────────────────────
 
 export function generateBookingToken(customerId: string): string {
-  const payload = { customerId, created: fmtDate(TODAY), expires: fmtDate(addDays(TODAY, 7)) }
+  const payload = { customerId, created: fmtDate(getToday()), expires: fmtDate(addDays(getToday(), 7)) }
   return btoa(JSON.stringify(payload)).replace(/=/g, '')
 }
 
@@ -213,8 +213,8 @@ export function generateBookingLink(customerId: string): BookingLink {
   return {
     token,
     customerId,
-    createdAt: fmtDate(TODAY),
-    expiresAt: fmtDate(addDays(TODAY, 7)),
+    createdAt: fmtDate(getToday()),
+    expiresAt: fmtDate(addDays(getToday(), 7)),
     status: 'active',
     slots,
   }

@@ -66,15 +66,17 @@ function teamBaseIcon(initials: string, color: string): L.DivIcon {
   })
 }
 
-const GPS_ICON = L.divIcon({
-  className: '',
-  html: `<div class="gps-dot" style="width:18px;height:18px;border-radius:50%;background:#2563eb;border:3px solid white;box-shadow:0 2px 10px rgba(37,99,235,0.55);"></div>`,
-  iconSize: [18, 18], iconAnchor: [9, 9], popupAnchor: [0, -11],
-})
+function makeGpsIcon(): L.DivIcon {
+  return L.divIcon({
+    className: '',
+    html: `<div class="gps-dot" style="width:18px;height:18px;border-radius:50%;background:#2563eb;border:3px solid white;box-shadow:0 2px 10px rgba(37,99,235,0.55);"></div>`,
+    iconSize: [18, 18], iconAnchor: [9, 9], popupAnchor: [0, -11],
+  })
+}
 
 function FlyTo({ lat, lng }: { lat: number; lng: number }) {
   const map = useMap()
-  useEffect(() => { map.flyTo([lat, lng], 15, { animate: true, duration: 1.2 }) }, [lat, lng])
+  useEffect(() => { map.flyTo([lat, lng], 15, { animate: true, duration: 1.2 }) }, [map, lat, lng])
   return null
 }
 
@@ -127,7 +129,7 @@ export function LiveMapView() {
             .filter(s => s.status !== 'cancelled')
             .map(s => ({ lat: s.job.lat, lng: s.job.lng })),
         ]
-        return fetchTeamRoute(route.teamId, waypoints, mapboxToken)
+        return fetchTeamRoute(route.teamId, waypoints, mapboxToken, fetchAbort.current?.signal)
       })
     ).then(results => {
       const map: Record<string, RealRoute | null> = {}
@@ -268,7 +270,7 @@ export function LiveMapView() {
 
           {/* GPS dot */}
           {gpsTracking && gpsPos && (
-            <Marker position={[gpsPos.lat, gpsPos.lng]} icon={GPS_ICON}>
+            <Marker position={[gpsPos.lat, gpsPos.lng]} icon={makeGpsIcon()}>
               <Popup>
                 <div style={{ padding: 4 }}>
                   <b>{trackedAs ? `Tracking ${CLEANERS.find(c => c.id === trackedAs)?.name.split(' ')[0]}` : 'Your Location'}</b>

@@ -4,23 +4,17 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, useMap } from
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { CLEANERS, JOBS } from '@/lib/mock-data'
-import { cn } from '@/lib/utils'
 import { buildOptimizedRoutes, TeamRoute, RouteStop } from '@/lib/routing-engine'
 import { fetchTeamRoute, RealRoute, CONGESTION_COLOR } from '@/lib/mapbox-routing'
 import { RoutingPanel } from './RoutingPanel'
 import { Crosshair, WifiOff, AlertTriangle, X, Loader2 } from 'lucide-react'
 
-// ─── Tile sources ──────────────────────────────────────────────────────────────
-// Mapbox Navigation Day: traffic baked into every road on the base map
-const TILE_MAPBOX = (token: string) =>
-  `https://api.mapbox.com/styles/v1/mapbox/navigation-day-v1/tiles/256/{z}/{x}/{y}{r}?access_token=${token}`
-const TILE_FALLBACK = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
-const TILE_SAT     = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-const ATTR_MAPBOX  = '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-const ATTR_CARTO   = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>'
-const ATTR_SAT     = '© Esri — Source: Esri, Maxar, GeoEye, Earthstar Geographics'
+// Free tile layers — no API key required
+const TILE_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+const TILE_SAT  = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+const ATTR_CARTO = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>'
+const ATTR_SAT   = '© Esri — Source: Esri, Maxar, GeoEye, Earthstar Geographics'
 
-// ─── Icon factories ────────────────────────────────────────────────────────────
 function fixLeafletIcons() {
   // @ts-ignore
   delete L.Icon.Default.prototype._getIconUrl
@@ -40,10 +34,10 @@ function stopIcon(seq: number, color: string, status: RouteStop['status']): L.Di
     className: '',
     html: `<div style="
       width:28px;height:28px;border-radius:50%;background:${bg};
-      border:2.5px solid rgba(255,255,255,0.95);
+      border:2.5px solid rgba(255,255,255,0.85);
       display:flex;align-items:center;justify-content:center;
       font-weight:800;color:white;font-size:12px;
-      box-shadow:0 2px 8px rgba(0,0,0,0.3);
+      box-shadow:0 2px 8px rgba(0,0,0,0.5);
       font-family:-apple-system,sans-serif;
       opacity:${dim ? 0.45 : 1};
     ">${label}</div>`,
@@ -56,10 +50,10 @@ function teamBaseIcon(initials: string, color: string): L.DivIcon {
     className: '',
     html: `<div style="
       width:34px;height:34px;border-radius:8px;background:${color};
-      border:2.5px solid rgba(255,255,255,0.95);
+      border:2.5px solid rgba(255,255,255,0.85);
       display:flex;align-items:center;justify-content:center;
       font-weight:700;color:white;font-size:10px;
-      box-shadow:0 2px 10px rgba(0,0,0,0.28);
+      box-shadow:0 2px 10px rgba(0,0,0,0.4);
       font-family:-apple-system,sans-serif;
     ">${initials}</div>`,
     iconSize: [34, 34], iconAnchor: [17, 17], popupAnchor: [0, -19],
@@ -69,7 +63,7 @@ function teamBaseIcon(initials: string, color: string): L.DivIcon {
 function makeGpsIcon(): L.DivIcon {
   return L.divIcon({
     className: '',
-    html: `<div class="gps-dot" style="width:18px;height:18px;border-radius:50%;background:#2563eb;border:3px solid white;box-shadow:0 2px 10px rgba(37,99,235,0.55);"></div>`,
+    html: `<div class="gps-dot" style="width:18px;height:18px;border-radius:50%;background:#8B85F2;border:3px solid white;box-shadow:0 2px 10px rgba(139,133,242,0.6);"></div>`,
     iconSize: [18, 18], iconAnchor: [9, 9], popupAnchor: [0, -11],
   })
 }
@@ -82,54 +76,42 @@ function FlyTo({ lat, lng }: { lat: number; lng: number }) {
 
 interface GpsPos { lat: number; lng: number; accuracy: number; speed: number | null }
 
-// ─── Component ─────────────────────────────────────────────────────────────────
 export function LiveMapView() {
-  const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? ''
-
-  const [mounted, setMounted]         = useState(false)
-  const [showCongestion, setShowCongestion] = useState(true)
-  const [satellite, setSatellite]     = useState(false)
-  const [routes, setRoutes]           = useState<TeamRoute[]>([])
-  const [realRoutes, setRealRoutes]   = useState<Record<string, RealRoute | null>>({})
+  const [mounted, setMounted]           = useState(false)
+  const [satellite, setSatellite]       = useState(false)
+  const [routes, setRoutes]             = useState<TeamRoute[]>([])
+  const [realRoutes, setRealRoutes]     = useState<Record<string, RealRoute | null>>({})
   const [loadingRoutes, setLoadingRoutes] = useState(false)
-
-  const [gpsPos, setGpsPos]           = useState<GpsPos | null>(null)
-  const [gpsTrail, setGpsTrail]       = useState<[number,number][]>([])
-  const [gpsTracking, setGpsTracking] = useState(false)
-  const [trackedAs, setTrackedAs]     = useState<string | null>(null)
-  const [gpsError, setGpsError]       = useState<string | null>(null)
-  const [flyTarget, setFlyTarget]     = useState<{ lat: number; lng: number } | null>(null)
+  const [gpsPos, setGpsPos]             = useState<GpsPos | null>(null)
+  const [gpsTrail, setGpsTrail]         = useState<[number,number][]>([])
+  const [gpsTracking, setGpsTracking]   = useState(false)
+  const [trackedAs, setTrackedAs]       = useState<string | null>(null)
+  const [gpsError, setGpsError]         = useState<string | null>(null)
+  const [flyTarget, setFlyTarget]       = useState<{ lat: number; lng: number } | null>(null)
   const watchRef   = useRef<number | null>(null)
   const fetchAbort = useRef<AbortController | null>(null)
 
-  // Build TSP routes on mount
   useEffect(() => {
     fixLeafletIcons()
     setMounted(true)
     const todayStr = new Date().toISOString().split('T')[0]
-    const todayJobs = JOBS.filter(j => j.scheduledDate === todayStr)
-    setRoutes(buildOptimizedRoutes(todayJobs, CLEANERS))
+    setRoutes(buildOptimizedRoutes(JOBS.filter(j => j.scheduledDate === todayStr), CLEANERS))
   }, [])
 
-  // Fetch real road geometry from Mapbox whenever TSP routes change
+  // Fetch real road geometry from OSRM whenever routes change
   useEffect(() => {
-    if (!mapboxToken || routes.length === 0) return
-
-    // Cancel any in-flight fetches
+    if (routes.length === 0) return
     fetchAbort.current?.abort()
     fetchAbort.current = new AbortController()
-
     setLoadingRoutes(true)
 
     Promise.all(
       routes.map(route => {
         const waypoints = [
           { lat: route.startLat, lng: route.startLng },
-          ...route.stops
-            .filter(s => s.status !== 'cancelled')
-            .map(s => ({ lat: s.job.lat, lng: s.job.lng })),
+          ...route.stops.filter(s => s.status !== 'cancelled').map(s => ({ lat: s.job.lat, lng: s.job.lng })),
         ]
-        return fetchTeamRoute(route.teamId, waypoints, mapboxToken, fetchAbort.current?.signal)
+        return fetchTeamRoute(route.teamId, waypoints, '', fetchAbort.current?.signal)
       })
     ).then(results => {
       const map: Record<string, RealRoute | null> = {}
@@ -137,7 +119,7 @@ export function LiveMapView() {
       setRealRoutes(map)
       setLoadingRoutes(false)
     }).catch(() => setLoadingRoutes(false))
-  }, [routes, mapboxToken])
+  }, [routes])
 
   function refreshRoutes(overrides: Record<string, RouteStop['status']>) {
     const todayStr = new Date().toISOString().split('T')[0]
@@ -174,11 +156,8 @@ export function LiveMapView() {
 
   if (!mounted) return null
 
-  const tileUrl = satellite ? TILE_SAT
-    : mapboxToken ? TILE_MAPBOX(mapboxToken)
-    : TILE_FALLBACK
-  const tileAttr = satellite ? ATTR_SAT : mapboxToken ? ATTR_MAPBOX : ATTR_CARTO
-  const tileKey  = satellite ? 'sat' : mapboxToken ? 'mapbox' : 'fallback'
+  const tileUrl  = satellite ? TILE_SAT : TILE_DARK
+  const tileAttr = satellite ? ATTR_SAT : ATTR_CARTO
 
   return (
     <div className="flex h-full">
@@ -197,44 +176,35 @@ export function LiveMapView() {
         <MapContainer center={[33.87, -118.26]} zoom={11}
           style={{ height: '100%', width: '100%' }} zoomControl={false}>
 
-          <TileLayer key={tileKey} url={tileUrl} attribution={tileAttr} maxZoom={19} />
+          <TileLayer key={satellite ? 'sat' : 'dark'} url={tileUrl} attribution={tileAttr} maxZoom={19} />
 
           {flyTarget && <FlyTo lat={flyTarget.lat} lng={flyTarget.lng} />}
 
-          {/* Routes — real road geometry when available, straight-line fallback */}
           {routes.map(route => {
             const real = realRoutes[route.teamId]
-
             return (
               <span key={route.teamId}>
                 {real
                   ? real.segments.map((seg, i) => (
-                      <Polyline key={i}
-                        positions={seg.positions}
-                        color={showCongestion ? CONGESTION_COLOR[seg.congestion] ?? route.color : route.color}
-                        weight={5}
-                        opacity={0.9}
-                      />
+                      <Polyline key={i} positions={seg.positions}
+                        color={route.color} weight={5} opacity={0.85} />
                     ))
-                  : /* Dashed placeholder while loading */
-                    <Polyline positions={route.polyline} color={route.color}
+                  : <Polyline positions={route.polyline} color={route.color}
                       weight={3.5} opacity={0.5} dashArray="8 6" />
                 }
 
-                {/* Team start marker */}
                 <Marker position={[route.startLat, route.startLng]}
                   icon={teamBaseIcon(route.cleanerNames.map(n => n[0]).join(''), route.color)}>
                   <Popup>
                     <div style={{ padding: 4 }}>
                       <b>{route.cleanerNames.join(' + ')}</b>
-                      <p style={{ fontSize: 11, color: '#666', marginTop: 2 }}>
-                        Start · {route.stops.length} stops · {route.totalDriveMin} min
+                      <p style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>
+                        Start · {route.stops.length} stops · {route.totalDriveMin} min drive
                       </p>
                     </div>
                   </Popup>
                 </Marker>
 
-                {/* Stop markers */}
                 {route.stops.map(stop => (
                   <Marker key={stop.job.id}
                     position={[stop.job.lat, stop.job.lng]}
@@ -243,10 +213,10 @@ export function LiveMapView() {
                       <div style={{ minWidth: 165, padding: 4 }}>
                         <b style={{ fontSize: 13 }}>Stop {stop.sequence} · {route.cleanerNames.join(' + ')}</b>
                         <p style={{ fontSize: 12, marginTop: 3 }}>{stop.job.address.split(',')[0]}</p>
-                        <p style={{ fontSize: 11, color: '#666', marginTop: 2 }}>
+                        <p style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>
                           {stop.startTime} · {stop.job.estimatedDuration} min
                         </p>
-                        <p style={{ fontSize: 11, color: CONGESTION_COLOR[stop.drive.traffic] ?? '#666', marginTop: 2 }}>
+                        <p style={{ fontSize: 11, color: CONGESTION_COLOR[stop.drive.traffic] ?? '#aaa', marginTop: 2 }}>
                           Drive: {stop.drive.minutes} min · {stop.drive.traffic}
                         </p>
                       </div>
@@ -257,111 +227,78 @@ export function LiveMapView() {
             )
           })}
 
-          {/* GPS accuracy ring */}
           {gpsTracking && gpsPos && (
             <Circle center={[gpsPos.lat, gpsPos.lng]} radius={Math.max(gpsPos.accuracy, 10)}
-              pathOptions={{ color: '#2563eb', fillColor: '#2563eb', fillOpacity: 0.07, weight: 1.5 }} />
+              pathOptions={{ color: '#8B85F2', fillColor: '#8B85F2', fillOpacity: 0.07, weight: 1.5 }} />
           )}
-
-          {/* GPS trail */}
           {gpsTracking && gpsTrail.length > 1 && (
-            <Polyline positions={gpsTrail} color="#2563eb" weight={3} opacity={0.5} dashArray="5 5" />
+            <Polyline positions={gpsTrail} color="#8B85F2" weight={3} opacity={0.5} dashArray="5 5" />
           )}
-
-          {/* GPS dot */}
           {gpsTracking && gpsPos && (
             <Marker position={[gpsPos.lat, gpsPos.lng]} icon={makeGpsIcon()}>
               <Popup>
                 <div style={{ padding: 4 }}>
                   <b>{trackedAs ? `Tracking ${CLEANERS.find(c => c.id === trackedAs)?.name.split(' ')[0]}` : 'Your Location'}</b>
-                  <p style={{ fontSize: 11, color: '#666', marginTop: 2 }}>±{Math.round(gpsPos.accuracy)}m</p>
+                  <p style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>±{Math.round(gpsPos.accuracy)}m</p>
                 </div>
               </Popup>
             </Marker>
           )}
         </MapContainer>
 
-        {/* ── Map controls — bottom right ───────────────────────────────── */}
+        {/* Map controls — bottom right */}
         <div className="absolute bottom-6 right-4 z-[1000] flex flex-col items-end gap-2">
+          {loadingRoutes && (
+            <div className="flex items-center gap-2 rounded-xl px-3 py-2"
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--ink-200)', fontSize: 12, color: 'var(--ink-400)' }}>
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Routing…
+            </div>
+          )}
 
-          {/* Congestion color toggle */}
-          <button onClick={() => setShowCongestion(v => !v)}
-            className={cn(
-              'flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-semibold shadow-lg backdrop-blur-sm transition-all',
-              showCongestion
-                ? 'border-orange-300 bg-white/95 text-orange-600'
-                : 'border-slate-200 bg-white/95 text-slate-500 hover:text-slate-800 hover:border-slate-300'
-            )}>
-            <span className="flex gap-0.5">
-              <span className="inline-block h-2.5 w-2 rounded-sm bg-green-500" />
-              <span className="inline-block h-2.5 w-2 rounded-sm bg-orange-400" />
-              <span className="inline-block h-2.5 w-2 rounded-sm bg-red-500" />
-            </span>
-            {showCongestion ? 'Traffic On' : 'Traffic Off'}
-            {loadingRoutes && <Loader2 className="h-3 w-3 animate-spin text-slate-400" />}
-          </button>
-
-          {/* Map / Satellite */}
-          <div className="flex overflow-hidden rounded-xl border border-slate-200 shadow-lg">
-            {([['Map', false], ['Satellite', true]] as const).map(([label, isSat], i) => (
-              <button key={label} onClick={() => setSatellite(isSat)}
-                className={cn(
-                  'px-3 py-2 text-xs font-semibold transition-colors',
-                  i > 0 && 'border-l border-slate-200',
-                  satellite === isSat ? 'bg-slate-800 text-white' : 'bg-white/95 text-slate-500 hover:text-slate-800'
-                )}>{label}</button>
-            ))}
+          {/* Map / Satellite toggle */}
+          <div className="flex overflow-hidden rounded-xl" style={{ border: '1px solid var(--ink-200)', boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
+            {(['Map', 'Satellite'] as const).map((label, i) => {
+              const active = (label === 'Satellite') === satellite
+              return (
+                <button key={label} onClick={() => setSatellite(label === 'Satellite')}
+                  style={{
+                    padding: '7px 14px', fontSize: 12, fontWeight: 600,
+                    borderLeft: i > 0 ? '1px solid var(--ink-200)' : 'none',
+                    background: active ? 'var(--blue-500)' : 'var(--bg-card)',
+                    color: active ? '#fff' : 'var(--ink-400)',
+                    border: 'none', cursor: 'pointer', transition: 'all 120ms',
+                  }}
+                >{label}</button>
+              )
+            })}
           </div>
 
           {/* Centre on GPS */}
           <button onClick={() => gpsPos && setFlyTarget({ lat: gpsPos.lat, lng: gpsPos.lng })}
             disabled={!gpsPos}
-            className={cn(
-              'flex h-9 w-9 items-center justify-center rounded-xl border shadow-lg transition-all',
-              gpsPos ? 'border-blue-300 bg-white/95 text-blue-600 hover:bg-blue-50'
-                     : 'border-slate-200 bg-white/80 text-slate-300 cursor-not-allowed'
-            )}>
+            style={{
+              width: 36, height: 36, borderRadius: 10,
+              background: gpsPos ? 'var(--blue-500)' : 'var(--bg-card)',
+              border: '1px solid var(--ink-200)',
+              color: gpsPos ? '#fff' : 'var(--ink-300)',
+              cursor: gpsPos ? 'pointer' : 'not-allowed',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+            }}>
             <Crosshair className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Congestion legend */}
-        {showCongestion && (
-          <div className="absolute bottom-6 left-4 z-[1000]">
-            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white/95 backdrop-blur-sm px-4 py-2 shadow-lg">
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Live traffic</span>
-              {([['#22c55e','Low'],['#f97316','Moderate'],['#ef4444','Heavy'],['#7f1d1d','Severe']] as const).map(([c,l]) => (
-                <div key={l} className="flex items-center gap-1">
-                  <div className="h-2.5 w-5 rounded-full" style={{ background: c }} />
-                  <span className="text-[10px] text-slate-500">{l}</span>
-                </div>
-              ))}
-              {!mapboxToken && (
-                <span className="text-[10px] text-amber-600 font-medium ml-1">⚠ No Mapbox token</span>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* No-token banner */}
-        {!mapboxToken && (
-          <div className="absolute top-4 left-1/2 z-[1001] -translate-x-1/2">
-            <div className="flex items-center gap-2 rounded-xl border border-amber-300 bg-white/95 px-4 py-2.5 shadow-lg">
-              <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0" />
-              <span className="text-xs text-amber-800">
-                Add <code className="font-mono text-amber-700">NEXT_PUBLIC_MAPBOX_TOKEN</code> to <code className="font-mono text-amber-700">.env.local</code> for real traffic data
-              </span>
-            </div>
-          </div>
-        )}
-
         {/* GPS error */}
         {gpsError && (
-          <div className="absolute top-4 left-1/2 z-[1001] -translate-x-1/2 mt-12">
-            <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-white/95 px-4 py-2.5 shadow-lg">
-              <AlertTriangle className="h-4 w-4 text-red-500" />
-              <span className="text-xs text-red-700">{gpsError}</span>
-              <button onClick={() => setGpsError(null)}><X className="h-3.5 w-3.5 text-red-400 ml-2" /></button>
+          <div className="absolute top-4 left-1/2 z-[1001] -translate-x-1/2">
+            <div className="flex items-center gap-2 rounded-xl px-4 py-2.5"
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--red-500)', boxShadow: '0 4px 16px rgba(0,0,0,0.5)' }}>
+              <AlertTriangle className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--red-500)' }} />
+              <span style={{ fontSize: 12, color: 'var(--ink-700)' }}>{gpsError}</span>
+              <button onClick={() => setGpsError(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', marginLeft: 4 }}>
+                <X className="h-3.5 w-3.5" style={{ color: 'var(--ink-400)' }} />
+              </button>
             </div>
           </div>
         )}
@@ -369,14 +306,20 @@ export function LiveMapView() {
         {/* GPS live bar */}
         {gpsTracking && gpsPos && (
           <div className="absolute top-4 right-4 z-[1000]">
-            <div className="flex items-center gap-3 rounded-xl border border-blue-200 bg-white/95 px-4 py-2.5 shadow-lg">
-              <span className="gps-dot h-2.5 w-2.5 rounded-full bg-blue-600 inline-block flex-shrink-0" />
-              <span className="text-xs font-semibold text-blue-700">
+            <div className="flex items-center gap-3 rounded-xl px-4 py-2.5"
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--blue-200)', boxShadow: '0 4px 16px rgba(0,0,0,0.5)' }}>
+              <span className="gps-dot inline-block h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: 'var(--blue-500)' }} />
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--blue-400)' }}>
                 {trackedAs ? `${CLEANERS.find(c => c.id === trackedAs)?.name.split(' ')[0]} — Live` : 'GPS Active'}
               </span>
-              <span className="text-[10px] text-slate-400">±{Math.round(gpsPos.accuracy)}m</span>
+              <span style={{ fontSize: 11, color: 'var(--ink-400)' }}>±{Math.round(gpsPos.accuracy)}m</span>
               <button onClick={stopGPS}
-                className="ml-1 rounded-md bg-red-50 border border-red-200 px-2 py-0.5 text-[10px] text-red-600 hover:bg-red-100 flex items-center gap-1">
+                style={{
+                  marginLeft: 4, borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 600,
+                  background: 'var(--red-50)', border: '1px solid var(--red-500)',
+                  color: 'var(--red-500)', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 4,
+                }}>
                 <WifiOff className="h-2.5 w-2.5" /> Stop
               </button>
             </div>

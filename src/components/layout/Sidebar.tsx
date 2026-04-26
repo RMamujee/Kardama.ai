@@ -45,7 +45,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
       style={{
         width: 220,
         background: 'var(--bg-rail)',
-        borderRight: '1px solid var(--ink-100)',
+        borderRight: '1px solid var(--ink-200)',
       }}
     >
       {/* Logo */}
@@ -142,7 +142,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
       </nav>
 
       {/* User section */}
-      <div style={{ borderTop: '1px solid var(--ink-100)', padding: 12 }}>
+      <div style={{ borderTop: '1px solid var(--ink-200)', padding: 12 }}>
         <div
           className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 transition-colors"
           style={{ borderRadius: 8 }}

@@ -18,17 +18,17 @@ const TEAM_NAMES: Record<string, string> = {
 }
 
 const TEAM_COLORS: Record<string, string> = {
-  'team-a': '#6366f1',
-  'team-b': '#10b981',
-  'team-c': '#f59e0b',
-  'team-d': '#8b5cf6',
+  'team-a': '#8B85F2',
+  'team-b': '#34D399',
+  'team-c': '#FBBF24',
+  'team-d': '#A78BFA',
 }
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; dot: string; label: string }> = {
-  available:  { bg: 'bg-emerald-500/15', text: 'text-emerald-400', dot: '#10b981', label: 'Available' },
-  'en-route': { bg: 'bg-amber-500/15',   text: 'text-amber-400',   dot: '#f59e0b', label: 'En Route' },
-  cleaning:   { bg: 'bg-indigo-500/15',  text: 'text-indigo-400',  dot: '#6366f1', label: 'Cleaning' },
-  'off-duty': { bg: 'bg-slate-800',      text: 'text-slate-500',   dot: '#374151', label: 'Off Duty' },
+  available:  { bg: 'rgba(52,211,153,0.14)',  text: '#34D399', dot: '#34D399', label: 'Available' },
+  'en-route': { bg: 'rgba(251,191,36,0.14)',  text: '#FBBF24', dot: '#FBBF24', label: 'En Route' },
+  cleaning:   { bg: 'rgba(139,133,242,0.15)', text: '#8B85F2', dot: '#8B85F2', label: 'Cleaning' },
+  'off-duty': { bg: 'rgba(144,153,174,0.12)', text: '#9099AE', dot: '#535B70', label: 'Off Duty' },
 }
 
 const AI_INSIGHTS = [
@@ -60,10 +60,10 @@ export default function TeamPage() {
   }
 
   const stats = [
-    { label: 'Total Cleaners', value: '8',                    icon: Users,        color: 'text-indigo-400' },
-    { label: 'Available Now',  value: availableCount.toString(), icon: CheckCircle, color: 'text-emerald-400' },
-    { label: 'Active Teams',   value: '4',                    icon: Shield,       color: 'text-violet-400' },
-    { label: 'Avg Rating',     value: `${avgRating}★`,        icon: Star,         color: 'text-amber-400' },
+    { label: 'Total Cleaners', value: '8',                      icon: Users,        tint: 'var(--blue-500)' },
+    { label: 'Available Now',  value: availableCount.toString(), icon: CheckCircle,  tint: 'var(--green-500)' },
+    { label: 'Active Teams',   value: '4',                      icon: Shield,       tint: 'var(--violet-500)' },
+    { label: 'Avg Rating',     value: `${avgRating}★`,          icon: Star,         tint: 'var(--amber-500)' },
   ]
 
   return (
@@ -78,28 +78,30 @@ export default function TeamPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.07 }}
           >
-            <div className="kpi-card rounded-xl p-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs text-slate-500 uppercase tracking-wide">{s.label}</p>
-                <s.icon className={`h-4 w-4 ${s.color}`} />
+            <div className="kpi-card rounded-xl p-5">
+              <div className="flex items-center justify-between mb-3">
+                <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--ink-400)' }}>{s.label}</p>
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: `${s.tint}22` }}>
+                  <s.icon className="h-3.5 w-3.5" style={{ color: s.tint }} />
+                </div>
               </div>
-              <p className="text-2xl font-bold text-white">{s.value}</p>
+              <p className="tnum" style={{ fontSize: 26, fontWeight: 700, color: 'var(--ink-900)', letterSpacing: '-0.02em' }}>{s.value}</p>
             </div>
           </motion.div>
         ))}
       </div>
 
       {/* ── AI Insights ───────────────────────────────────────── */}
-      <div className="rounded-xl bg-indigo-500/[0.07] border border-indigo-500/20 p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="h-4 w-4 text-indigo-400" />
-          <span className="text-sm font-medium text-indigo-300">AI Team Insights</span>
+      <div className="rounded-xl p-4" style={{ background: 'var(--blue-50)', border: '1px solid var(--blue-100)' }}>
+        <div className="flex items-center gap-2 mb-3">
+          <Sparkles className="h-4 w-4" style={{ color: 'var(--blue-500)' }} />
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--blue-400)' }}>AI Team Insights</span>
         </div>
-        <ul className="space-y-1.5">
+        <ul className="space-y-2">
           {AI_INSIGHTS.map((insight, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm text-slate-400">
-              <span className="text-indigo-500 mt-0.5 flex-shrink-0">•</span>
-              {insight}
+            <li key={i} className="flex items-start gap-2">
+              <span className="mt-0.5 flex-shrink-0" style={{ color: 'var(--blue-500)', fontSize: 13 }}>•</span>
+              <span style={{ fontSize: 13, color: 'var(--ink-500)', lineHeight: 1.5 }}>{insight}</span>
             </li>
           ))}
         </ul>
@@ -135,7 +137,7 @@ export default function TeamPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1 }}
                 >
-                  <Card className="hover:border-indigo-500/20 transition-all duration-200">
+                  <Card className="transition-all duration-200" style={{ '--hover-border': 'var(--blue-200)' } as React.CSSProperties}>
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -156,21 +158,24 @@ export default function TeamPage() {
                           return (
                             <div
                               key={cleaner.id}
-                              className="flex-1 flex items-center gap-2.5 rounded-lg bg-[#0d1321] border border-[#1e2a3a] p-3 cursor-pointer hover:border-indigo-500/30 transition-colors"
+                              className="flex-1 flex items-center gap-2.5 p-3 cursor-pointer transition-colors duration-[120ms]"
+                              style={{ borderRadius: 8, background: 'var(--bg-soft)', border: '1px solid var(--ink-200)' }}
                               onClick={() => setSelectedCleaner(cleaner.id)}
+                              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--blue-200)'; (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
+                              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--ink-200)'; (e.currentTarget as HTMLElement).style.background = 'var(--bg-soft)' }}
                             >
                               <div className="relative">
                                 <Avatar initials={cleaner.initials} color={team.color} size="sm" />
                                 <div
-                                  className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0d1321]"
-                                  style={{ backgroundColor: sc.dot }}
+                                  className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full"
+                                  style={{ backgroundColor: sc.dot, border: '2px solid var(--bg-soft)' }}
                                 />
                               </div>
                               <div className="min-w-0">
-                                <p className="text-xs font-medium text-slate-200 truncate">
+                                <p className="truncate" style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-900)' }}>
                                   {cleaner.name.split(' ')[0]}
                                 </p>
-                                <span className={`text-[10px] font-medium ${sc.text}`}>
+                                <span style={{ fontSize: 10, fontWeight: 600, color: sc.text }}>
                                   {sc.label}
                                 </span>
                               </div>
@@ -181,24 +186,22 @@ export default function TeamPage() {
 
                       {/* Team stats */}
                       <div className="grid grid-cols-3 gap-2 text-center">
-                        <div className="rounded-lg bg-[#0d1321] p-2">
-                          <p className="text-base font-bold text-white">{completedJobs.length}</p>
-                          <p className="text-[10px] text-slate-600">Jobs Done</p>
+                        <div className="rounded-lg p-3" style={{ background: 'var(--bg-soft)' }}>
+                          <p className="tnum font-bold" style={{ fontSize: 18, color: 'var(--ink-900)' }}>{completedJobs.length}</p>
+                          <p style={{ fontSize: 10, color: 'var(--ink-400)', marginTop: 2 }}>Jobs Done</p>
                         </div>
-                        <div className="rounded-lg bg-[#0d1321] p-2">
-                          <p className="text-base font-bold text-emerald-400">
-                            {formatCurrency(teamRevenue)}
-                          </p>
-                          <p className="text-[10px] text-slate-600">Revenue</p>
+                        <div className="rounded-lg p-3" style={{ background: 'var(--bg-soft)' }}>
+                          <p className="tnum font-bold" style={{ fontSize: 18, color: 'var(--green-500)' }}>{formatCurrency(teamRevenue)}</p>
+                          <p style={{ fontSize: 10, color: 'var(--ink-400)', marginTop: 2 }}>Revenue</p>
                         </div>
-                        <div className="rounded-lg bg-[#0d1321] p-2">
-                          <p className="text-base font-bold text-amber-400">{avgTeamRating}★</p>
-                          <p className="text-[10px] text-slate-600">Rating</p>
+                        <div className="rounded-lg p-3" style={{ background: 'var(--bg-soft)' }}>
+                          <p className="tnum font-bold" style={{ fontSize: 18, color: 'var(--amber-500)' }}>{avgTeamRating}★</p>
+                          <p style={{ fontSize: 10, color: 'var(--ink-400)', marginTop: 2 }}>Rating</p>
                         </div>
                       </div>
 
                       {/* Home area */}
-                      <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                      <div className="flex items-center gap-1.5" style={{ fontSize: 12, color: 'var(--ink-400)' }}>
                         <MapPin className="h-3 w-3" />
                         <span>Based in {team.cleaners[0]?.homeAreaName}</span>
                       </div>
@@ -227,88 +230,71 @@ export default function TeamPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
                 >
-                  <Card className="hover:border-indigo-500/20 transition-all">
+                  <Card className="transition-all">
                     <CardContent className="p-5">
                       {/* Header */}
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-3">
                           <Avatar initials={cleaner.initials} color={cleaner.color} size="md" />
                           <div>
-                            <p className="font-semibold text-slate-100 text-sm">{cleaner.name}</p>
-                            <p className="text-xs text-slate-500">{TEAM_NAMES[cleaner.teamId]}</p>
+                            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-900)' }}>{cleaner.name}</p>
+                            <p style={{ fontSize: 11, color: 'var(--ink-400)', marginTop: 1 }}>{TEAM_NAMES[cleaner.teamId]}</p>
                           </div>
                         </div>
                         <span
-                          className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${sc.bg} ${sc.text}`}
+                          style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 99, background: sc.bg, color: sc.text }}
                         >
                           {sc.label}
                         </span>
                       </div>
 
                       <div className="space-y-2.5">
-                        {/* Rating */}
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-slate-500">Rating</span>
-                          <span className="text-amber-400 font-medium">⭐ {cleaner.rating}</span>
+                        <div className="flex items-center justify-between" style={{ fontSize: 12 }}>
+                          <span style={{ color: 'var(--ink-400)' }}>Rating</span>
+                          <span style={{ color: 'var(--amber-500)', fontWeight: 600 }}>⭐ {cleaner.rating}</span>
                         </div>
-
-                        {/* Reliability */}
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-slate-500">Reliability</span>
-                          <span className="text-emerald-400 font-medium">
-                            {cleaner.reliabilityScore}%
-                          </span>
+                        <div className="flex items-center justify-between" style={{ fontSize: 12 }}>
+                          <span style={{ color: 'var(--ink-400)' }}>Reliability</span>
+                          <span style={{ color: 'var(--green-500)', fontWeight: 600 }}>{cleaner.reliabilityScore}%</span>
                         </div>
-                        <Progress value={cleaner.reliabilityScore} color="bg-emerald-500" />
-
-                        {/* Total jobs */}
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-slate-500">Total Jobs</span>
-                          <span className="text-slate-200 font-medium">{cleaner.totalJobs}</span>
+                        <Progress value={cleaner.reliabilityScore} color="var(--green-500)" />
+                        <div className="flex items-center justify-between" style={{ fontSize: 12 }}>
+                          <span style={{ color: 'var(--ink-400)' }}>Total Jobs</span>
+                          <span style={{ color: 'var(--ink-700)', fontWeight: 600 }}>{cleaner.totalJobs}</span>
                         </div>
-
-                        {/* This month completed */}
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-slate-500">Completed (mo.)</span>
-                          <span className="text-slate-300 font-medium">{completedCount}</span>
+                        <div className="flex items-center justify-between" style={{ fontSize: 12 }}>
+                          <span style={{ color: 'var(--ink-400)' }}>Completed (mo.)</span>
+                          <span style={{ color: 'var(--ink-700)', fontWeight: 600 }}>{completedCount}</span>
                         </div>
-
-                        {/* Monthly pay */}
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-slate-500">This Month Pay</span>
-                          <span className="text-indigo-400 font-bold">
-                            {formatCurrency(monthPay)}
-                          </span>
+                        <div className="flex items-center justify-between" style={{ fontSize: 12 }}>
+                          <span style={{ color: 'var(--ink-400)' }}>This Month Pay</span>
+                          <span className="tnum font-bold" style={{ color: 'var(--blue-400)' }}>{formatCurrency(monthPay)}</span>
                         </div>
-
-                        {/* Home area */}
-                        <div className="flex items-center gap-1.5 text-[10px] text-slate-600 mt-1">
+                        <div className="flex items-center gap-1.5 mt-1" style={{ fontSize: 10, color: 'var(--ink-400)' }}>
                           <MapPin className="h-3 w-3" />
                           {cleaner.homeAreaName}
                         </div>
-
-                        {/* Specialties */}
                         <div className="flex flex-wrap gap-1">
                           {cleaner.specialties.map(s => (
                             <span
                               key={s}
-                              className="text-[9px] bg-[#0d1321] border border-[#1e2a3a] text-slate-400 rounded px-1.5 py-0.5 capitalize"
+                              style={{ fontSize: 9, background: 'var(--bg-soft)', border: '1px solid var(--ink-200)', color: 'var(--ink-500)', borderRadius: 4, padding: '2px 6px' }}
+                              className="capitalize"
                             >
                               {s.replace('-', ' ')}
                             </span>
                           ))}
                         </div>
-
-                        {/* Availability days */}
                         <div className="flex gap-1">
                           {(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const).map(d => (
                             <div
                               key={d}
-                              className={`flex-1 text-center rounded text-[8px] py-0.5 ${
-                                cleaner.availableHours[d]
-                                  ? 'bg-indigo-500/20 text-indigo-400'
-                                  : 'bg-[#1a2537] text-slate-600'
-                              }`}
+                              className="flex-1 text-center rounded py-0.5"
+                              style={{
+                                fontSize: 8,
+                                background: cleaner.availableHours[d] ? 'var(--blue-50)' : 'var(--bg-elev)',
+                                color: cleaner.availableHours[d] ? 'var(--blue-400)' : 'var(--ink-300)',
+                              }}
                             >
                               {d[0]}
                             </div>
@@ -329,7 +315,7 @@ export default function TeamPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-indigo-400" />
+                  <TrendingUp className="h-4 w-4" style={{ color: 'var(--blue-400)' }} />
                   <CardTitle>Monthly Pay Calculator</CardTitle>
                 </div>
                 <Badge variant="neutral">April 2026</Badge>
@@ -338,7 +324,7 @@ export default function TeamPage() {
             <CardContent>
               <div className="space-y-2">
                 {/* Column headers */}
-                <div className="grid grid-cols-6 gap-3 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                <div className="grid grid-cols-6 gap-3 px-3 py-2" style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--ink-400)' }}>
                   <div className="col-span-2">Cleaner</div>
                   <div>Jobs Done</div>
                   <div>Job Revenue</div>
@@ -346,49 +332,42 @@ export default function TeamPage() {
                   <div>Est. Pay</div>
                 </div>
 
-                {/* Cleaner rows */}
                 {CLEANERS.map(cleaner => {
-                  const completedJobs = JOBS.filter(
-                    j => j.cleanerIds.includes(cleaner.id) && j.status === 'completed'
-                  )
+                  const completedJobs = JOBS.filter(j => j.cleanerIds.includes(cleaner.id) && j.status === 'completed')
                   const jobRevenue = completedJobs.reduce((s, j) => s + j.price, 0)
                   const pay = getMonthlyPay(cleaner.id)
-
                   return (
                     <div
                       key={cleaner.id}
-                      className="grid grid-cols-6 gap-3 items-center px-3 py-3 rounded-lg bg-[#0d1321] border border-[#1e2a3a] hover:border-indigo-500/20 transition-colors"
+                      className="grid grid-cols-6 gap-3 items-center px-3 py-3 transition-colors duration-[120ms]"
+                      style={{ borderRadius: 8, background: 'var(--bg-soft)', border: '1px solid var(--ink-200)' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--blue-200)' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--ink-200)' }}
                     >
                       <div className="col-span-2 flex items-center gap-2.5">
                         <Avatar initials={cleaner.initials} color={cleaner.color} size="sm" />
                         <div>
-                          <p className="text-sm font-medium text-slate-200">{cleaner.name}</p>
-                          <p className="text-[10px] text-slate-600">{TEAM_NAMES[cleaner.teamId]}</p>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-900)' }}>{cleaner.name}</p>
+                          <p style={{ fontSize: 10, color: 'var(--ink-400)', marginTop: 1 }}>{TEAM_NAMES[cleaner.teamId]}</p>
                         </div>
                       </div>
-                      <div className="text-sm text-slate-300 font-medium">{completedJobs.length}</div>
-                      <div className="text-sm text-slate-400">{formatCurrency(jobRevenue)}</div>
-                      <div className="text-sm text-slate-500">35%</div>
-                      <div className="text-sm font-bold text-emerald-400">{formatCurrency(pay)}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-700)' }}>{completedJobs.length}</div>
+                      <div className="tnum" style={{ fontSize: 13, color: 'var(--ink-500)' }}>{formatCurrency(jobRevenue)}</div>
+                      <div style={{ fontSize: 13, color: 'var(--ink-400)' }}>35%</div>
+                      <div className="tnum font-bold" style={{ fontSize: 13, color: 'var(--green-500)' }}>{formatCurrency(pay)}</div>
                     </div>
                   )
                 })}
 
                 {/* Total row */}
-                <div className="grid grid-cols-6 gap-3 items-center px-3 py-3 rounded-lg bg-indigo-500/10 border border-indigo-500/20 mt-2">
-                  <div className="col-span-2 text-sm font-semibold text-slate-200">
-                    Total Payroll
+                <div className="grid grid-cols-6 gap-3 items-center px-3 py-3 mt-1" style={{ borderRadius: 8, background: 'var(--blue-50)', border: '1px solid var(--blue-100)' }}>
+                  <div className="col-span-2" style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-900)' }}>Total Payroll</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-700)' }}>{JOBS.filter(j => j.status === 'completed').length}</div>
+                  <div className="tnum" style={{ fontSize: 13, color: 'var(--ink-500)' }}>
+                    {formatCurrency(JOBS.filter(j => j.status === 'completed').reduce((s, j) => s + j.price, 0))}
                   </div>
-                  <div className="text-sm text-slate-300">
-                    {JOBS.filter(j => j.status === 'completed').length}
-                  </div>
-                  <div className="text-sm text-slate-400">
-                    {formatCurrency(
-                      JOBS.filter(j => j.status === 'completed').reduce((s, j) => s + j.price, 0)
-                    )}
-                  </div>
-                  <div className="text-sm text-slate-500">—</div>
-                  <div className="text-sm font-bold text-indigo-400">
+                  <div style={{ color: 'var(--ink-400)', fontSize: 13 }}>—</div>
+                  <div className="tnum font-bold" style={{ fontSize: 13, color: 'var(--blue-400)' }}>
                     {formatCurrency(CLEANERS.reduce((s, c) => s + getMonthlyPay(c.id), 0))}
                   </div>
                 </div>

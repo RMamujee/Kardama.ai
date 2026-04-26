@@ -47,7 +47,7 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div className="space-y-6 max-w-7xl">
+    <div className="space-y-5 max-w-7xl">
       {/* KPI Cards */}
       <motion.div variants={container} initial="hidden" animate="visible" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map((kpi) => (
@@ -85,29 +85,29 @@ export default function DashboardPage() {
                 <Badge variant="default">{todayJobs.length} scheduled</Badge>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {todayJobs.length === 0 && <p className="text-sm text-slate-500 py-6 text-center">No jobs scheduled today</p>}
-                {todayJobs.map((job) => {
+            <CardContent className="p-0">
+              <div className="overflow-y-auto" style={{ maxHeight: 380 }}>
+                {todayJobs.length === 0 && <p className="py-8 text-center" style={{ fontSize: 13, color: 'var(--ink-400)' }}>No jobs scheduled today</p>}
+                {todayJobs.map((job, idx) => {
                   const cleaners = CLEANERS.filter(c => job.cleanerIds.includes(c.id))
                   return (
                     <div
                       key={job.id}
-                      className="flex items-center gap-3 p-3 cursor-pointer transition-colors duration-[120ms]"
-                      style={{ borderRadius: 'var(--r-sm)', border: '1px solid var(--ink-100)', background: 'var(--bg-soft)' }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--blue-200)'; (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--ink-100)'; (e.currentTarget as HTMLElement).style.background = 'var(--bg-soft)' }}
+                      className="flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors duration-[120ms]"
+                      style={{ borderBottom: idx < todayJobs.length - 1 ? '1px solid var(--ink-200)' : 'none' }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-soft)' }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                     >
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg flex-shrink-0" style={{ background: 'var(--bg-elev)' }}>
                         <Clock className="h-4 w-4" style={{ color: 'var(--ink-400)' }} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="truncate" style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-900)' }}>{job.address.split(',')[0]}</p>
-                        <p style={{ fontSize: 11.5, color: 'var(--ink-400)' }}>{formatTime(job.scheduledTime)} · {getServiceLabel(job.serviceType)} · {cleaners.map(c => c.name.split(' ')[0]).join(' + ')}</p>
+                        <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-900)' }}>{job.address.split(',')[0]}</p>
+                        <p style={{ fontSize: 11.5, color: 'var(--ink-500)', marginTop: 1 }}>{formatTime(job.scheduledTime)} · {getServiceLabel(job.serviceType)} · {cleaners.map(c => c.name.split(' ')[0]).join(' + ')}</p>
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="flex items-center gap-2.5 flex-shrink-0">
                         <Badge variant={(STATUS_BADGE as any)[job.status] || 'neutral'} className="capitalize">{job.status}</Badge>
-                        <span className="tnum font-bold" style={{ fontSize: 13.5, color: 'var(--green-500)' }}>${job.price}</span>
+                        <span className="tnum font-bold" style={{ fontSize: 13, color: 'var(--green-500)', minWidth: 36, textAlign: 'right' }}>${job.price}</span>
                       </div>
                     </div>
                   )
@@ -151,7 +151,7 @@ export default function DashboardPage() {
                 <div
                   key={c.id}
                   className="flex items-center gap-2.5 p-3 transition-colors duration-[120ms]"
-                  style={{ borderRadius: 10, background: 'var(--bg-soft)', border: '1px solid var(--ink-100)' }}
+                  style={{ borderRadius: 10, background: 'var(--bg-soft)', border: '1px solid var(--ink-200)' }}
                 >
                   <div className="relative flex-shrink-0">
                     <div

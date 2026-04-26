@@ -8,7 +8,7 @@ export const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDi
       className={cn('transition-all duration-[150ms]', className)}
       style={{
         background: 'var(--bg-card)',
-        border: '1px solid var(--ink-100)',
+        border: '1px solid var(--ink-200)',
         borderRadius: 'var(--r-md)',
         boxShadow: 'var(--shadow-sm)',
         ...style,

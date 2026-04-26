@@ -63,7 +63,7 @@ export default function SchedulingPage() {
           <Button variant="outline" size="icon" onClick={() => setWeekOffset(weekOffset - 1)}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-sm font-medium text-slate-400">
+          <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink-500)' }}>
             {weekDates[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} –{' '}
             {weekDates[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
           </span>
@@ -80,23 +80,30 @@ export default function SchedulingPage() {
       </div>
 
       {/* Week Calendar */}
-      <Card className="bg-[#0d1321] border-[#1e2a3a]">
+      <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
           <div className="min-w-[560px]">
           {/* Day headers */}
-          <div className="grid grid-cols-8 border-b border-[#1e2a3a]">
-            <div className="border-r border-[#1e2a3a] p-3 text-xs text-slate-600" />
+          <div className="grid grid-cols-8" style={{ borderBottom: '1px solid var(--ink-200)' }}>
+            <div className="p-3" style={{ borderRight: '1px solid var(--ink-200)' }} />
             {weekDates.map((d, i) => {
               const dateStr = fmtDate(d)
               const isToday = dateStr === today
               return (
-                <div key={i} className={cn('p-3 text-center border-r border-[#1e2a3a] last:border-r-0', isToday && 'bg-indigo-500/[0.05]')}>
-                  <p className={cn('text-xs font-medium', isToday ? 'text-indigo-400' : 'text-slate-500')}>{DAY_LABELS[i]}</p>
-                  <p className={cn('text-lg font-semibold mt-0.5', isToday ? 'text-indigo-300' : 'text-slate-200')}>{d.getDate()}</p>
+                <div
+                  key={i}
+                  className="p-3 text-center"
+                  style={{
+                    borderRight: i < 6 ? '1px solid var(--ink-200)' : 'none',
+                    background: isToday ? 'var(--blue-50)' : 'transparent',
+                  }}
+                >
+                  <p style={{ fontSize: 11, fontWeight: 600, color: isToday ? 'var(--blue-400)' : 'var(--ink-400)' }}>{DAY_LABELS[i]}</p>
+                  <p style={{ fontSize: 18, fontWeight: 600, marginTop: 2, color: isToday ? 'var(--blue-400)' : 'var(--ink-700)' }}>{d.getDate()}</p>
                   {jobsByDay[dateStr]?.length > 0 && (
                     <div className="mt-1 flex justify-center">
-                      <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                      <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: 'var(--blue-500)' }} />
                     </div>
                   )}
                 </div>
@@ -107,8 +114,8 @@ export default function SchedulingPage() {
           {/* Time rows */}
           <div className="max-h-[500px] overflow-y-auto">
             {HOURS.map(hour => (
-              <div key={hour} className="grid grid-cols-8 border-b border-[#1e2a3a] min-h-[60px]">
-                <div className="border-r border-[#1e2a3a] px-3 py-2 text-xs text-slate-600 font-mono">
+              <div key={hour} className="grid grid-cols-8" style={{ borderBottom: '1px solid var(--ink-200)', minHeight: 60 }}>
+                <div className="px-3 py-2 font-mono" style={{ borderRight: '1px solid var(--ink-200)', fontSize: 11, color: 'var(--ink-300)' }}>
                   {hour > 12 ? `${hour-12}PM` : hour === 12 ? '12PM' : `${hour}AM`}
                 </div>
                 {weekDates.map((d, di) => {
@@ -119,7 +126,14 @@ export default function SchedulingPage() {
                   })
                   const isToday = dateStr === today
                   return (
-                    <div key={di} className={cn('border-r border-[#1e2a3a] last:border-r-0 p-1 space-y-1', isToday && 'bg-indigo-500/[0.03]')}>
+                    <div
+                      key={di}
+                      className="p-1 space-y-1"
+                      style={{
+                        borderRight: di < 6 ? '1px solid var(--ink-200)' : 'none',
+                        background: isToday ? 'rgba(139,133,242,0.03)' : 'transparent',
+                      }}
+                    >
                       {dayJobs.map(job => {
                         const cleaners = CLEANERS.filter(c => job.cleanerIds.includes(c.id))
                         return (
@@ -151,45 +165,50 @@ export default function SchedulingPage() {
       {/* Job Detail Panel */}
       {selectedJob && (
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-          <Card className="bg-[#111827] border-[#1e2a3a]">
+          <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Job Details</CardTitle>
-                <button onClick={() => setSelectedJob(null)} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Close</button>
+                <button
+                  onClick={() => setSelectedJob(null)}
+                  style={{ fontSize: 12, color: 'var(--ink-400)', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 120ms' }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ink-700)' }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ink-400)' }}
+                >Close</button>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-slate-500">Address</p>
-                  <p className="font-medium text-slate-200">{selectedJob.address}</p>
+                  <p style={{ fontSize: 11.5, color: 'var(--ink-400)', marginBottom: 3 }}>Address</p>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-700)' }}>{selectedJob.address}</p>
                 </div>
                 <div>
-                  <p className="text-slate-500">Service</p>
-                  <p className="font-medium text-slate-200">{getServiceLabel(selectedJob.serviceType)}</p>
+                  <p style={{ fontSize: 11.5, color: 'var(--ink-400)', marginBottom: 3 }}>Service</p>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-700)' }}>{getServiceLabel(selectedJob.serviceType)}</p>
                 </div>
                 <div>
-                  <p className="text-slate-500">Time</p>
-                  <p className="font-medium text-slate-200">{formatTime(selectedJob.scheduledTime)} · {selectedJob.estimatedDuration} min</p>
+                  <p style={{ fontSize: 11.5, color: 'var(--ink-400)', marginBottom: 3 }}>Time</p>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-700)' }}>{formatTime(selectedJob.scheduledTime)} · {selectedJob.estimatedDuration} min</p>
                 </div>
                 <div>
-                  <p className="text-slate-500">Price</p>
-                  <p className="font-medium text-emerald-400">{formatCurrency(selectedJob.price)}</p>
+                  <p style={{ fontSize: 11.5, color: 'var(--ink-400)', marginBottom: 3 }}>Price</p>
+                  <p className="tnum" style={{ fontSize: 13, fontWeight: 700, color: 'var(--green-500)' }}>{formatCurrency(selectedJob.price)}</p>
                 </div>
                 <div>
-                  <p className="text-slate-500">Team</p>
-                  <div className="flex gap-2 mt-1">
+                  <p style={{ fontSize: 11.5, color: 'var(--ink-400)', marginBottom: 6 }}>Team</p>
+                  <div className="flex gap-2">
                     {CLEANERS.filter(c => selectedJob.cleanerIds.includes(c.id)).map(c => (
                       <div key={c.id} className="flex items-center gap-1.5">
                         <Avatar initials={c.initials} color={c.color} size="sm" />
-                        <span className="text-xs font-medium text-slate-300">{c.name.split(' ')[0]}</span>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-600)' }}>{c.name.split(' ')[0]}</span>
                       </div>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <p className="text-slate-500">Status</p>
-                  <Badge variant="default" className="mt-1 capitalize">{selectedJob.status}</Badge>
+                  <p style={{ fontSize: 11.5, color: 'var(--ink-400)', marginBottom: 6 }}>Status</p>
+                  <Badge variant="default" className="capitalize">{selectedJob.status}</Badge>
                 </div>
               </div>
             </CardContent>
@@ -198,13 +217,16 @@ export default function SchedulingPage() {
       )}
 
       {/* AI Info Banner */}
-      <div className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-indigo-500/10 to-violet-500/10 border border-indigo-500/20 p-4">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500/20">
-          <Sparkles className="h-4 w-4 text-indigo-400" />
+      <div
+        className="flex items-center gap-3 rounded-xl p-4"
+        style={{ background: 'var(--blue-50)', border: '1px solid var(--blue-100)' }}
+      >
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg flex-shrink-0" style={{ background: 'rgba(139,133,242,0.18)' }}>
+          <Sparkles className="h-4 w-4" style={{ color: 'var(--blue-400)' }} />
         </div>
         <div>
-          <p className="text-sm font-medium text-slate-200">AI Scheduling Active</p>
-          <p className="text-xs text-slate-500">Click &quot;New Job&quot; to get AI-powered team recommendations based on location, availability, and reliability.</p>
+          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-700)' }}>AI Scheduling Active</p>
+          <p style={{ fontSize: 12, color: 'var(--ink-400)', marginTop: 2 }}>Click &quot;New Job&quot; to get AI-powered team recommendations based on location, availability, and reliability.</p>
         </div>
       </div>
 

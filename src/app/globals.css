@@ -99,7 +99,7 @@ body {
 /* Card hover lift */
 .glow-card {
   background: var(--bg-card);
-  border: 1px solid var(--ink-100);
+  border: 1px solid var(--ink-200);
   box-shadow: var(--shadow-sm);
   transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
@@ -111,7 +111,7 @@ body {
 
 .kpi-card {
   background: var(--bg-card);
-  border: 1px solid var(--ink-100);
+  border: 1px solid var(--ink-200);
   position: relative;
   overflow: hidden;
   transition: border-color 0.15s ease, transform 0.15s ease;

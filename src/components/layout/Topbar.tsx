@@ -27,7 +27,7 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
       style={{
         height: 60,
         background: 'var(--bg-page)',
-        borderBottom: '1px solid var(--ink-100)',
+        borderBottom: '1px solid var(--ink-200)',
         padding: '0 16px',
       }}
     >

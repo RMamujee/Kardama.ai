@@ -33,9 +33,9 @@ export default function PaymentsPage() {
   const pending = JOBS.filter(j => !j.paid && j.status === 'completed').reduce((s, j) => s + j.price, 0)
 
   const stats = [
-    { label: 'Month Revenue', value: formatCurrency(mtd), icon: DollarSign, color: 'text-indigo-400', glow: 'shadow-[0_0_20px_rgba(99,102,241,0.15)]', trend: '+14%' },
-    { label: 'Year Revenue', value: formatCurrency(ytd), icon: TrendingUp, color: 'text-emerald-400', glow: 'shadow-[0_0_20px_rgba(16,185,129,0.15)]', trend: '+21%' },
-    { label: 'Pending', value: formatCurrency(pending), icon: AlertCircle, color: 'text-amber-400', glow: 'shadow-[0_0_20px_rgba(245,158,11,0.15)]', trend: null },
+    { label: 'Month Revenue', value: formatCurrency(mtd), icon: DollarSign, tint: '#8B85F2', tintBg: 'rgba(139,133,242,0.18)', trend: '+14%' },
+    { label: 'Year Revenue', value: formatCurrency(ytd), icon: TrendingUp, tint: '#34D399', tintBg: 'rgba(52,211,153,0.18)', trend: '+21%' },
+    { label: 'Pending', value: formatCurrency(pending), icon: AlertCircle, tint: '#FBBF24', tintBg: 'rgba(251,191,36,0.18)', trend: null },
   ]
 
   return (
@@ -44,16 +44,16 @@ export default function PaymentsPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {stats.map((s, i) => (
           <motion.div key={s.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
-            <div className={`kpi-card rounded-xl p-5 ${s.glow}`}>
+            <div className="kpi-card rounded-xl p-5">
               <div className="flex items-start justify-between mb-3">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{s.label}</p>
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1a2537]">
-                  <s.icon className={`h-4 w-4 ${s.color}`} />
+                <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-400)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s.label}</p>
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: s.tintBg }}>
+                  <s.icon className="h-4 w-4" style={{ color: s.tint }} />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-white mb-1">{s.value}</p>
+              <p className="tnum" style={{ fontSize: 24, fontWeight: 700, color: 'var(--ink-900)', marginBottom: 4, letterSpacing: '-0.02em' }}>{s.value}</p>
               {s.trend && (
-                <p className="text-xs text-emerald-400">{s.trend} vs last period</p>
+                <p style={{ fontSize: 12, color: 'var(--green-500)' }}>{s.trend} vs last period</p>
               )}
             </div>
           </motion.div>
@@ -64,7 +64,7 @@ export default function PaymentsPage() {
       <Card>
         <CardContent className="p-0">
           <Tabs defaultValue="transactions">
-            <div className="flex items-center justify-between border-b border-[#1e2a3a] px-5 pt-4">
+            <div className="flex items-center justify-between px-5 pt-4" style={{ borderBottom: '1px solid var(--ink-200)' }}>
               <TabsList>
                 <TabsTrigger value="transactions">Transactions</TabsTrigger>
                 <TabsTrigger value="chart">Revenue Chart</TabsTrigger>
@@ -76,9 +76,9 @@ export default function PaymentsPage() {
 
             <TabsContent value="transactions">
               {/* Filters */}
-              <div className="flex flex-wrap gap-3 border-b border-[#1e2a3a] px-5 py-3">
+              <div className="flex flex-wrap gap-3 px-5 py-3" style={{ borderBottom: '1px solid var(--ink-200)' }}>
                 <div className="relative flex-1 min-w-[180px]">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4" style={{ color: 'var(--ink-400)' }} />
                   <Input
                     placeholder="Search payments..."
                     value={searchQuery}
@@ -104,28 +104,33 @@ export default function PaymentsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-[#1e2a3a]">
+                    <tr style={{ borderBottom: '1px solid var(--ink-200)' }}>
                       {['Date', 'Customer', 'Amount', 'Method', 'Status', 'Notes', 'Action'].map(h => (
-                        <th key={h} className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">{h}</th>
+                        <th key={h} className="px-4 py-3 text-left" style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--ink-400)' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#1e2a3a]">
+                  <tbody>
                     {filtered.length === 0 && (
-                      <tr><td colSpan={7} className="py-12 text-center text-sm text-slate-500">No payments found</td></tr>
+                      <tr><td colSpan={7} className="py-12 text-center" style={{ fontSize: 13, color: 'var(--ink-400)' }}>No payments found</td></tr>
                     )}
                     {filtered.map((p) => {
                       const customer = CUSTOMERS.find(c => c.id === p.customerId)
                       const mc = METHOD_COLORS[p.method] || METHOD_COLORS.cash
                       return (
-                        <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
-                          <td className="px-4 py-3 text-sm text-slate-500">{p.receivedAt.split('T')[0]}</td>
-                          <td className="px-4 py-3 text-sm font-medium text-slate-200">{customer?.name || 'Unknown'}</td>
-                          <td className="px-4 py-3 text-sm font-bold tnum" style={{ color: 'var(--green-500)' }}>{formatCurrency(p.amount)}</td>
+                        <tr
+                          key={p.id}
+                          style={{ borderBottom: '1px solid var(--ink-100)', transition: 'background 120ms' }}
+                          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-soft)' }}
+                          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                        >
+                          <td className="px-4 py-3" style={{ fontSize: 13, color: 'var(--ink-400)' }}>{p.receivedAt.split('T')[0]}</td>
+                          <td className="px-4 py-3" style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-700)' }}>{customer?.name || 'Unknown'}</td>
+                          <td className="px-4 py-3 tnum" style={{ fontSize: 13, fontWeight: 700, color: 'var(--green-500)' }}>{formatCurrency(p.amount)}</td>
                           <td className="px-4 py-3">
                             <span
-                              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium"
-                              style={{ background: mc.bg, color: mc.text }}
+                              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5"
+                              style={{ background: mc.bg, color: mc.text, fontSize: 12, fontWeight: 600 }}
                             >
                               <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: mc.dot }} />
                               {p.method.charAt(0).toUpperCase() + p.method.slice(1)}
@@ -134,10 +139,10 @@ export default function PaymentsPage() {
                           <td className="px-4 py-3">
                             <Badge variant={STATUS_VARIANT[p.status] || 'neutral'} className="capitalize">{p.status}</Badge>
                           </td>
-                          <td className="px-4 py-3 text-xs text-slate-500 max-w-[180px] truncate">{p.confirmationNote}</td>
+                          <td className="px-4 py-3 max-w-[180px] truncate" style={{ fontSize: 12, color: 'var(--ink-400)' }}>{p.confirmationNote}</td>
                           <td className="px-4 py-3">
                             {p.status !== 'confirmed' && (
-                              <Button variant="ghost" size="sm" onClick={() => confirmPayment(p.id)} className="text-xs text-emerald-400 hover:text-emerald-300">
+                              <Button variant="ghost" size="sm" onClick={() => confirmPayment(p.id)} style={{ fontSize: 12, color: 'var(--green-500)' }}>
                                 Confirm
                               </Button>
                             )}

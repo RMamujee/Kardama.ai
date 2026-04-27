@@ -43,46 +43,46 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
     <div
       className="flex h-screen flex-shrink-0 flex-col"
       style={{
-        width: 220,
+        width: 240,
         background: 'var(--bg-rail)',
         borderRight: '1px solid var(--ink-200)',
       }}
     >
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-4" style={{ padding: '18px 16px 14px' }}>
+      <div className="flex items-center gap-3" style={{ padding: '22px 18px 18px' }}>
         <div
-          className="flex h-7 w-7 items-center justify-center rounded-lg"
+          className="flex h-9 w-9 items-center justify-center rounded-xl"
           style={{ background: 'linear-gradient(135deg, var(--blue-500), var(--blue-700))' }}
         >
-          <Sparkles className="h-3.5 w-3.5 text-white" />
+          <Sparkles className="h-4 w-4 text-white" />
         </div>
         <div>
-          <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ink-900)' }}>
+          <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ink-900)' }}>
             Kardama
           </div>
-          <div style={{ fontSize: 9.5, color: 'var(--blue-400)', fontWeight: 600, marginTop: -1, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: 10.5, color: 'var(--blue-400)', fontWeight: 600, marginTop: 1, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
             AI Field Service
           </div>
         </div>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto" style={{ padding: '0 8px' }}>
+      <nav className="flex-1 overflow-y-auto" style={{ padding: '4px 10px' }}>
         {NAV_SECTIONS.map((section) => (
-          <div key={section.label} style={{ marginBottom: 12 }}>
+          <div key={section.label} style={{ marginBottom: 18 }}>
             <p
               style={{
-                padding: '8px 12px 6px',
-                fontSize: 9.5,
+                padding: '10px 12px 8px',
+                fontSize: 10.5,
                 fontWeight: 700,
-                letterSpacing: '0.08em',
+                letterSpacing: '0.09em',
                 color: 'var(--ink-400)',
                 textTransform: 'uppercase',
               }}
             >
               {section.label}
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {section.items.map(({ label, href, icon: Icon, badge }) => {
                 const active = pathname === href || pathname.startsWith(href + '/')
                 return (
@@ -91,14 +91,14 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
                     href={href}
                     onClick={onClose}
                     className={cn(
-                      'group flex items-center gap-2.5 rounded-lg transition-all duration-[120ms]',
+                      'group flex items-center gap-3 rounded-lg transition-all duration-[120ms]',
                     )}
                     style={{
-                      padding: '7px 12px',
-                      borderRadius: 8,
+                      padding: '9px 12px',
+                      borderRadius: 9,
                       background: active ? 'var(--blue-50)' : 'transparent',
                       color: active ? 'var(--blue-400)' : 'var(--ink-500)',
-                      fontSize: 13,
+                      fontSize: 13.5,
                       fontWeight: active ? 600 : 500,
                     }}
                     onMouseEnter={(e) => {
@@ -115,7 +115,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
                     }}
                   >
                     <Icon
-                      className="h-4 w-4 flex-shrink-0"
+                      className="h-[17px] w-[17px] flex-shrink-0"
                       style={{ color: active ? 'var(--blue-400)' : 'var(--ink-400)', strokeWidth: 1.8 }}
                     />
                     <span className="flex-1">{label}</span>
@@ -124,10 +124,12 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
                         style={{
                           background: 'var(--blue-500)',
                           color: '#fff',
-                          fontSize: 9.5,
+                          fontSize: 10.5,
                           fontWeight: 700,
-                          padding: '1px 6px',
+                          padding: '2px 7px',
                           borderRadius: 99,
+                          minWidth: 18,
+                          textAlign: 'center',
                         }}
                       >
                         {badge}
@@ -142,24 +144,24 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
       </nav>
 
       {/* User section */}
-      <div style={{ borderTop: '1px solid var(--ink-200)', padding: 12 }}>
+      <div style={{ borderTop: '1px solid var(--ink-200)', padding: 14 }}>
         <div
-          className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 transition-colors"
-          style={{ borderRadius: 8 }}
+          className="flex cursor-pointer items-center gap-3 rounded-lg transition-colors"
+          style={{ borderRadius: 10, padding: '10px 12px' }}
           onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
         >
           <div
-            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
+            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-[12px] font-bold"
             style={{ background: 'linear-gradient(135deg, #34D399, #10B981)', color: 'var(--bg-page)' }}
           >
             DC
           </div>
           <div className="min-w-0 flex-1">
-            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-700)' }} className="truncate">David Chen</p>
-            <p style={{ fontSize: 11, color: 'var(--ink-400)' }} className="truncate">Owner · Long Beach</p>
+            <p style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-700)' }} className="truncate">David Chen</p>
+            <p style={{ fontSize: 11.5, color: 'var(--ink-400)', marginTop: 1 }} className="truncate">Owner · Long Beach</p>
           </div>
-          <LogOut className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--ink-300)' }} />
+          <LogOut className="h-[17px] w-[17px] flex-shrink-0" style={{ color: 'var(--ink-300)' }} />
         </div>
       </div>
     </div>

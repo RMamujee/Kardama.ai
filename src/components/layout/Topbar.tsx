@@ -25,10 +25,10 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
     <header
       className="flex flex-shrink-0 items-center gap-3 md:gap-4"
       style={{
-        height: 60,
+        height: 68,
         background: 'var(--bg-page)',
         borderBottom: '1px solid var(--ink-200)',
-        padding: '0 16px',
+        padding: '0 22px',
       }}
     >
       {/* Mobile menu button */}
@@ -43,11 +43,11 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
       </button>
 
       <div className="min-w-0">
-        <h1 style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink-900)', letterSpacing: '-0.01em' }}>
+        <h1 style={{ fontSize: 19, fontWeight: 700, color: 'var(--ink-900)', letterSpacing: '-0.015em', lineHeight: 1.2 }}>
           {info.title}
         </h1>
         {info.sub && (
-          <p className="hidden sm:block" style={{ fontSize: 11.5, color: 'var(--ink-400)', marginTop: 1 }}>{info.sub}</p>
+          <p className="hidden sm:block" style={{ fontSize: 12.5, color: 'var(--ink-400)', marginTop: 2 }}>{info.sub}</p>
         )}
       </div>
 
@@ -63,7 +63,7 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
       <button
         className="flex items-center justify-center transition-colors duration-150"
         style={{
-          width: 32, height: 32, borderRadius: 99,
+          width: 36, height: 36, borderRadius: 99,
           background: 'var(--bg-elev)',
           border: '1px solid var(--ink-100)',
           cursor: 'pointer',
@@ -72,24 +72,24 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
         onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ink-900)' }}
         onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ink-400)' }}
       >
-        <Search className="h-3.5 w-3.5" />
+        <Search className="h-4 w-4" />
       </button>
 
       {/* New button */}
       <button
-        className="hidden sm:flex items-center gap-1.5 transition-all duration-150"
+        className="hidden sm:flex items-center gap-2 transition-all duration-150"
         style={{
-          height: 32, padding: '0 12px', borderRadius: 8,
+          height: 36, padding: '0 14px', borderRadius: 9,
           background: 'linear-gradient(180deg, var(--blue-500), var(--blue-600))',
           color: '#fff',
-          fontSize: 13, fontWeight: 600,
+          fontSize: 13.5, fontWeight: 600,
           border: 'none', cursor: 'pointer',
           boxShadow: '0 1px 0 rgba(255,255,255,0.18) inset, 0 4px 14px rgba(111,105,229,0.35)',
         }}
         onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.filter = 'brightness(1.08)' }}
         onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.filter = 'none' }}
       >
-        <Plus className="h-3.5 w-3.5" />
+        <Plus className="h-4 w-4" />
         New
       </button>
 
@@ -97,7 +97,7 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
       <button
         className="relative flex items-center justify-center transition-colors duration-150"
         style={{
-          width: 32, height: 32, borderRadius: 99,
+          width: 36, height: 36, borderRadius: 99,
           background: 'var(--bg-elev)',
           border: '1px solid var(--ink-100)',
           cursor: 'pointer',
@@ -106,12 +106,13 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
         onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ink-900)' }}
         onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ink-400)' }}
       >
-        <Bell className="h-3.5 w-3.5" />
+        <Bell className="h-4 w-4" />
         <span
           className="absolute"
           style={{
-            top: 7, right: 8, width: 6, height: 6,
+            top: 8, right: 9, width: 7, height: 7,
             background: 'var(--blue-500)', borderRadius: 99,
+            boxShadow: '0 0 0 2px var(--bg-page)',
           }}
         />
       </button>
@@ -120,7 +121,7 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
       <div
         className="flex cursor-pointer items-center justify-center rounded-full font-bold"
         style={{
-          width: 32, height: 32, fontSize: 11.5,
+          width: 36, height: 36, fontSize: 12.5,
           background: 'linear-gradient(135deg, #34D399, #10B981)',
           color: 'var(--bg-page)',
           flexShrink: 0,

@@ -56,14 +56,14 @@ export default function SchedulingPage() {
   const today = fmtDate(new Date())
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 max-w-7xl">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Button variant="outline" size="icon" onClick={() => setWeekOffset(weekOffset - 1)}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink-500)' }}>
+          <span style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--ink-500)' }}>
             {weekDates[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} –{' '}
             {weekDates[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
           </span>
@@ -99,8 +99,8 @@ export default function SchedulingPage() {
                     background: isToday ? 'var(--blue-50)' : 'transparent',
                   }}
                 >
-                  <p style={{ fontSize: 11, fontWeight: 600, color: isToday ? 'var(--blue-400)' : 'var(--ink-400)' }}>{DAY_LABELS[i]}</p>
-                  <p style={{ fontSize: 18, fontWeight: 600, marginTop: 2, color: isToday ? 'var(--blue-400)' : 'var(--ink-700)' }}>{d.getDate()}</p>
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: isToday ? 'var(--blue-400)' : 'var(--ink-400)' }}>{DAY_LABELS[i]}</p>
+                  <p className="tnum" style={{ fontSize: 19, fontWeight: 700, marginTop: 3, letterSpacing: '-0.02em', color: isToday ? 'var(--blue-400)' : 'var(--ink-700)' }}>{d.getDate()}</p>
                   {jobsByDay[dateStr]?.length > 0 && (
                     <div className="mt-1 flex justify-center">
                       <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: 'var(--blue-500)' }} />
@@ -114,8 +114,8 @@ export default function SchedulingPage() {
           {/* Time rows */}
           <div className="max-h-[500px] overflow-y-auto">
             {HOURS.map(hour => (
-              <div key={hour} className="grid grid-cols-8" style={{ borderBottom: '1px solid var(--ink-200)', minHeight: 60 }}>
-                <div className="px-3 py-2 font-mono" style={{ borderRight: '1px solid var(--ink-200)', fontSize: 11, color: 'var(--ink-300)' }}>
+              <div key={hour} className="grid grid-cols-8" style={{ borderBottom: '1px solid var(--ink-200)', minHeight: 64 }}>
+                <div className="px-3 py-2.5 font-mono tnum" style={{ borderRight: '1px solid var(--ink-200)', fontSize: 12, color: 'var(--ink-300)' }}>
                   {hour > 12 ? `${hour-12}PM` : hour === 12 ? '12PM' : `${hour}AM`}
                 </div>
                 {weekDates.map((d, di) => {
@@ -140,14 +140,14 @@ export default function SchedulingPage() {
                           <button
                             key={job.id}
                             onClick={() => setSelectedJob(job)}
-                            className="w-full rounded-md border p-1.5 text-left text-xs transition-all"
+                            className="w-full rounded-md border p-2 text-left transition-all"
                             style={(() => {
                               const sc = SERVICE_COLORS[job.serviceType] ?? SERVICE_COLORS.standard
-                              return { background: sc.bg, color: sc.text, borderColor: sc.border }
+                              return { background: sc.bg, color: sc.text, borderColor: sc.border, fontSize: 12 }
                             })()}
                           >
                             <p className="font-semibold truncate">{job.address.split(',')[0]}</p>
-                            <p className="text-[10px] opacity-75">{formatTime(job.scheduledTime)} · {cleaners.map(c=>c.initials).join('+')}</p>
+                            <p className="opacity-75 mt-0.5" style={{ fontSize: 11 }}>{formatTime(job.scheduledTime)} · {cleaners.map(c=>c.initials).join('+')}</p>
                           </button>
                         )
                       })}
@@ -178,36 +178,36 @@ export default function SchedulingPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-5">
                 <div>
-                  <p style={{ fontSize: 11.5, color: 'var(--ink-400)', marginBottom: 3 }}>Address</p>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-700)' }}>{selectedJob.address}</p>
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 6 }}>Address</p>
+                  <p style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-700)' }}>{selectedJob.address}</p>
                 </div>
                 <div>
-                  <p style={{ fontSize: 11.5, color: 'var(--ink-400)', marginBottom: 3 }}>Service</p>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-700)' }}>{getServiceLabel(selectedJob.serviceType)}</p>
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 6 }}>Service</p>
+                  <p style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-700)' }}>{getServiceLabel(selectedJob.serviceType)}</p>
                 </div>
                 <div>
-                  <p style={{ fontSize: 11.5, color: 'var(--ink-400)', marginBottom: 3 }}>Time</p>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-700)' }}>{formatTime(selectedJob.scheduledTime)} · {selectedJob.estimatedDuration} min</p>
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 6 }}>Time</p>
+                  <p style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-700)' }}>{formatTime(selectedJob.scheduledTime)} · {selectedJob.estimatedDuration} min</p>
                 </div>
                 <div>
-                  <p style={{ fontSize: 11.5, color: 'var(--ink-400)', marginBottom: 3 }}>Price</p>
-                  <p className="tnum" style={{ fontSize: 13, fontWeight: 700, color: 'var(--green-500)' }}>{formatCurrency(selectedJob.price)}</p>
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 6 }}>Price</p>
+                  <p className="tnum" style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--green-500)' }}>{formatCurrency(selectedJob.price)}</p>
                 </div>
                 <div>
-                  <p style={{ fontSize: 11.5, color: 'var(--ink-400)', marginBottom: 6 }}>Team</p>
-                  <div className="flex gap-2">
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 8 }}>Team</p>
+                  <div className="flex gap-3 flex-wrap">
                     {CLEANERS.filter(c => selectedJob.cleanerIds.includes(c.id)).map(c => (
-                      <div key={c.id} className="flex items-center gap-1.5">
+                      <div key={c.id} className="flex items-center gap-2">
                         <Avatar initials={c.initials} color={c.color} size="sm" />
-                        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-600)' }}>{c.name.split(' ')[0]}</span>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-600)' }}>{c.name.split(' ')[0]}</span>
                       </div>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <p style={{ fontSize: 11.5, color: 'var(--ink-400)', marginBottom: 6 }}>Status</p>
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 8 }}>Status</p>
                   <Badge variant="default" className="capitalize">{selectedJob.status}</Badge>
                 </div>
               </div>
@@ -225,8 +225,8 @@ export default function SchedulingPage() {
           <Sparkles className="h-4 w-4" style={{ color: 'var(--blue-400)' }} />
         </div>
         <div>
-          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-700)' }}>AI Scheduling Active</p>
-          <p style={{ fontSize: 12, color: 'var(--ink-400)', marginTop: 2 }}>Click &quot;New Job&quot; to get AI-powered team recommendations based on location, availability, and reliability.</p>
+          <p style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-700)' }}>AI Scheduling Active</p>
+          <p style={{ fontSize: 12.5, color: 'var(--ink-400)', marginTop: 3, lineHeight: 1.5 }}>Click &quot;New Job&quot; to get AI-powered team recommendations based on location, availability, and reliability.</p>
         </div>
       </div>
 

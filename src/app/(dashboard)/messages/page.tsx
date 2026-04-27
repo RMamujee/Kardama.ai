@@ -210,7 +210,7 @@ export default function MessagesPage() {
             key={panel}
             onClick={() => setMobilePanel(panel)}
             className={cn(
-              'flex-1 py-2.5 text-xs font-medium capitalize transition-colors',
+              'flex-1 py-3 text-sm font-medium capitalize transition-colors',
               mobilePanel === panel
                 ? 'text-indigo-400 border-b-2 border-indigo-500 bg-indigo-500/5'
                 : 'text-slate-500'
@@ -232,11 +232,11 @@ export default function MessagesPage() {
           <div className="flex items-center gap-2 mb-1">
             <Navigation className="h-4 w-4 text-indigo-400" />
             <h2 className="text-sm font-semibold text-white">Today's Routes</h2>
-            <span className="ml-auto text-[10px] text-slate-500">
+            <span className="ml-auto text-slate-500" style={{ fontSize: 11.5 }}>
               {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
             </span>
           </div>
-          <p className="text-[11px] text-slate-500">Select a job to compose a client notification</p>
+          <p className="text-slate-500" style={{ fontSize: 12 }}>Select a job to compose a client notification</p>
         </div>
 
         <div className="flex-1 overflow-y-auto">
@@ -260,7 +260,7 @@ export default function MessagesPage() {
                   key={item.job.id}
                   onClick={() => selectJob(item)}
                   className={cn(
-                    'relative w-full flex items-start gap-3 px-3 py-3 text-left transition-colors',
+                    'relative w-full flex items-start gap-3 px-3 py-3.5 text-left transition-colors',
                     isActive ? 'bg-indigo-500/10' : 'hover:bg-white/[0.03]',
                     idx < schedule.length - 1 && 'border-b border-[#1e2a3a]/50'
                   )}
@@ -289,40 +289,40 @@ export default function MessagesPage() {
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-xs font-semibold text-slate-200 truncate">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-semibold text-slate-200 truncate">
                         {item.customer?.name || 'Unknown'}
                       </span>
                       <div className="flex items-center gap-1 ml-1 flex-shrink-0">
-                        {hasSent && <CheckCheck className="h-3 w-3 text-emerald-400" />}
+                        {hasSent && <CheckCheck className="h-3.5 w-3.5 text-emerald-400" />}
                         {!item.isOnSchedule && (
-                          <AlertTriangle className="h-3 w-3 text-amber-400" />
+                          <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
                         )}
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 mb-1">
-                      <Clock className="h-2.5 w-2.5 text-slate-600" />
-                      <span className="text-[10px] text-slate-500">{item.etaTime}</span>
+                      <Clock className="h-3 w-3 text-slate-600" />
+                      <span className="text-slate-500 tnum" style={{ fontSize: 12 }}>{item.etaTime}</span>
                       {!item.isOnSchedule && (
-                        <span className="text-[10px] text-amber-400">delayed</span>
+                        <span className="text-amber-400" style={{ fontSize: 11.5 }}>delayed</span>
                       )}
                       <span className={cn(
-                        'rounded px-1 py-0.5 text-[9px] font-medium',
+                        'rounded px-1.5 py-0.5 font-medium',
                         SERVICE_COLORS[item.job.serviceType] || 'bg-slate-500/20 text-slate-300'
-                      )}>
+                      )} style={{ fontSize: 11 }}>
                         {getServiceLabel(item.job.serviceType)}
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <MapPin className="h-2.5 w-2.5 text-slate-600 flex-shrink-0" />
-                      <span className="text-[10px] text-slate-600 truncate">
+                      <MapPin className="h-3 w-3 text-slate-600 flex-shrink-0" />
+                      <span className="text-slate-600 truncate" style={{ fontSize: 12 }}>
                         {item.customer?.address?.split(',')[0]}
                       </span>
                     </div>
                     {item.driveFromPrev !== null && (
                       <div className="mt-1 flex items-center gap-1">
-                        <Car className="h-2.5 w-2.5 text-slate-700" />
-                        <span className="text-[10px] text-slate-700">{item.driveFromPrev}min drive from prev</span>
+                        <Car className="h-3 w-3 text-slate-700" />
+                        <span className="text-slate-700" style={{ fontSize: 11.5 }}>{item.driveFromPrev}min drive from prev</span>
                       </div>
                     )}
                   </div>
@@ -349,18 +349,18 @@ export default function MessagesPage() {
               className="flex flex-1 flex-col overflow-hidden"
             >
               {/* Customer header */}
-              <div className="px-6 py-4 border-b border-[#1e2a3a] bg-[#0a0f1c]">
+              <div className="px-6 py-5 border-b border-[#1e2a3a] bg-[#0a0f1c]">
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="flex items-center gap-2.5 mb-1">
+                    <div className="flex items-center gap-2.5 mb-2">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-xs font-bold text-white">
                         {selected.customer?.name?.split(' ').map(n => n[0]).join('') || '??'}
                       </div>
                       <div>
                         <h3 className="text-sm font-semibold text-white">{selected.customer?.name || 'Unknown Customer'}</h3>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 mt-0.5">
                           <Phone className="h-3 w-3 text-slate-500" />
-                          <span className="text-xs text-slate-500">{selected.customer?.phone}</span>
+                          <span className="text-slate-500 tnum" style={{ fontSize: 12 }}>{selected.customer?.phone}</span>
                         </div>
                       </div>
                     </div>
@@ -368,16 +368,16 @@ export default function MessagesPage() {
                       <Badge variant={STATUS_BADGE[selected.job.status] || 'default'} className="capitalize">
                         {selected.job.status}
                       </Badge>
-                      <span className="text-[11px] text-slate-500">
+                      <span className="text-slate-500" style={{ fontSize: 12 }}>
                         {getServiceLabel(selected.job.serviceType)} · {selected.job.estimatedDuration} min
                       </span>
-                      <span className="text-[11px] text-slate-500">·</span>
-                      <span className="text-[11px] font-medium text-emerald-400">{formatCurrency(selected.job.price)}</span>
+                      <span className="text-slate-500" style={{ fontSize: 12 }}>·</span>
+                      <span className="font-medium text-emerald-400 tnum" style={{ fontSize: 12 }}>{formatCurrency(selected.job.price)}</span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-2xl font-bold text-white">{selected.etaTime}</div>
-                    <div className="text-[11px] text-slate-500">
+                    <div className="tnum text-white" style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em' }}>{selected.etaTime}</div>
+                    <div className="text-slate-500 mt-0.5" style={{ fontSize: 12 }}>
                       {selected.isOnSchedule ? 'on schedule' : 'running late'}
                     </div>
                   </div>
@@ -386,52 +386,52 @@ export default function MessagesPage() {
 
               {/* ETA Breakdown */}
               <div className="px-6 py-4 border-b border-[#1e2a3a]">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-600 mb-3">ETA Breakdown</p>
+                <p className="mb-3" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', color: 'var(--ink-400)', textTransform: 'uppercase' }}>ETA Breakdown</p>
                 <div className="flex items-center gap-2 flex-wrap">
                   {selected.prevJobEnd !== null ? (
                     <>
-                      <div className="flex items-center gap-1.5 rounded-lg bg-[#1a2537] px-3 py-2">
+                      <div className="flex items-center gap-2 rounded-lg bg-[#1a2537] px-3 py-2">
                         <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
                         <div>
-                          <div className="text-[10px] text-slate-500">Prev job ends</div>
-                          <div className="text-xs font-semibold text-white">{minToTime(selected.prevJobEnd)}</div>
+                          <div className="text-slate-500" style={{ fontSize: 11.5 }}>Prev job ends</div>
+                          <div className="text-sm font-semibold text-white tnum">{minToTime(selected.prevJobEnd)}</div>
                         </div>
                       </div>
                       <ChevronRight className="h-4 w-4 text-slate-700" />
-                      <div className="flex items-center gap-1.5 rounded-lg bg-[#1a2537] px-3 py-2">
+                      <div className="flex items-center gap-2 rounded-lg bg-[#1a2537] px-3 py-2">
                         <Car className="h-3.5 w-3.5 text-indigo-400" />
                         <div>
-                          <div className="text-[10px] text-slate-500">Drive time</div>
-                          <div className="text-xs font-semibold text-white">{selected.driveFromPrev} min</div>
+                          <div className="text-slate-500" style={{ fontSize: 11.5 }}>Drive time</div>
+                          <div className="text-sm font-semibold text-white tnum">{selected.driveFromPrev} min</div>
                         </div>
                       </div>
                       <ChevronRight className="h-4 w-4 text-slate-700" />
                     </>
                   ) : (
                     <>
-                      <div className="flex items-center gap-1.5 rounded-lg bg-[#1a2537] px-3 py-2">
+                      <div className="flex items-center gap-2 rounded-lg bg-[#1a2537] px-3 py-2">
                         <Timer className="h-3.5 w-3.5 text-indigo-400" />
                         <div>
-                          <div className="text-[10px] text-slate-500">First job of day</div>
-                          <div className="text-xs font-semibold text-white">Starting fresh</div>
+                          <div className="text-slate-500" style={{ fontSize: 11.5 }}>First job of day</div>
+                          <div className="text-sm font-semibold text-white">Starting fresh</div>
                         </div>
                       </div>
                       <ChevronRight className="h-4 w-4 text-slate-700" />
                     </>
                   )}
-                  <div className="flex items-center gap-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 px-3 py-2">
+                  <div className="flex items-center gap-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 px-3 py-2">
                     <Navigation className="h-3.5 w-3.5 text-indigo-400" />
                     <div>
-                      <div className="text-[10px] text-indigo-400">Arrives at</div>
-                      <div className="text-xs font-bold text-white">{selected.etaTime}</div>
+                      <div className="text-indigo-400" style={{ fontSize: 11.5 }}>Arrives at</div>
+                      <div className="text-sm font-bold text-white tnum">{selected.etaTime}</div>
                     </div>
                   </div>
                   {!selected.isOnSchedule && (
-                    <div className="flex items-center gap-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2">
+                    <div className="flex items-center gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2">
                       <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
                       <div>
-                        <div className="text-[10px] text-amber-400">Delay</div>
-                        <div className="text-xs font-bold text-white">
+                        <div className="text-amber-400" style={{ fontSize: 11.5 }}>Delay</div>
+                        <div className="text-sm font-bold text-white tnum">
                           +{selected.etaMinutes - parseMin(selected.job.scheduledTime)} min
                         </div>
                       </div>
@@ -441,18 +441,18 @@ export default function MessagesPage() {
               </div>
 
               {/* Team pills */}
-              <div className="px-6 py-3 border-b border-[#1e2a3a]">
+              <div className="px-6 py-3.5 border-b border-[#1e2a3a]">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-slate-600 uppercase tracking-widest font-semibold">Team</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', color: 'var(--ink-400)', textTransform: 'uppercase' }}>Team</span>
                   {selected.cleaners.map(c => (
                     <div key={c.id} className="flex items-center gap-1.5 rounded-full bg-[#1a2537] pl-1.5 pr-2.5 py-1">
                       <div
-                        className="flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold text-white"
-                        style={{ background: c.color }}
+                        className="flex h-5 w-5 items-center justify-center rounded-full font-bold text-white"
+                        style={{ background: c.color, fontSize: 10 }}
                       >
                         {c.initials}
                       </div>
-                      <span className="text-[11px] text-slate-300">{c.name.split(' ')[0]}</span>
+                      <span className="text-slate-300" style={{ fontSize: 12 }}>{c.name.split(' ')[0]}</span>
                     </div>
                   ))}
                 </div>
@@ -460,18 +460,19 @@ export default function MessagesPage() {
 
               {/* Template selector */}
               <div className="px-6 py-4 border-b border-[#1e2a3a]">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-600 mb-2">Notification Type</p>
+                <p className="mb-2.5" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', color: 'var(--ink-400)', textTransform: 'uppercase' }}>Notification Type</p>
                 <div className="flex gap-2 flex-wrap">
                   {(Object.entries(TEMPLATES) as [TemplateKey, typeof TEMPLATES[TemplateKey]][]).map(([key, tmpl]) => (
                     <button
                       key={key}
                       onClick={() => selectTemplate(key)}
                       className={cn(
-                        'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all',
+                        'flex items-center gap-1.5 rounded-lg border px-3 py-2 font-medium transition-all',
                         activeTemplate === key
                           ? 'border-indigo-500/50 bg-indigo-500/10 text-indigo-300'
                           : 'border-[#1e2a3a] text-slate-500 hover:border-slate-600 hover:text-slate-300'
                       )}
+                      style={{ fontSize: 12.5 }}
                     >
                       <tmpl.icon className={cn('h-3.5 w-3.5', activeTemplate === key ? 'text-indigo-400' : 'text-slate-600')} />
                       {tmpl.label}
@@ -483,8 +484,8 @@ export default function MessagesPage() {
               {/* Message editor */}
               <div className="flex-1 overflow-y-auto px-6 py-4">
                 <div className="mb-3 flex items-center justify-between">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-600">Message Preview</p>
-                  <div className="flex items-center gap-1.5 text-[10px] text-slate-600">
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', color: 'var(--ink-400)', textTransform: 'uppercase' }}>Message Preview</p>
+                  <div className="flex items-center gap-1.5 text-slate-600" style={{ fontSize: 11.5 }}>
                     <MessageSquare className="h-3 w-3" />
                     SMS · {message.length} chars
                   </div>
@@ -495,15 +496,15 @@ export default function MessagesPage() {
                   <div className="rounded-2xl border border-[#1e2a3a] bg-[#0d1321] p-4">
                     {/* SMS header */}
                     <div className="mb-3 flex items-center gap-2 border-b border-[#1e2a3a] pb-3">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-[10px] font-bold text-white">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 font-bold text-white" style={{ fontSize: 11 }}>
                         DC
                       </div>
                       <div>
-                        <div className="text-xs font-semibold text-white">David's Cleaning</div>
-                        <div className="text-[10px] text-slate-500">SMS Notification</div>
+                        <div className="text-sm font-semibold text-white">David's Cleaning</div>
+                        <div className="text-slate-500" style={{ fontSize: 11.5 }}>SMS Notification</div>
                       </div>
                     </div>
-                    <div className="rounded-xl bg-[#1a2537] p-3 text-sm text-slate-200 leading-relaxed">
+                    <div className="rounded-xl bg-[#1a2537] p-3.5 text-sm text-slate-200 leading-relaxed">
                       {message}
                     </div>
                   </div>
@@ -511,7 +512,7 @@ export default function MessagesPage() {
 
                 {/* Editable textarea */}
                 <div className="mt-4">
-                  <p className="text-[10px] text-slate-600 mb-1.5">Edit message</p>
+                  <p className="text-slate-600 mb-2" style={{ fontSize: 11.5 }}>Edit message</p>
                   <textarea
                     className="w-full resize-none rounded-xl bg-[#111827] border border-[#1e2a3a] px-4 py-3 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/40 transition-colors"
                     rows={4}
@@ -525,25 +526,25 @@ export default function MessagesPage() {
               <div className="px-6 py-4 border-t border-[#1e2a3a] bg-[#0a0f1c]">
                 <div className="flex items-center gap-3">
                   <div className="flex-1">
-                    <div className="text-xs font-medium text-slate-300">
+                    <div className="text-sm font-medium text-slate-300">
                       Send to: {selected.customer?.name}
                     </div>
-                    <div className="text-[11px] text-slate-500">{selected.customer?.phone}</div>
+                    <div className="text-slate-500 mt-0.5 tnum" style={{ fontSize: 12 }}>{selected.customer?.phone}</div>
                   </div>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setMessage(buildMessage(activeTemplate, selected))}
-                    className="h-8 gap-1.5 text-xs"
+                    className="gap-1.5"
                   >
-                    <RefreshCw className="h-3 w-3" />
+                    <RefreshCw className="h-3.5 w-3.5" />
                     Reset
                   </Button>
                   <Button
                     onClick={handleSend}
                     disabled={!message.trim() || sending || isSent}
                     size="sm"
-                    className={cn('h-8 gap-2 min-w-[120px]', isSent && 'bg-emerald-600 hover:bg-emerald-600')}
+                    className={cn('gap-2 min-w-[140px]', isSent && 'bg-emerald-600 hover:bg-emerald-600')}
                   >
                     {sending ? (
                       <>
@@ -578,15 +579,15 @@ export default function MessagesPage() {
       {/* Right sidebar: send log */}
       <div className={cn(
         'flex-shrink-0 border-[#1e2a3a] bg-[#0a0f1c] p-4',
-        'w-full md:w-52 md:border-l',
+        'w-full md:w-56 md:border-l',
         mobilePanel !== 'sent' ? 'hidden md:block' : 'block'
       )}>
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-600 mb-3">Sent Today</p>
+        <p className="mb-3" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', color: 'var(--ink-400)', textTransform: 'uppercase' }}>Sent Today</p>
 
         {sentSet.size === 0 ? (
-          <div className="py-4 text-center">
-            <Send className="h-6 w-6 text-slate-700 mx-auto mb-1.5" />
-            <p className="text-[11px] text-slate-600">No messages sent yet</p>
+          <div className="py-5 text-center">
+            <Send className="h-6 w-6 text-slate-700 mx-auto mb-2" />
+            <p className="text-slate-600" style={{ fontSize: 12 }}>No messages sent yet</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -595,14 +596,14 @@ export default function MessagesPage() {
               const item = schedule.find(s => s.job.id === jobId)
               if (!item) return null
               return (
-                <div key={key} className="rounded-lg bg-[#111827] border border-[#1e2a3a] p-2.5">
+                <div key={key} className="rounded-lg bg-[#111827] border border-[#1e2a3a] p-3">
                   <div className="flex items-center gap-1.5 mb-1">
-                    <CheckCheck className="h-3 w-3 text-emerald-400" />
-                    <span className="text-[10px] font-medium text-emerald-400">Sent</span>
+                    <CheckCheck className="h-3.5 w-3.5 text-emerald-400" />
+                    <span className="font-medium text-emerald-400" style={{ fontSize: 11.5 }}>Sent</span>
                   </div>
-                  <p className="text-[11px] font-medium text-slate-300 truncate">{item.customer?.name}</p>
-                  <p className="text-[10px] text-slate-600">{TEMPLATES[tpl]?.label}</p>
-                  <p className="text-[10px] text-slate-600">{new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</p>
+                  <p className="font-medium text-slate-300 truncate" style={{ fontSize: 12.5 }}>{item.customer?.name}</p>
+                  <p className="text-slate-600" style={{ fontSize: 11.5 }}>{TEMPLATES[tpl]?.label}</p>
+                  <p className="text-slate-600 tnum" style={{ fontSize: 11.5 }}>{new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</p>
                 </div>
               )
             })}
@@ -610,26 +611,26 @@ export default function MessagesPage() {
         )}
 
         <div className="mt-6 border-t border-[#1e2a3a] pt-4">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-600 mb-2">Today's Stats</p>
+          <p className="mb-2.5" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', color: 'var(--ink-400)', textTransform: 'uppercase' }}>Today's Stats</p>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-[11px] text-slate-500">Jobs</span>
-              <span className="text-[11px] font-semibold text-white">{schedule.length}</span>
+              <span className="text-slate-500" style={{ fontSize: 12 }}>Jobs</span>
+              <span className="font-semibold text-white tnum" style={{ fontSize: 12.5 }}>{schedule.length}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[11px] text-slate-500">Notified</span>
-              <span className="text-[11px] font-semibold text-emerald-400">{new Set([...sentSet].map(k => k.split('-')[0])).size}</span>
+              <span className="text-slate-500" style={{ fontSize: 12 }}>Notified</span>
+              <span className="font-semibold text-emerald-400 tnum" style={{ fontSize: 12.5 }}>{new Set([...sentSet].map(k => k.split('-')[0])).size}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[11px] text-slate-500">Revenue</span>
-              <span className="text-[11px] font-semibold text-white">
+              <span className="text-slate-500" style={{ fontSize: 12 }}>Revenue</span>
+              <span className="font-semibold text-white tnum" style={{ fontSize: 12.5 }}>
                 {formatCurrency(schedule.reduce((s, i) => s + i.job.price, 0))}
               </span>
             </div>
             {schedule.some(s => !s.isOnSchedule) && (
-              <div className="flex items-center gap-1 mt-1 rounded-lg bg-amber-500/10 border border-amber-500/20 px-2 py-1.5">
-                <AlertTriangle className="h-3 w-3 text-amber-400 flex-shrink-0" />
-                <span className="text-[10px] text-amber-400">Delays detected</span>
+              <div className="flex items-center gap-1.5 mt-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-2.5 py-2">
+                <AlertTriangle className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />
+                <span className="text-amber-400" style={{ fontSize: 11.5 }}>Delays detected</span>
               </div>
             )}
           </div>

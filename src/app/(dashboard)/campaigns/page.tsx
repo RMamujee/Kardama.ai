@@ -60,25 +60,25 @@ function CampaignRow({ campaign }: { campaign: NurturingCampaign }) {
     <div className={cn('border-b border-[#1e2a3a] last:border-0 transition-colors', campaign.status === 'pending' && 'bg-amber-500/[0.02]')}>
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-white/[0.02] transition-colors"
+        className="flex w-full items-center gap-3 px-4 py-4 text-left hover:bg-white/[0.02] transition-colors"
       >
         <Avatar initials={initials} color={avatarColor} size="sm" />
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <p className="text-sm font-semibold text-slate-200 truncate">{customer.name}</p>
-            <span className="hidden sm:inline text-xs text-slate-600">{customer.city}</span>
+            <span className="hidden sm:inline text-slate-600" style={{ fontSize: 12 }}>{customer.city}</span>
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-slate-500 mt-0.5" style={{ fontSize: 12 }}>
             Last cleaned {campaign.daysSinceLastJob}d ago · {TRIGGER_LABELS[campaign.trigger]}
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
-          <Badge variant={status.variant} className="text-[10px] flex items-center gap-1">
+          <Badge variant={status.variant} className="flex items-center gap-1">
             {status.icon} {status.label}
           </Badge>
-          {expanded ? <ChevronDown className="h-3.5 w-3.5 text-slate-600" /> : <ChevronRight className="h-3.5 w-3.5 text-slate-600" />}
+          {expanded ? <ChevronDown className="h-4 w-4 text-slate-600" /> : <ChevronRight className="h-4 w-4 text-slate-600" />}
         </div>
       </button>
 
@@ -93,18 +93,19 @@ function CampaignRow({ campaign }: { campaign: NurturingCampaign }) {
             <div className="px-4 pb-4 pl-16 space-y-3">
               {/* Message preview */}
               <div className="rounded-xl bg-[#070b14] border border-[#1e2a3a] p-4">
-                <p className="text-xs text-slate-500 mb-2 font-medium uppercase tracking-wide">Follow-up Message</p>
+                <p className="mb-2" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', color: 'var(--ink-400)', textTransform: 'uppercase' }}>Follow-up Message</p>
                 <p className="text-sm text-slate-300 leading-relaxed">{campaign.message}</p>
               </div>
 
               {/* Booking link */}
               {bookingUrl && (
-                <div className="flex items-center gap-2 rounded-lg bg-[#0d1321] border border-[#1e2a3a] p-3">
-                  <Link2 className="h-3.5 w-3.5 text-indigo-400 flex-shrink-0" />
-                  <span className="flex-1 text-xs text-slate-400 font-mono truncate">{bookingUrl}</span>
+                <div className="flex items-center gap-2 rounded-lg bg-[#0d1321] border border-[#1e2a3a] p-3.5">
+                  <Link2 className="h-4 w-4 text-indigo-400 flex-shrink-0" />
+                  <span className="flex-1 text-slate-400 font-mono truncate" style={{ fontSize: 12.5 }}>{bookingUrl}</span>
                   <button
                     onClick={handleCopy}
-                    className="text-xs text-indigo-400 hover:text-indigo-300 flex-shrink-0 font-medium"
+                    className="text-indigo-400 hover:text-indigo-300 flex-shrink-0 font-medium"
+                    style={{ fontSize: 12.5 }}
                   >
                     {copied ? '✓ Copied' : 'Copy'}
                   </button>
@@ -133,7 +134,7 @@ function CampaignRow({ campaign }: { campaign: NurturingCampaign }) {
               )}
 
               {campaign.status === 'sent' && (
-                <p className="text-xs text-slate-500 flex items-center gap-1.5">
+                <p className="text-slate-500 flex items-center gap-1.5" style={{ fontSize: 12 }}>
                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                   Sent {campaign.sentAt ? new Date(campaign.sentAt).toLocaleString() : 'today'}
                 </p>
@@ -155,7 +156,7 @@ function SlotCard({ slot, onSelect, selected }: { slot: BookingSlot; onSelect: (
     <button
       onClick={onSelect}
       className={cn(
-        'w-full rounded-xl border p-3.5 text-left transition-all',
+        'w-full rounded-xl border p-4 text-left transition-all',
         selected
           ? 'border-indigo-500/60 bg-indigo-500/10 shadow-[0_0_12px_rgba(99,102,241,0.15)]'
           : 'border-[#1e2a3a] bg-[#0d1321] hover:border-[#2e3d52] hover:bg-[#111827]'
@@ -164,25 +165,25 @@ function SlotCard({ slot, onSelect, selected }: { slot: BookingSlot; onSelect: (
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-slate-200 truncate">{slot.label}</p>
-          <div className="flex items-center gap-2 mt-1 flex-wrap">
+          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             {slot.insertionLabel ? (
               <div className="flex items-center gap-1">
                 {isOnRoute
-                  ? <Zap className="h-3 w-3 text-emerald-400" />
+                  ? <Zap className="h-3.5 w-3.5 text-emerald-400" />
                   : isGood
-                  ? <Route className="h-3 w-3 text-indigo-400" />
+                  ? <Route className="h-3.5 w-3.5 text-indigo-400" />
                   : null}
-                <span className={cn('text-xs font-medium',
+                <span className={cn('font-medium',
                   isOnRoute ? 'text-emerald-400' : isGood ? 'text-indigo-400' : 'text-slate-500'
-                )}>
+                )} style={{ fontSize: 12 }}>
                   {slot.insertionLabel}
                 </span>
               </div>
             ) : (
-              <span className="text-xs text-slate-500">Available</span>
+              <span className="text-slate-500" style={{ fontSize: 12 }}>Available</span>
             )}
-            <span className="text-[10px] text-slate-700">·</span>
-            <span className="text-xs text-slate-600">{cleaners.map(c => c.name.split(' ')[0]).join(' & ')}</span>
+            <span className="text-slate-700" style={{ fontSize: 12 }}>·</span>
+            <span className="text-slate-600" style={{ fontSize: 12 }}>{cleaners.map(c => c.name.split(' ')[0]).join(' & ')}</span>
           </div>
         </div>
         <div className="flex -space-x-1.5 flex-shrink-0">
@@ -192,8 +193,8 @@ function SlotCard({ slot, onSelect, selected }: { slot: BookingSlot; onSelect: (
         </div>
       </div>
       {selected && (
-        <div className="mt-2 flex items-center gap-1 text-xs text-indigo-400">
-          <CheckCircle2 className="h-3 w-3" /> Selected — copy link to share
+        <div className="mt-2.5 flex items-center gap-1.5 text-indigo-400" style={{ fontSize: 12 }}>
+          <CheckCircle2 className="h-3.5 w-3.5" /> Selected — copy link to share
         </div>
       )}
     </button>
@@ -227,7 +228,7 @@ export default function CampaignsPage() {
   const selectedCustomer = CUSTOMERS.find(c => c.id === bookingCustomerId)
 
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-7 max-w-6xl">
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
@@ -237,13 +238,13 @@ export default function CampaignsPage() {
           { label: 'Links Generated', value: bookingLinks.length, icon: Link2, color: 'text-emerald-400', glow: 'shadow-[0_0_20px_rgba(16,185,129,0.10)]' },
         ].map((s, i) => (
           <motion.div key={s.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>
-            <div className={`kpi-card rounded-xl p-4 ${s.glow}`}>
+            <div className={`kpi-card rounded-xl p-5 ${s.glow}`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-slate-500 uppercase tracking-wide">{s.label}</p>
-                  <p className="mt-0.5 text-2xl font-bold text-white">{s.value}</p>
+                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', color: 'var(--ink-400)', textTransform: 'uppercase' }}>{s.label}</p>
+                  <p className="mt-1 tnum text-white" style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em' }}>{s.value}</p>
                 </div>
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1a2537]">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#1a2537]">
                   <s.icon className={`h-4 w-4 ${s.color}`} />
                 </div>
               </div>
@@ -258,7 +259,7 @@ export default function CampaignsPage() {
             <Bell className="h-3.5 w-3.5 mr-1.5" />
             Nurturing Campaigns
             {pendingCount > 0 && (
-              <span className="ml-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500/20 text-[10px] font-bold text-amber-400">
+              <span className="ml-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-amber-500/20 px-1 font-bold text-amber-400" style={{ fontSize: 11 }}>
                 {pendingCount}
               </span>
             )}
@@ -278,7 +279,7 @@ export default function CampaignsPage() {
             </div>
             <div>
               <p className="text-sm font-semibold text-slate-200">3-Week Follow-up Automation</p>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-slate-500 mt-1 leading-relaxed" style={{ fontSize: 13 }}>
                 AI detects customers whose last cleaning was 21+ days ago and generates personalized follow-up messages with booking links. Each link shows route-optimized time slots.
               </p>
             </div>
@@ -288,7 +289,7 @@ export default function CampaignsPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Follow-up Queue</CardTitle>
-                <Badge variant="warning" className="text-xs">{pendingCount} pending</Badge>
+                <Badge variant="warning">{pendingCount} pending</Badge>
               </div>
             </CardHeader>
             <CardContent className="p-0">
@@ -311,7 +312,7 @@ export default function CampaignsPage() {
             </div>
             <div>
               <p className="text-sm font-semibold text-slate-200">Route-Smart Booking Links</p>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-slate-500 mt-1 leading-relaxed" style={{ fontSize: 13 }}>
                 Generate a personalized booking link for any customer. Available time slots are calculated based on team schedules and cleaning routes — prioritizing slots that cluster nearby jobs to reduce drive time.
               </p>
             </div>
@@ -326,7 +327,7 @@ export default function CampaignsPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <label className="text-xs text-slate-500 mb-2 block">Select Customer</label>
+                    <label className="mb-2.5 block" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', color: 'var(--ink-400)', textTransform: 'uppercase' }}>Select Customer</label>
                     <div className="space-y-1.5 max-h-64 overflow-y-auto">
                       {CUSTOMERS.map((c, i) => {
                         const initials = c.name.split(' ').map(n => n[0]).join('')
@@ -336,7 +337,7 @@ export default function CampaignsPage() {
                             key={c.id}
                             onClick={() => setBookingCustomerId(c.id)}
                             className={cn(
-                              'flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-colors',
+                              'flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left transition-colors',
                               bookingCustomerId === c.id
                                 ? 'bg-indigo-500/15 border border-indigo-500/30'
                                 : 'hover:bg-white/[0.03] border border-transparent'
@@ -344,8 +345,8 @@ export default function CampaignsPage() {
                           >
                             <Avatar initials={initials} color={color} size="sm" />
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium text-slate-200 truncate">{c.name}</p>
-                              <p className="text-[10px] text-slate-500">{c.city}</p>
+                              <p className="font-medium text-slate-200 truncate" style={{ fontSize: 13 }}>{c.name}</p>
+                              <p className="text-slate-500" style={{ fontSize: 11.5 }}>{c.city}</p>
                             </div>
                             {bookingCustomerId === c.id && <CheckCircle2 className="h-3.5 w-3.5 text-indigo-400 flex-shrink-0" />}
                           </button>
@@ -364,11 +365,11 @@ export default function CampaignsPage() {
 
                   {activeLink && (
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2 rounded-lg bg-[#070b14] border border-emerald-500/30 p-3">
+                      <div className="flex items-center gap-2 rounded-lg bg-[#070b14] border border-emerald-500/30 p-3.5">
                         <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-emerald-400">Link Generated!</p>
-                          <p className="text-[10px] text-slate-500 font-mono truncate">
+                          <p className="font-medium text-emerald-400" style={{ fontSize: 12.5 }}>Link Generated!</p>
+                          <p className="text-slate-500 font-mono truncate" style={{ fontSize: 11.5 }}>
                             /book/{activeLink.token.slice(0, 18)}…
                           </p>
                         </div>
@@ -382,7 +383,7 @@ export default function CampaignsPage() {
                         <Copy className="h-3.5 w-3.5" />
                         {copiedLink ? '✓ Copied!' : 'Copy Link to Share'}
                       </Button>
-                      <p className="text-[10px] text-slate-600 text-center">
+                      <p className="text-slate-600 text-center" style={{ fontSize: 11.5 }}>
                         Expires {new Date(activeLink.expiresAt + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </p>
                     </div>
@@ -414,7 +415,7 @@ export default function CampaignsPage() {
                       Select a customer and click &ldquo;Generate Booking Link&rdquo; to see available slots based on team schedules and cleaning routes.
                     </div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                       {availableSlots.map((slot, i) => (
                         <SlotCard
                           key={`${slot.date}-${slot.time}-${i}`}
@@ -444,19 +445,20 @@ export default function CampaignsPage() {
                   const color = AVATAR_COLORS[CUSTOMERS.indexOf(customer) % AVATAR_COLORS.length]
                   const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/book/${link.token}`
                   return (
-                    <div key={link.token} className="flex items-center gap-3 px-4 py-3 border-b border-[#1e2a3a] last:border-0">
+                    <div key={link.token} className="flex items-center gap-3 px-4 py-3.5 border-b border-[#1e2a3a] last:border-0">
                       <Avatar initials={initials} color={color} size="sm" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-slate-200">{customer.name}</p>
-                        <p className="text-xs text-slate-500 font-mono truncate">/book/{link.token.slice(0, 20)}…</p>
+                        <p className="text-slate-500 font-mono truncate" style={{ fontSize: 12 }}>/book/{link.token.slice(0, 20)}…</p>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <Badge variant="neutral" className="text-[10px]">{link.slots.length} slots</Badge>
+                        <Badge variant="neutral">{link.slots.length} slots</Badge>
                         <button
                           onClick={() => { navigator.clipboard.writeText(url) }}
-                          className="text-xs text-indigo-400 hover:text-indigo-300"
+                          className="text-indigo-400 hover:text-indigo-300"
+                          style={{ fontSize: 12.5 }}
                         >
-                          <Copy className="h-3.5 w-3.5" />
+                          <Copy className="h-4 w-4" />
                         </button>
                       </div>
                     </div>

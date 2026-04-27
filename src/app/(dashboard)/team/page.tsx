@@ -67,7 +67,7 @@ export default function TeamPage() {
   ]
 
   return (
-    <div className="space-y-6 max-w-7xl">
+    <div className="space-y-7 max-w-7xl">
 
       {/* ── Stats row ─────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -80,28 +80,28 @@ export default function TeamPage() {
           >
             <div className="kpi-card rounded-xl p-5">
               <div className="flex items-center justify-between mb-3">
-                <p style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--ink-400)' }}>{s.label}</p>
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: `${s.tint}22` }}>
-                  <s.icon className="h-3.5 w-3.5" style={{ color: s.tint }} />
+                <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--ink-400)' }}>{s.label}</p>
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ background: `${s.tint}22` }}>
+                  <s.icon className="h-4 w-4" style={{ color: s.tint }} />
                 </div>
               </div>
-              <p className="tnum" style={{ fontSize: 26, fontWeight: 700, color: 'var(--ink-900)', letterSpacing: '-0.02em' }}>{s.value}</p>
+              <p className="tnum" style={{ fontSize: 28, fontWeight: 700, color: 'var(--ink-900)', letterSpacing: '-0.02em' }}>{s.value}</p>
             </div>
           </motion.div>
         ))}
       </div>
 
       {/* ── AI Insights ───────────────────────────────────────── */}
-      <div className="rounded-xl p-4" style={{ background: 'var(--blue-50)', border: '1px solid var(--blue-100)' }}>
+      <div className="rounded-xl p-5" style={{ background: 'var(--blue-50)', border: '1px solid var(--blue-100)' }}>
         <div className="flex items-center gap-2 mb-3">
           <Sparkles className="h-4 w-4" style={{ color: 'var(--blue-500)' }} />
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--blue-400)' }}>AI Team Insights</span>
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--blue-400)' }}>AI Team Insights</span>
         </div>
-        <ul className="space-y-2">
+        <ul className="space-y-2.5">
           {AI_INSIGHTS.map((insight, i) => (
             <li key={i} className="flex items-start gap-2">
-              <span className="mt-0.5 flex-shrink-0" style={{ color: 'var(--blue-500)', fontSize: 13 }}>•</span>
-              <span style={{ fontSize: 13, color: 'var(--ink-500)', lineHeight: 1.5 }}>{insight}</span>
+              <span className="mt-0.5 flex-shrink-0" style={{ color: 'var(--blue-500)', fontSize: 13.5 }}>•</span>
+              <span style={{ fontSize: 13.5, color: 'var(--ink-500)', lineHeight: 1.55 }}>{insight}</span>
             </li>
           ))}
         </ul>
@@ -172,10 +172,10 @@ export default function TeamPage() {
                                 />
                               </div>
                               <div className="min-w-0">
-                                <p className="truncate" style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-900)' }}>
+                                <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-900)' }}>
                                   {cleaner.name.split(' ')[0]}
                                 </p>
-                                <span style={{ fontSize: 10, fontWeight: 600, color: sc.text }}>
+                                <span style={{ fontSize: 11.5, fontWeight: 600, color: sc.text }}>
                                   {sc.label}
                                 </span>
                               </div>
@@ -187,22 +187,22 @@ export default function TeamPage() {
                       {/* Team stats */}
                       <div className="grid grid-cols-3 gap-2 text-center">
                         <div className="rounded-lg p-3" style={{ background: 'var(--bg-soft)' }}>
-                          <p className="tnum font-bold" style={{ fontSize: 18, color: 'var(--ink-900)' }}>{completedJobs.length}</p>
-                          <p style={{ fontSize: 10, color: 'var(--ink-400)', marginTop: 2 }}>Jobs Done</p>
+                          <p className="tnum" style={{ fontSize: 19, fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ink-900)' }}>{completedJobs.length}</p>
+                          <p style={{ fontSize: 11.5, color: 'var(--ink-400)', marginTop: 3 }}>Jobs Done</p>
                         </div>
                         <div className="rounded-lg p-3" style={{ background: 'var(--bg-soft)' }}>
-                          <p className="tnum font-bold" style={{ fontSize: 18, color: 'var(--green-500)' }}>{formatCurrency(teamRevenue)}</p>
-                          <p style={{ fontSize: 10, color: 'var(--ink-400)', marginTop: 2 }}>Revenue</p>
+                          <p className="tnum" style={{ fontSize: 19, fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--green-500)' }}>{formatCurrency(teamRevenue)}</p>
+                          <p style={{ fontSize: 11.5, color: 'var(--ink-400)', marginTop: 3 }}>Revenue</p>
                         </div>
                         <div className="rounded-lg p-3" style={{ background: 'var(--bg-soft)' }}>
-                          <p className="tnum font-bold" style={{ fontSize: 18, color: 'var(--amber-500)' }}>{avgTeamRating}★</p>
-                          <p style={{ fontSize: 10, color: 'var(--ink-400)', marginTop: 2 }}>Rating</p>
+                          <p className="tnum" style={{ fontSize: 19, fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--amber-500)' }}>{avgTeamRating}★</p>
+                          <p style={{ fontSize: 11.5, color: 'var(--ink-400)', marginTop: 3 }}>Rating</p>
                         </div>
                       </div>
 
                       {/* Home area */}
-                      <div className="flex items-center gap-1.5" style={{ fontSize: 12, color: 'var(--ink-400)' }}>
-                        <MapPin className="h-3 w-3" />
+                      <div className="flex items-center gap-1.5" style={{ fontSize: 12.5, color: 'var(--ink-400)' }}>
+                        <MapPin className="h-3.5 w-3.5" />
                         <span>Based in {team.cleaners[0]?.homeAreaName}</span>
                       </div>
                     </CardContent>
@@ -233,52 +233,52 @@ export default function TeamPage() {
                   <Card className="transition-all">
                     <CardContent className="p-5">
                       {/* Header */}
-                      <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-start justify-between mb-3.5">
                         <div className="flex items-center gap-3">
                           <Avatar initials={cleaner.initials} color={cleaner.color} size="md" />
                           <div>
-                            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-900)' }}>{cleaner.name}</p>
-                            <p style={{ fontSize: 11, color: 'var(--ink-400)', marginTop: 1 }}>{TEAM_NAMES[cleaner.teamId]}</p>
+                            <p style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-900)' }}>{cleaner.name}</p>
+                            <p style={{ fontSize: 12, color: 'var(--ink-400)', marginTop: 2 }}>{TEAM_NAMES[cleaner.teamId]}</p>
                           </div>
                         </div>
                         <span
-                          style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 99, background: sc.bg, color: sc.text }}
+                          style={{ fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 99, background: sc.bg, color: sc.text }}
                         >
                           {sc.label}
                         </span>
                       </div>
 
                       <div className="space-y-2.5">
-                        <div className="flex items-center justify-between" style={{ fontSize: 12 }}>
+                        <div className="flex items-center justify-between" style={{ fontSize: 12.5 }}>
                           <span style={{ color: 'var(--ink-400)' }}>Rating</span>
                           <span style={{ color: 'var(--amber-500)', fontWeight: 600 }}>⭐ {cleaner.rating}</span>
                         </div>
-                        <div className="flex items-center justify-between" style={{ fontSize: 12 }}>
+                        <div className="flex items-center justify-between" style={{ fontSize: 12.5 }}>
                           <span style={{ color: 'var(--ink-400)' }}>Reliability</span>
-                          <span style={{ color: 'var(--green-500)', fontWeight: 600 }}>{cleaner.reliabilityScore}%</span>
+                          <span className="tnum" style={{ color: 'var(--green-500)', fontWeight: 600 }}>{cleaner.reliabilityScore}%</span>
                         </div>
                         <Progress value={cleaner.reliabilityScore} color="var(--green-500)" />
-                        <div className="flex items-center justify-between" style={{ fontSize: 12 }}>
+                        <div className="flex items-center justify-between" style={{ fontSize: 12.5 }}>
                           <span style={{ color: 'var(--ink-400)' }}>Total Jobs</span>
-                          <span style={{ color: 'var(--ink-700)', fontWeight: 600 }}>{cleaner.totalJobs}</span>
+                          <span className="tnum" style={{ color: 'var(--ink-700)', fontWeight: 600 }}>{cleaner.totalJobs}</span>
                         </div>
-                        <div className="flex items-center justify-between" style={{ fontSize: 12 }}>
+                        <div className="flex items-center justify-between" style={{ fontSize: 12.5 }}>
                           <span style={{ color: 'var(--ink-400)' }}>Completed (mo.)</span>
-                          <span style={{ color: 'var(--ink-700)', fontWeight: 600 }}>{completedCount}</span>
+                          <span className="tnum" style={{ color: 'var(--ink-700)', fontWeight: 600 }}>{completedCount}</span>
                         </div>
-                        <div className="flex items-center justify-between" style={{ fontSize: 12 }}>
+                        <div className="flex items-center justify-between" style={{ fontSize: 12.5 }}>
                           <span style={{ color: 'var(--ink-400)' }}>This Month Pay</span>
                           <span className="tnum font-bold" style={{ color: 'var(--blue-400)' }}>{formatCurrency(monthPay)}</span>
                         </div>
-                        <div className="flex items-center gap-1.5 mt-1" style={{ fontSize: 10, color: 'var(--ink-400)' }}>
+                        <div className="flex items-center gap-1.5 mt-1.5" style={{ fontSize: 11.5, color: 'var(--ink-400)' }}>
                           <MapPin className="h-3 w-3" />
                           {cleaner.homeAreaName}
                         </div>
-                        <div className="flex flex-wrap gap-1">
+                        <div className="flex flex-wrap gap-1.5">
                           {cleaner.specialties.map(s => (
                             <span
                               key={s}
-                              style={{ fontSize: 9, background: 'var(--bg-soft)', border: '1px solid var(--ink-200)', color: 'var(--ink-500)', borderRadius: 4, padding: '2px 6px' }}
+                              style={{ fontSize: 11, background: 'var(--bg-soft)', border: '1px solid var(--ink-200)', color: 'var(--ink-500)', borderRadius: 4, padding: '2px 7px' }}
                               className="capitalize"
                             >
                               {s.replace('-', ' ')}
@@ -289,9 +289,10 @@ export default function TeamPage() {
                           {(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const).map(d => (
                             <div
                               key={d}
-                              className="flex-1 text-center rounded py-0.5"
+                              className="flex-1 text-center rounded py-1"
                               style={{
-                                fontSize: 8,
+                                fontSize: 10,
+                                fontWeight: 600,
                                 background: cleaner.availableHours[d] ? 'var(--blue-50)' : 'var(--bg-elev)',
                                 color: cleaner.availableHours[d] ? 'var(--blue-400)' : 'var(--ink-300)',
                               }}
@@ -324,7 +325,7 @@ export default function TeamPage() {
             <CardContent>
               <div className="space-y-2">
                 {/* Column headers */}
-                <div className="grid grid-cols-6 gap-3 px-3 py-2" style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--ink-400)' }}>
+                <div className="grid grid-cols-6 gap-3 px-3 py-2.5" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--ink-400)' }}>
                   <div className="col-span-2">Cleaner</div>
                   <div>Jobs Done</div>
                   <div>Job Revenue</div>
@@ -339,7 +340,7 @@ export default function TeamPage() {
                   return (
                     <div
                       key={cleaner.id}
-                      className="grid grid-cols-6 gap-3 items-center px-3 py-3 transition-colors duration-[120ms]"
+                      className="grid grid-cols-6 gap-3 items-center px-3 py-3.5 transition-colors duration-[120ms]"
                       style={{ borderRadius: 8, background: 'var(--bg-soft)', border: '1px solid var(--ink-200)' }}
                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--blue-200)' }}
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--ink-200)' }}
@@ -347,27 +348,27 @@ export default function TeamPage() {
                       <div className="col-span-2 flex items-center gap-2.5">
                         <Avatar initials={cleaner.initials} color={cleaner.color} size="sm" />
                         <div>
-                          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-900)' }}>{cleaner.name}</p>
-                          <p style={{ fontSize: 10, color: 'var(--ink-400)', marginTop: 1 }}>{TEAM_NAMES[cleaner.teamId]}</p>
+                          <p style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-900)' }}>{cleaner.name}</p>
+                          <p style={{ fontSize: 11.5, color: 'var(--ink-400)', marginTop: 2 }}>{TEAM_NAMES[cleaner.teamId]}</p>
                         </div>
                       </div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-700)' }}>{completedJobs.length}</div>
-                      <div className="tnum" style={{ fontSize: 13, color: 'var(--ink-500)' }}>{formatCurrency(jobRevenue)}</div>
-                      <div style={{ fontSize: 13, color: 'var(--ink-400)' }}>35%</div>
-                      <div className="tnum font-bold" style={{ fontSize: 13, color: 'var(--green-500)' }}>{formatCurrency(pay)}</div>
+                      <div className="tnum" style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-700)' }}>{completedJobs.length}</div>
+                      <div className="tnum" style={{ fontSize: 13.5, color: 'var(--ink-500)' }}>{formatCurrency(jobRevenue)}</div>
+                      <div className="tnum" style={{ fontSize: 13.5, color: 'var(--ink-400)' }}>35%</div>
+                      <div className="tnum font-bold" style={{ fontSize: 13.5, color: 'var(--green-500)' }}>{formatCurrency(pay)}</div>
                     </div>
                   )
                 })}
 
                 {/* Total row */}
-                <div className="grid grid-cols-6 gap-3 items-center px-3 py-3 mt-1" style={{ borderRadius: 8, background: 'var(--blue-50)', border: '1px solid var(--blue-100)' }}>
-                  <div className="col-span-2" style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-900)' }}>Total Payroll</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-700)' }}>{JOBS.filter(j => j.status === 'completed').length}</div>
-                  <div className="tnum" style={{ fontSize: 13, color: 'var(--ink-500)' }}>
+                <div className="grid grid-cols-6 gap-3 items-center px-3 py-3.5 mt-1" style={{ borderRadius: 8, background: 'var(--blue-50)', border: '1px solid var(--blue-100)' }}>
+                  <div className="col-span-2" style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--ink-900)' }}>Total Payroll</div>
+                  <div className="tnum" style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-700)' }}>{JOBS.filter(j => j.status === 'completed').length}</div>
+                  <div className="tnum" style={{ fontSize: 13.5, color: 'var(--ink-500)' }}>
                     {formatCurrency(JOBS.filter(j => j.status === 'completed').reduce((s, j) => s + j.price, 0))}
                   </div>
-                  <div style={{ color: 'var(--ink-400)', fontSize: 13 }}>—</div>
-                  <div className="tnum font-bold" style={{ fontSize: 13, color: 'var(--blue-400)' }}>
+                  <div style={{ color: 'var(--ink-400)', fontSize: 13.5 }}>—</div>
+                  <div className="tnum font-bold" style={{ fontSize: 13.5, color: 'var(--blue-400)' }}>
                     {formatCurrency(CLEANERS.reduce((s, c) => s + getMonthlyPay(c.id), 0))}
                   </div>
                 </div>

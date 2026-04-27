@@ -195,48 +195,50 @@ export default function InboxPage() {
       {/* Left: Conversation List */}
       <div className={cn(
         'flex-shrink-0 flex flex-col border-[#1e2a3a] bg-[#0a0f1c]',
-        'w-full md:w-80 md:border-r',
+        'w-full md:w-[340px] md:border-r',
         mobilePanel !== 'list' ? 'hidden md:flex' : 'flex'
       )}>
         {/* Header */}
-        <div className="p-4 border-b border-[#1e2a3a]">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-indigo-400" />
-              <h2 className="text-sm font-semibold text-white">AI Inbox</h2>
+        <div className="border-b border-[#1e2a3a]" style={{ padding: 18 }}>
+          <div className="flex items-center justify-between" style={{ marginBottom: 14 }}>
+            <div className="flex items-center gap-2.5">
+              <MessageSquare className="h-[18px] w-[18px] text-indigo-400" />
+              <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink-900)', letterSpacing: '-0.01em' }}>AI Inbox</h2>
               {totalUnread > 0 && (
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-indigo-500 text-[10px] font-bold text-white">
+                <span className="flex items-center justify-center rounded-full bg-indigo-500 font-bold text-white" style={{ height: 18, minWidth: 18, padding: '0 5px', fontSize: 11 }}>
                   {totalUnread}
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-1 rounded-full bg-indigo-500/10 px-2 py-0.5 border border-indigo-500/20">
-              <Zap className="h-2.5 w-2.5 text-indigo-400" />
-              <span className="text-[10px] font-medium text-indigo-400">AI Active</span>
+            <div className="flex items-center gap-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20" style={{ padding: '4px 10px' }}>
+              <Zap className="h-3 w-3 text-indigo-400" />
+              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--blue-400)' }}>AI Active</span>
             </div>
           </div>
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
             <input
-              className="w-full rounded-lg bg-[#0d1321] border border-[#1e2a3a] pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50"
+              className="w-full rounded-lg bg-[#0d1321] border border-[#1e2a3a] focus:outline-none focus:border-indigo-500/50"
+              style={{ padding: '9px 12px 9px 36px', fontSize: 13, color: 'var(--ink-700)' }}
               placeholder="Search conversations..."
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
           </div>
           {/* Filter tabs */}
-          <div className="mt-2 flex gap-1 overflow-x-auto pb-0.5 scrollbar-hide">
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide" style={{ marginTop: 12 }}>
             {['all', 'new-lead', 'booked', 'quote-sent'].map(f => (
               <button
                 key={f}
                 onClick={() => setFilterStatus(f)}
                 className={cn(
-                  'flex-shrink-0 rounded-md px-2 py-1 text-[10px] font-medium transition-colors',
+                  'flex-shrink-0 rounded-md font-medium transition-colors',
                   filterStatus === f
                     ? 'bg-indigo-500/20 text-indigo-300'
                     : 'text-slate-500 hover:text-slate-300 hover:bg-white/[0.04]'
                 )}
+                style={{ padding: '5px 10px', fontSize: 11.5 }}
               >
                 {f === 'all' ? 'All' : f === 'new-lead' ? 'New Leads' : f === 'booked' ? 'Booked' : 'Quoted'}
               </button>
@@ -251,37 +253,38 @@ export default function InboxPage() {
               key={conv.id}
               onClick={() => { setSelected(conv); setDraft(''); setMobilePanel('thread') }}
               className={cn(
-                'w-full flex items-start gap-3 p-3 text-left transition-colors border-b border-[#1e2a3a]/50',
+                'w-full flex items-start gap-3.5 text-left transition-colors border-b border-[#1e2a3a]/50',
                 selected.id === conv.id ? 'bg-indigo-500/10' : 'hover:bg-white/[0.03]'
               )}
+              style={{ padding: '14px 16px' }}
             >
               {/* Avatar */}
               <div className="relative flex-shrink-0">
                 <div
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold text-white"
-                  style={{ background: conv.avatarColor }}
+                  className="flex items-center justify-center rounded-full font-bold text-white"
+                  style={{ width: 40, height: 40, background: conv.avatarColor, fontSize: 13 }}
                 >
                   {conv.avatar}
                 </div>
                 {conv.unread > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-indigo-500 text-[8px] font-bold text-white">
+                  <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center rounded-full bg-indigo-500 font-bold text-white" style={{ height: 16, minWidth: 16, padding: '0 4px', fontSize: 10, border: '2px solid #0a0f1c' }}>
                     {conv.unread}
                   </span>
                 )}
               </div>
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-0.5">
-                  <span className="text-xs font-semibold text-slate-200 truncate">{conv.name}</span>
-                  <span className="text-[10px] text-slate-600 flex-shrink-0 ml-1">{conv.lastTime}</span>
+                <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
+                  <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-900)' }} className="truncate">{conv.name}</span>
+                  <span style={{ fontSize: 11, color: 'var(--ink-400)' }} className="flex-shrink-0 ml-2">{conv.lastTime}</span>
                 </div>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Badge variant={STATUS_CONFIG[conv.status].variant} className="text-[9px] px-1.5 py-0">
+                <div className="flex items-center gap-2" style={{ marginBottom: 5 }}>
+                  <Badge variant={STATUS_CONFIG[conv.status].variant}>
                     {STATUS_CONFIG[conv.status].label}
                   </Badge>
-                  <span className="text-[10px] text-slate-600">{conv.city}</span>
+                  <span style={{ fontSize: 11.5, color: 'var(--ink-400)' }}>{conv.city}</span>
                 </div>
-                <p className="text-[11px] text-slate-500 truncate">{conv.lastPreview}</p>
+                <p style={{ fontSize: 12.5, color: 'var(--ink-500)', lineHeight: 1.45 }} className="truncate">{conv.lastPreview}</p>
               </div>
             </button>
           ))}
@@ -303,77 +306,85 @@ export default function InboxPage() {
             className="flex flex-1 flex-col overflow-hidden"
           >
             {/* Thread header */}
-            <div className="flex items-center justify-between px-6 py-3.5 border-b border-[#1e2a3a] bg-[#0a0f1c]">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between border-b border-[#1e2a3a] bg-[#0a0f1c]" style={{ padding: '14px 24px' }}>
+              <div className="flex items-center gap-3.5">
                 <div
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold text-white flex-shrink-0"
-                  style={{ background: selected.avatarColor }}
+                  className="flex items-center justify-center rounded-full font-bold text-white flex-shrink-0"
+                  style={{ width: 40, height: 40, fontSize: 13, background: selected.avatarColor }}
                 >
                   {selected.avatar}
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-white">{selected.name}</span>
-                    <Badge variant={STATUS_CONFIG[selected.status].variant} className="text-[9px]">
+                  <div className="flex items-center gap-2.5">
+                    <span style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--ink-900)', letterSpacing: '-0.01em' }}>{selected.name}</span>
+                    <Badge variant={STATUS_CONFIG[selected.status].variant}>
                       {STATUS_CONFIG[selected.status].label}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-[11px] text-slate-500">{selected.city}</span>
-                    <span className="text-[11px] text-slate-600">·</span>
-                    <span className="text-[11px] text-slate-500 capitalize">{selected.source}</span>
-                    <span className="text-[11px] text-slate-600">·</span>
-                    <span className={cn(
-                      'text-[11px] font-medium',
-                      selected.aiScore >= 80 ? 'text-emerald-400' : selected.aiScore >= 50 ? 'text-amber-400' : 'text-slate-500'
-                    )}>
+                  <div className="flex items-center gap-2" style={{ marginTop: 3 }}>
+                    <span style={{ fontSize: 12, color: 'var(--ink-500)' }}>{selected.city}</span>
+                    <span style={{ color: 'var(--ink-300)' }}>·</span>
+                    <span style={{ fontSize: 12, color: 'var(--ink-500)' }} className="capitalize">{selected.source}</span>
+                    <span style={{ color: 'var(--ink-300)' }}>·</span>
+                    <span
+                      style={{ fontSize: 12, fontWeight: 600 }}
+                      className={cn(
+                        selected.aiScore >= 80 ? 'text-emerald-400' : selected.aiScore >= 50 ? 'text-amber-400' : 'text-slate-500'
+                      )}
+                    >
                       AI Score: {selected.aiScore}
                     </span>
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="text-xs h-7">
-                  <Phone className="h-3 w-3 mr-1" />
+                <Button variant="outline" size="sm">
+                  <Phone className="h-3.5 w-3.5" />
                   Call
                 </Button>
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                <Button variant="ghost" size="icon-sm">
                   <MoreVertical className="h-4 w-4 text-slate-500" />
                 </Button>
               </div>
             </div>
 
             {/* Message thread */}
-            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+            <div className="flex-1 overflow-y-auto space-y-4" style={{ padding: '20px 24px' }}>
               {currentThread.map((msg, i) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.03 }}
-                  className={cn('flex gap-2', msg.from === 'us' ? 'justify-end' : 'justify-start')}
+                  className={cn('flex gap-2.5', msg.from === 'us' ? 'justify-end' : 'justify-start')}
                 >
                   {msg.from === 'them' && (
                     <div
-                      className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white mt-0.5"
-                      style={{ background: selected.avatarColor }}
+                      className="flex flex-shrink-0 items-center justify-center rounded-full font-bold text-white"
+                      style={{ width: 30, height: 30, marginTop: 2, fontSize: 11, background: selected.avatarColor }}
                     >
                       {selected.avatar}
                     </div>
                   )}
-                  <div className={cn('max-w-[70%]', msg.from === 'us' ? 'items-end' : 'items-start', 'flex flex-col gap-1')}>
-                    <div className={cn(
-                      'rounded-2xl px-3.5 py-2 text-sm leading-relaxed',
-                      msg.from === 'us'
-                        ? 'bg-indigo-500 text-white rounded-tr-sm'
-                        : 'bg-[#1a2537] text-slate-200 rounded-tl-sm'
-                    )}>
+                  <div className={cn('max-w-[72%]', msg.from === 'us' ? 'items-end' : 'items-start', 'flex flex-col gap-1.5')}>
+                    <div
+                      className={cn(
+                        'rounded-2xl',
+                        msg.from === 'us'
+                          ? 'bg-indigo-500 text-white rounded-tr-sm'
+                          : 'bg-[#1a2537] text-slate-100 rounded-tl-sm'
+                      )}
+                      style={{ padding: '10px 14px', fontSize: 13.5, lineHeight: 1.55 }}
+                    >
                       {msg.text}
                     </div>
-                    <div className={cn('flex items-center gap-1 text-[10px] text-slate-600', msg.from === 'us' ? 'flex-row-reverse' : '')}>
-                      <Clock className="h-2.5 w-2.5" />
+                    <div
+                      className={cn('flex items-center gap-1.5', msg.from === 'us' ? 'flex-row-reverse' : '')}
+                      style={{ fontSize: 11, color: 'var(--ink-400)' }}
+                    >
+                      <Clock className="h-3 w-3" />
                       <span>{msg.time}</span>
-                      {msg.from === 'us' && <CheckCheck className="h-2.5 w-2.5 text-indigo-400 ml-0.5" />}
+                      {msg.from === 'us' && <CheckCheck className="h-3 w-3 text-indigo-400" />}
                     </div>
                   </div>
                 </motion.div>
@@ -381,57 +392,53 @@ export default function InboxPage() {
             </div>
 
             {/* AI Insight bar */}
-            <div className="mx-6 mb-3 rounded-xl border border-indigo-500/20 bg-indigo-500/5 px-4 py-2.5">
-              <div className="flex items-start gap-2.5">
-                <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-500/20">
-                  <Bot className="h-3.5 w-3.5 text-indigo-400" />
+            <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5" style={{ margin: '0 24px 14px', padding: '12px 16px' }}>
+              <div className="flex items-start gap-3">
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-500/20">
+                  <Bot className="h-4 w-4 text-indigo-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-wide">AI Insight</span>
-                    {selected.aiScore >= 80 && <Flame className="h-3 w-3 text-orange-400" />}
+                  <div className="flex items-center gap-2" style={{ marginBottom: 3 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--blue-400)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>AI Insight</span>
+                    {selected.aiScore >= 80 && <Flame className="h-3.5 w-3.5 text-orange-400" />}
                   </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">{selected.aiInsight}</p>
+                  <p style={{ fontSize: 13, color: 'var(--ink-700)', lineHeight: 1.5 }}>{selected.aiInsight}</p>
                 </div>
                 <Button
                   variant="glow"
                   size="sm"
-                  className="flex-shrink-0 h-7 text-xs"
+                  className="flex-shrink-0"
                   onClick={handleAiDraft}
                   disabled={aiGenerating}
                 >
                   {aiGenerating ? (
-                    <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    <Sparkles className="h-3 w-3 mr-1" />
+                    <Sparkles className="h-3.5 w-3.5" />
                   )}
-                  {aiGenerating ? 'Drafting...' : 'AI Draft'}
+                  {aiGenerating ? 'Drafting…' : 'AI Draft'}
                 </Button>
               </div>
             </div>
 
             {/* Composer */}
-            <div className="px-6 pb-4">
+            <div style={{ padding: '0 24px 18px' }}>
               <div className="relative rounded-xl border border-[#1e2a3a] bg-[#111827] focus-within:border-indigo-500/40 transition-colors">
                 <textarea
-                  className="w-full resize-none rounded-xl bg-transparent px-4 pt-3 pb-12 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none"
+                  className="w-full resize-none rounded-xl bg-transparent focus:outline-none"
+                  style={{ padding: '14px 16px 50px', fontSize: 13.5, color: 'var(--ink-700)', lineHeight: 1.55 }}
                   rows={3}
-                  placeholder="Type a message or click AI Draft..."
+                  placeholder="Type a message or click AI Draft…"
                   value={draft}
                   onChange={e => setDraft(e.target.value)}
                   onKeyDown={e => {
                     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSend()
                   }}
                 />
-                <div className="absolute bottom-3 right-3 flex items-center gap-2">
-                  <span className="text-[10px] text-slate-600">⌘+Enter to send</span>
-                  <Button
-                    onClick={handleSend}
-                    disabled={!draft.trim()}
-                    size="sm"
-                    className="h-7 gap-1.5"
-                  >
-                    <Send className="h-3 w-3" />
+                <div className="absolute flex items-center gap-3" style={{ bottom: 10, right: 12 }}>
+                  <span style={{ fontSize: 11, color: 'var(--ink-400)' }}>⌘+Enter to send</span>
+                  <Button onClick={handleSend} disabled={!draft.trim()} size="sm">
+                    <Send className="h-3.5 w-3.5" />
                     Send
                   </Button>
                 </div>
@@ -443,21 +450,26 @@ export default function InboxPage() {
 
       {/* Right sidebar: Lead scoring */}
       <div className={cn(
-        'flex-shrink-0 border-[#1e2a3a] bg-[#0a0f1c] p-4 space-y-4',
-        'w-full md:w-56 md:border-l',
+        'flex-shrink-0 border-[#1e2a3a] bg-[#0a0f1c] space-y-5',
+        'w-full md:w-64 md:border-l',
         mobilePanel !== 'details' ? 'hidden md:block' : 'block overflow-y-auto'
-      )}>
+      )}
+        style={{ padding: 18 }}
+      >
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-600 mb-2">AI Lead Score</p>
-          <div className="text-center py-3">
-            <div className={cn(
-              'text-4xl font-bold',
-              selected.aiScore >= 80 ? 'text-emerald-400' : selected.aiScore >= 50 ? 'text-amber-400' : 'text-slate-500'
-            )}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-400)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 10 }}>AI Lead Score</p>
+          <div className="text-center" style={{ padding: '14px 0 10px' }}>
+            <div
+              className={cn(
+                'tnum',
+                selected.aiScore >= 80 ? 'text-emerald-400' : selected.aiScore >= 50 ? 'text-amber-400' : 'text-slate-500'
+              )}
+              style={{ fontSize: 44, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1 }}
+            >
               {selected.aiScore}
             </div>
-            <div className="text-[10px] text-slate-500 mt-0.5">out of 100</div>
-            <div className="mt-2 h-1.5 w-full rounded-full bg-[#1a2537] overflow-hidden">
+            <div style={{ fontSize: 11.5, color: 'var(--ink-400)', marginTop: 4 }}>out of 100</div>
+            <div className="rounded-full bg-[#1a2537] overflow-hidden" style={{ marginTop: 12, height: 6 }}>
               <div
                 className={cn(
                   'h-full rounded-full transition-all duration-500',
@@ -469,57 +481,55 @@ export default function InboxPage() {
           </div>
         </div>
 
-        <div className="border-t border-[#1e2a3a] pt-4">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-600 mb-2">Details</p>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-[11px] text-slate-500">Source</span>
-              <span className="text-[11px] text-slate-300 capitalize">{selected.source}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-[11px] text-slate-500">Location</span>
-              <span className="text-[11px] text-slate-300">{selected.city}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-[11px] text-slate-500">Messages</span>
-              <span className="text-[11px] text-slate-300">{currentThread.length}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-[11px] text-slate-500">Stage</span>
-              <Badge variant={STATUS_CONFIG[selected.status].variant} className="text-[9px] px-1.5">
+        <div className="border-t border-[#1e2a3a]" style={{ paddingTop: 18 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-400)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 10 }}>Details</p>
+          <div className="space-y-2.5">
+            {[
+              ['Source', selected.source],
+              ['Location', selected.city],
+              ['Messages', String(currentThread.length)],
+            ].map(([label, value]) => (
+              <div key={label} className="flex justify-between items-center">
+                <span style={{ fontSize: 12.5, color: 'var(--ink-400)' }}>{label}</span>
+                <span style={{ fontSize: 12.5, color: 'var(--ink-700)', fontWeight: 500 }} className="capitalize">{value}</span>
+              </div>
+            ))}
+            <div className="flex justify-between items-center">
+              <span style={{ fontSize: 12.5, color: 'var(--ink-400)' }}>Stage</span>
+              <Badge variant={STATUS_CONFIG[selected.status].variant}>
                 {STATUS_CONFIG[selected.status].label}
               </Badge>
             </div>
           </div>
         </div>
 
-        <div className="border-t border-[#1e2a3a] pt-4">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-600 mb-2">Quick Actions</p>
-          <div className="space-y-1.5">
-            <Button variant="outline" size="sm" className="w-full h-7 text-xs justify-start gap-2">
-              <Tag className="h-3 w-3" />
+        <div className="border-t border-[#1e2a3a]" style={{ paddingTop: 18 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-400)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 10 }}>Quick Actions</p>
+          <div className="space-y-2">
+            <Button variant="outline" size="sm" className="w-full justify-start">
+              <Tag className="h-3.5 w-3.5" />
               Add Label
             </Button>
-            <Button variant="outline" size="sm" className="w-full h-7 text-xs justify-start gap-2">
-              <Star className="h-3 w-3" />
+            <Button variant="outline" size="sm" className="w-full justify-start">
+              <Star className="h-3.5 w-3.5" />
               Mark Priority
             </Button>
-            <Button variant="outline" size="sm" className="w-full h-7 text-xs justify-start gap-2">
-              <ArrowRight className="h-3 w-3" />
+            <Button variant="outline" size="sm" className="w-full justify-start">
+              <ArrowRight className="h-3.5 w-3.5" />
               Book Job
             </Button>
           </div>
         </div>
 
-        <div className="border-t border-[#1e2a3a] pt-4">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-600 mb-2">Pipeline Today</p>
-          <div className="space-y-1.5">
+        <div className="border-t border-[#1e2a3a]" style={{ paddingTop: 18 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-400)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 10 }}>Pipeline Today</p>
+          <div className="space-y-2">
             {['new-lead', 'quote-sent', 'booked'].map(s => {
               const count = CONVERSATIONS.filter(c => c.status === s).length
               return (
                 <div key={s} className="flex justify-between items-center">
-                  <span className="text-[11px] text-slate-500 capitalize">{s.replace('-', ' ')}</span>
-                  <span className="text-[11px] font-semibold text-slate-300">{count}</span>
+                  <span style={{ fontSize: 12.5, color: 'var(--ink-400)' }} className="capitalize">{s.replace('-', ' ')}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-700)' }} className="tnum">{count}</span>
                 </div>
               )
             })}

@@ -3,17 +3,17 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const badgeVariants = cva(
-  'inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold transition-colors',
+  'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-semibold transition-colors',
   {
     variants: {
       variant: {
-        default: 'text-[11px]',
-        success: 'text-[11px]',
-        warning: 'text-[11px]',
-        danger:  'text-[11px]',
-        neutral: 'text-[11px]',
-        purple:  'text-[11px]',
-        teal:    'text-[11px]',
+        default: 'text-[11.5px]',
+        success: 'text-[11.5px]',
+        warning: 'text-[11.5px]',
+        danger:  'text-[11.5px]',
+        neutral: 'text-[11.5px]',
+        purple:  'text-[11.5px]',
+        teal:    'text-[11.5px]',
       },
     },
     defaultVariants: { variant: 'default' },
@@ -46,7 +46,7 @@ export function Badge({ className, variant = 'default', dot, style, ...props }: 
       {dot && (
         <span
           className="inline-block rounded-full"
-          style={{ width: 5, height: 5, background: tokenStyle.color as string }}
+          style={{ width: 6, height: 6, background: tokenStyle.color as string }}
         />
       )}
       {props.children}

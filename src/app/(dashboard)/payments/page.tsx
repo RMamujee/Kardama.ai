@@ -39,21 +39,21 @@ export default function PaymentsPage() {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7 max-w-7xl">
       {/* Stat Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {stats.map((s, i) => (
           <motion.div key={s.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
             <div className="kpi-card rounded-xl p-5">
               <div className="flex items-start justify-between mb-3">
-                <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink-400)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s.label}</p>
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: s.tintBg }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-400)', textTransform: 'uppercase', letterSpacing: '0.09em' }}>{s.label}</p>
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ background: s.tintBg }}>
                   <s.icon className="h-4 w-4" style={{ color: s.tint }} />
                 </div>
               </div>
-              <p className="tnum" style={{ fontSize: 24, fontWeight: 700, color: 'var(--ink-900)', marginBottom: 4, letterSpacing: '-0.02em' }}>{s.value}</p>
+              <p className="tnum" style={{ fontSize: 28, fontWeight: 700, color: 'var(--ink-900)', marginBottom: 4, letterSpacing: '-0.02em' }}>{s.value}</p>
               {s.trend && (
-                <p style={{ fontSize: 12, color: 'var(--green-500)' }}>{s.trend} vs last period</p>
+                <p style={{ fontSize: 12.5, color: 'var(--green-500)' }}>{s.trend} vs last period</p>
               )}
             </div>
           </motion.div>
@@ -76,14 +76,14 @@ export default function PaymentsPage() {
 
             <TabsContent value="transactions">
               {/* Filters */}
-              <div className="flex flex-wrap gap-3 px-5 py-3" style={{ borderBottom: '1px solid var(--ink-200)' }}>
+              <div className="flex flex-wrap gap-3 px-5 py-4" style={{ borderBottom: '1px solid var(--ink-200)' }}>
                 <div className="relative flex-1 min-w-[180px]">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4" style={{ color: 'var(--ink-400)' }} />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: 'var(--ink-400)' }} />
                   <Input
                     placeholder="Search payments..."
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    className="pl-8"
+                    className="pl-9"
                   />
                 </div>
                 <Select value={filterMethod} onChange={e => setFilterMethod(e.target.value as any)} className="w-36">
@@ -106,7 +106,7 @@ export default function PaymentsPage() {
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--ink-200)' }}>
                       {['Date', 'Customer', 'Amount', 'Method', 'Status', 'Notes', 'Action'].map(h => (
-                        <th key={h} className="px-4 py-3 text-left" style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--ink-400)' }}>{h}</th>
+                        <th key={h} className="px-4 py-3 text-left" style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: 'var(--ink-400)' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -124,25 +124,25 @@ export default function PaymentsPage() {
                           onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-soft)' }}
                           onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                         >
-                          <td className="px-4 py-3" style={{ fontSize: 13, color: 'var(--ink-400)' }}>{p.receivedAt.split('T')[0]}</td>
-                          <td className="px-4 py-3" style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-700)' }}>{customer?.name || 'Unknown'}</td>
-                          <td className="px-4 py-3 tnum" style={{ fontSize: 13, fontWeight: 700, color: 'var(--green-500)' }}>{formatCurrency(p.amount)}</td>
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-3.5 tnum" style={{ fontSize: 13, color: 'var(--ink-400)' }}>{p.receivedAt.split('T')[0]}</td>
+                          <td className="px-4 py-3.5" style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-700)' }}>{customer?.name || 'Unknown'}</td>
+                          <td className="px-4 py-3.5 tnum" style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--green-500)' }}>{formatCurrency(p.amount)}</td>
+                          <td className="px-4 py-3.5">
                             <span
-                              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5"
+                              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1"
                               style={{ background: mc.bg, color: mc.text, fontSize: 12, fontWeight: 600 }}
                             >
                               <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: mc.dot }} />
                               {p.method.charAt(0).toUpperCase() + p.method.slice(1)}
                             </span>
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-3.5">
                             <Badge variant={STATUS_VARIANT[p.status] || 'neutral'} className="capitalize">{p.status}</Badge>
                           </td>
-                          <td className="px-4 py-3 max-w-[180px] truncate" style={{ fontSize: 12, color: 'var(--ink-400)' }}>{p.confirmationNote}</td>
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-3.5 max-w-[180px] truncate" style={{ fontSize: 12.5, color: 'var(--ink-400)' }}>{p.confirmationNote}</td>
+                          <td className="px-4 py-3.5">
                             {p.status !== 'confirmed' && (
-                              <Button variant="ghost" size="sm" onClick={() => confirmPayment(p.id)} style={{ fontSize: 12, color: 'var(--green-500)' }}>
+                              <Button variant="ghost" size="sm" onClick={() => confirmPayment(p.id)} style={{ color: 'var(--green-500)' }}>
                                 Confirm
                               </Button>
                             )}

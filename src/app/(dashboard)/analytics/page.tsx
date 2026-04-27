@@ -114,13 +114,13 @@ export default function AnalyticsPage() {
   ]
 
   return (
-    <div className="space-y-6 max-w-7xl">
+    <div className="space-y-7 max-w-7xl">
 
       {/* ── Period selector ───────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-slate-100">Analytics &amp; Reports</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Long Beach service area · all teams</p>
+          <p className="text-sm text-slate-500 mt-1">Long Beach service area · all teams</p>
         </div>
         <Tabs defaultValue="year" onValueChange={v => setPeriod(v as typeof period)}>
           <TabsList>
@@ -143,14 +143,14 @@ export default function AnalyticsPage() {
           >
             <div className="kpi-card rounded-xl p-5">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs text-slate-500 uppercase tracking-wide">{kpi.label}</p>
+                <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', color: 'var(--ink-400)', textTransform: 'uppercase' }}>{kpi.label}</p>
                 <kpi.icon className={`h-4 w-4 ${kpi.color}`} />
               </div>
-              <p className="text-2xl font-bold text-white mb-1">{kpi.value}</p>
-              <div className={`flex items-center gap-0.5 text-xs font-medium ${kpi.up ? 'text-emerald-400' : 'text-red-400'}`}>
+              <p className="tnum text-white mb-1" style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em' }}>{kpi.value}</p>
+              <div className={`flex items-center gap-1 font-medium ${kpi.up ? 'text-emerald-400' : 'text-red-400'}`} style={{ fontSize: 12 }}>
                 {kpi.up
-                  ? <ArrowUpRight className="h-3 w-3" />
-                  : <ArrowDownRight className="h-3 w-3" />
+                  ? <ArrowUpRight className="h-3.5 w-3.5" />
+                  : <ArrowDownRight className="h-3.5 w-3.5" />
                 }
                 {kpi.change} vs last year
               </div>
@@ -183,12 +183,12 @@ export default function AnalyticsPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e2a3a" />
                 <XAxis
                   dataKey="month"
-                  tick={{ fill: '#475569', fontSize: 11 }}
+                  tick={{ fill: '#475569', fontSize: 12 }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fill: '#475569', fontSize: 11 }}
+                  tick={{ fill: '#475569', fontSize: 12 }}
                   axisLine={false}
                   tickLine={false}
                   tickFormatter={(v: number) => `$${(v / 1000).toFixed(1)}k`}
@@ -223,15 +223,15 @@ export default function AnalyticsPage() {
               <CardDescription>By total spend · all time</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {topCustomers.map((c, i) => (
-                  <div key={c.name} className="space-y-1.5">
+                  <div key={c.name} className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono text-slate-600 w-4">{i + 1}</span>
+                      <div className="flex items-center gap-2.5">
+                        <span style={{ fontSize: 12 }} className="font-mono text-slate-600 w-4">{i + 1}</span>
                         <span className="text-slate-200 font-medium">{c.name}</span>
                       </div>
-                      <span className="text-emerald-400 font-bold text-sm">{formatCurrency(c.value)}</span>
+                      <span className="text-emerald-400 font-bold text-sm tnum">{formatCurrency(c.value)}</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-[#1a2537] overflow-hidden">
                       <motion.div
@@ -253,7 +253,7 @@ export default function AnalyticsPage() {
           initial={{ opacity: 0, x: 16 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4 }}
-          className="space-y-4"
+          className="space-y-5"
         >
           {/* Service Type Breakdown */}
           <Card>
@@ -262,12 +262,12 @@ export default function AnalyticsPage() {
               <CardDescription>% of total jobs by service type</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2.5">
+              <div className="space-y-3.5">
                 {SERVICE_DATA.map(s => (
                   <div key={s.name} className="flex items-center gap-3">
                     <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
                     <span className="text-sm text-slate-300 flex-1">{s.name}</span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5">
                       <div className="h-1.5 w-24 rounded-full bg-[#1a2537] overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
@@ -277,7 +277,7 @@ export default function AnalyticsPage() {
                           style={{ backgroundColor: s.color }}
                         />
                       </div>
-                      <span className="text-xs text-slate-500 w-8 text-right">{s.value}%</span>
+                      <span style={{ fontSize: 12 }} className="text-slate-500 w-8 text-right tnum">{s.value}%</span>
                     </div>
                   </div>
                 ))}
@@ -292,7 +292,7 @@ export default function AnalyticsPage() {
               <CardDescription>Long Beach 15-mile radius</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2.5">
+              <div className="space-y-3.5">
                 {AREA_CITIES.map(a => (
                   <div key={a.city} className="flex items-center gap-3">
                     <span className="text-sm text-slate-300 w-32 flex-shrink-0">{a.city}</span>
@@ -304,7 +304,7 @@ export default function AnalyticsPage() {
                         className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500"
                       />
                     </div>
-                    <span className="text-xs text-slate-500 w-12 text-right">{a.jobs} jobs</span>
+                    <span style={{ fontSize: 12 }} className="text-slate-500 w-14 text-right tnum">{a.jobs} jobs</span>
                   </div>
                 ))}
               </div>
@@ -323,7 +323,7 @@ export default function AnalyticsPage() {
           <CardContent>
             <div className="space-y-1">
               {/* Header row */}
-              <div className="grid grid-cols-6 gap-4 px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-600 border-b border-[#1e2a3a]">
+              <div className="grid grid-cols-6 gap-4 px-3 pb-2.5 border-b border-[#1e2a3a]" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', color: 'var(--ink-400)', textTransform: 'uppercase' }}>
                 <div className="col-span-2">Team</div>
                 <div>Jobs</div>
                 <div>Revenue</div>
@@ -334,20 +334,20 @@ export default function AnalyticsPage() {
               {teamData.map((team) => (
                 <div
                   key={team.team}
-                  className="grid grid-cols-6 gap-4 items-center px-3 py-3 rounded-lg hover:bg-white/[0.02] transition-colors"
+                  className="grid grid-cols-6 gap-4 items-center px-3 py-4 rounded-lg hover:bg-white/[0.02] transition-colors"
                 >
                   <div className="col-span-2">
                     <p className="text-sm font-medium text-slate-200">Team {team.team}</p>
-                    <p className="text-xs text-slate-600 mt-0.5">{team.cleaners}</p>
+                    <p style={{ fontSize: 12 }} className="text-slate-600 mt-0.5">{team.cleaners}</p>
                   </div>
-                  <div className="text-sm text-slate-300">{team.jobs}</div>
-                  <div className="text-sm font-medium text-emerald-400">{formatCurrency(team.revenue)}</div>
+                  <div className="text-sm text-slate-300 tnum">{team.jobs}</div>
+                  <div className="text-sm font-medium text-emerald-400 tnum">{formatCurrency(team.revenue)}</div>
                   <div>
-                    <span className={`text-sm font-medium ${team.completionRate >= 80 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    <span className={`text-sm font-medium tnum ${team.completionRate >= 80 ? 'text-emerald-400' : 'text-amber-400'}`}>
                       {team.completionRate}%
                     </span>
                   </div>
-                  <div className="text-sm text-amber-400">⭐ {team.rating}</div>
+                  <div className="text-sm text-amber-400 tnum">⭐ {team.rating}</div>
                 </div>
               ))}
             </div>
@@ -365,11 +365,11 @@ export default function AnalyticsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
               {AI_INSIGHTS.map((insight, i) => (
                 <div
                   key={i}
-                  className="flex items-start gap-3 rounded-xl bg-indigo-500/[0.06] border border-indigo-500/15 p-3.5"
+                  className="flex items-start gap-3 rounded-xl bg-indigo-500/[0.06] border border-indigo-500/15 p-4"
                 >
                   <span className="text-lg flex-shrink-0">{insight.icon}</span>
                   <p className="text-sm text-slate-300 leading-relaxed">{insight.text}</p>

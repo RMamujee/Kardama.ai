@@ -47,28 +47,26 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div className="space-y-5 max-w-7xl">
+    <div className="space-y-7 max-w-7xl">
       {/* KPI Cards */}
-      <motion.div variants={container} initial="hidden" animate="visible" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <motion.div variants={container} initial="hidden" animate="visible" className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map((kpi) => (
           <motion.div key={kpi.label} variants={item}>
-            <div className="kpi-card rounded-xl p-[18px]">
-              <div className="flex items-start justify-between mb-3.5">
+            <div className="kpi-card rounded-xl" style={{ padding: 22 }}>
+              <div className="flex items-start justify-between" style={{ marginBottom: 18 }}>
                 <div
-                  className="flex h-8 w-8 items-center justify-center rounded-[10px]"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl"
                   style={{ background: `${kpi.tint}22`, color: kpi.tint }}
                 >
-                  <kpi.icon className="h-4 w-4" />
+                  <kpi.icon className="h-[18px] w-[18px]" />
                 </div>
                 {kpi.trend && (
                   <Badge variant="success" dot>{kpi.trend}</Badge>
                 )}
               </div>
-              <p className="tnum mb-1" style={{ fontSize: 11.5, color: 'var(--ink-400)', fontWeight: 500 }}>{kpi.label}</p>
-              <p className="tnum" style={{ fontSize: 26, fontWeight: 700, color: 'var(--ink-900)', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: 4 }}>{kpi.value}</p>
-              <div className="flex items-center justify-between">
-                <p style={{ fontSize: 12, color: 'var(--ink-500)' }}>{kpi.sub}</p>
-              </div>
+              <p className="tnum" style={{ fontSize: 12.5, color: 'var(--ink-400)', fontWeight: 500, marginBottom: 6 }}>{kpi.label}</p>
+              <p className="tnum" style={{ fontSize: 30, fontWeight: 700, color: 'var(--ink-900)', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: 6 }}>{kpi.value}</p>
+              <p style={{ fontSize: 12.5, color: 'var(--ink-500)' }}>{kpi.sub}</p>
             </div>
           </motion.div>
         ))}
@@ -86,28 +84,31 @@ export default function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-y-auto" style={{ maxHeight: 380 }}>
-                {todayJobs.length === 0 && <p className="py-8 text-center" style={{ fontSize: 13, color: 'var(--ink-400)' }}>No jobs scheduled today</p>}
+              <div className="overflow-y-auto" style={{ maxHeight: 420 }}>
+                {todayJobs.length === 0 && <p className="py-10 text-center" style={{ fontSize: 14, color: 'var(--ink-400)' }}>No jobs scheduled today</p>}
                 {todayJobs.map((job, idx) => {
                   const cleaners = CLEANERS.filter(c => job.cleanerIds.includes(c.id))
                   return (
                     <div
                       key={job.id}
-                      className="flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors duration-[120ms]"
-                      style={{ borderBottom: idx < todayJobs.length - 1 ? '1px solid var(--ink-200)' : 'none' }}
+                      className="flex items-center gap-4 cursor-pointer transition-colors duration-[120ms]"
+                      style={{
+                        padding: '14px 22px',
+                        borderBottom: idx < todayJobs.length - 1 ? '1px solid var(--ink-200)' : 'none',
+                      }}
                       onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-soft)' }}
                       onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                     >
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg flex-shrink-0" style={{ background: 'var(--bg-elev)' }}>
-                        <Clock className="h-4 w-4" style={{ color: 'var(--ink-400)' }} />
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl flex-shrink-0" style={{ background: 'var(--bg-elev)' }}>
+                        <Clock className="h-[18px] w-[18px]" style={{ color: 'var(--ink-400)' }} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="truncate" style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-900)' }}>{job.address.split(',')[0]}</p>
-                        <p style={{ fontSize: 11.5, color: 'var(--ink-500)', marginTop: 1 }}>{formatTime(job.scheduledTime)} · {getServiceLabel(job.serviceType)} · {cleaners.map(c => c.name.split(' ')[0]).join(' + ')}</p>
+                        <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-900)' }}>{job.address.split(',')[0]}</p>
+                        <p style={{ fontSize: 12.5, color: 'var(--ink-500)', marginTop: 3 }}>{formatTime(job.scheduledTime)} · {getServiceLabel(job.serviceType)} · {cleaners.map(c => c.name.split(' ')[0]).join(' + ')}</p>
                       </div>
-                      <div className="flex items-center gap-2.5 flex-shrink-0">
+                      <div className="flex items-center gap-3 flex-shrink-0">
                         <Badge variant={(STATUS_BADGE as any)[job.status] || 'neutral'} className="capitalize">{job.status}</Badge>
-                        <span className="tnum font-bold" style={{ fontSize: 13, color: 'var(--green-500)', minWidth: 36, textAlign: 'right' }}>${job.price}</span>
+                        <span className="tnum font-bold" style={{ fontSize: 14, color: 'var(--green-500)', minWidth: 44, textAlign: 'right' }}>${job.price}</span>
                       </div>
                     </div>
                   )
@@ -122,16 +123,16 @@ export default function DashboardPage() {
           <Card className="h-full">
             <CardHeader><CardTitle>Recent Activity</CardTitle></CardHeader>
             <CardContent>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {recentActivity.map((a, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <div
-                      className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full"
-                      style={{ backgroundColor: a.color }}
+                      className="mt-[7px] h-2 w-2 flex-shrink-0 rounded-full"
+                      style={{ backgroundColor: a.color, boxShadow: `0 0 0 3px ${a.color}22` }}
                     />
-                    <div>
-                      <p style={{ fontSize: 12.5, color: 'var(--ink-700)', lineHeight: 1.4 }}>{a.msg}</p>
-                      <p style={{ fontSize: 11, color: 'var(--ink-400)', marginTop: 2 }}>{a.time}</p>
+                    <div className="flex-1 min-w-0">
+                      <p style={{ fontSize: 13.5, color: 'var(--ink-700)', lineHeight: 1.5 }}>{a.msg}</p>
+                      <p style={{ fontSize: 12, color: 'var(--ink-400)', marginTop: 3 }}>{a.time}</p>
                     </div>
                   </div>
                 ))}
@@ -150,18 +151,18 @@ export default function DashboardPage() {
               {CLEANERS.map((c) => (
                 <div
                   key={c.id}
-                  className="flex items-center gap-2.5 p-3 transition-colors duration-[120ms]"
-                  style={{ borderRadius: 10, background: 'var(--bg-soft)', border: '1px solid var(--ink-200)' }}
+                  className="flex items-center gap-3 transition-colors duration-[120ms]"
+                  style={{ borderRadius: 12, background: 'var(--bg-soft)', border: '1px solid var(--ink-200)', padding: '14px 14px' }}
                 >
                   <div className="relative flex-shrink-0">
                     <div
-                      className="flex h-8 w-8 items-center justify-center rounded-full font-bold"
-                      style={{ backgroundColor: c.color, color: 'var(--bg-page)', fontSize: 11 }}
+                      className="flex h-10 w-10 items-center justify-center rounded-full font-bold"
+                      style={{ backgroundColor: c.color, color: 'var(--bg-page)', fontSize: 12.5 }}
                     >
                       {c.initials}
                     </div>
                     <div
-                      className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full"
+                      className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full"
                       style={{
                         backgroundColor: CLEANER_STATUS_COLOR[c.status] ?? '#535B70',
                         border: '2px solid var(--bg-soft)',
@@ -169,8 +170,8 @@ export default function DashboardPage() {
                     />
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate" style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-900)' }}>{c.name.split(' ')[0]}</p>
-                    <p className="capitalize" style={{ fontSize: 10.5, color: 'var(--ink-400)' }}>{c.homeAreaName}</p>
+                    <p className="truncate" style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-900)' }}>{c.name.split(' ')[0]}</p>
+                    <p className="capitalize" style={{ fontSize: 11.5, color: 'var(--ink-400)', marginTop: 2 }}>{c.homeAreaName}</p>
                   </div>
                 </div>
               ))}
@@ -183,33 +184,34 @@ export default function DashboardPage() {
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
         <Card style={{ borderColor: 'var(--blue-100)' }}>
           <CardHeader>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <div
-                className="flex h-7 w-7 items-center justify-center rounded-lg"
+                className="flex h-8 w-8 items-center justify-center rounded-lg"
                 style={{ background: 'var(--blue-50)' }}
               >
-                <Sparkles className="h-3.5 w-3.5" style={{ color: 'var(--blue-500)' }} />
+                <Sparkles className="h-4 w-4" style={{ color: 'var(--blue-500)' }} />
               </div>
               <CardTitle style={{ color: 'var(--blue-400)' }}>AI Copilot</CardTitle>
               <Badge variant="default">3 new</Badge>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {AI_INSIGHTS.map((insight, i) => (
                 <div
                   key={i}
-                  className="flex items-start gap-3 p-3 cursor-pointer transition-colors duration-[120ms]"
+                  className="flex items-start gap-3.5 cursor-pointer transition-colors duration-[120ms]"
                   style={{
-                    borderRadius: 10,
+                    borderRadius: 12,
+                    padding: '14px 16px',
                     background: i === 0 ? 'var(--blue-50)' : 'transparent',
                     border: `1px solid ${i === 0 ? 'var(--blue-100)' : 'transparent'}`,
                   }}
                   onMouseEnter={(e) => { if (i !== 0) (e.currentTarget as HTMLElement).style.background = 'var(--bg-soft)' }}
                   onMouseLeave={(e) => { if (i !== 0) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                 >
-                  <span className="flex-shrink-0 text-base">{insight.icon}</span>
-                  <p style={{ fontSize: 13, color: 'var(--ink-700)', lineHeight: 1.5 }}>{insight.text}</p>
+                  <span className="flex-shrink-0 text-lg leading-none mt-0.5">{insight.icon}</span>
+                  <p style={{ fontSize: 13.5, color: 'var(--ink-700)', lineHeight: 1.55 }}>{insight.text}</p>
                 </div>
               ))}
             </div>

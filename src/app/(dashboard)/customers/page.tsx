@@ -76,9 +76,9 @@ export default function CustomersPage() {
   ]
 
   return (
-    <div className="space-y-6 max-w-7xl">
+    <div className="space-y-7 max-w-7xl">
       {/* Stats Row */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-5 lg:grid-cols-4">
         {stats.map((s, i) => (
           <motion.div
             key={s.label}
@@ -86,24 +86,24 @@ export default function CustomersPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.07 }}
           >
-            <div className="kpi-card rounded-xl p-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs text-slate-500 uppercase tracking-wide">{s.label}</p>
-                <s.icon className={`h-4 w-4 ${s.color}`} />
+            <div className="kpi-card rounded-xl" style={{ padding: 22 }}>
+              <div className="flex items-center justify-between" style={{ marginBottom: 14 }}>
+                <p style={{ fontSize: 11.5, color: 'var(--ink-400)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>{s.label}</p>
+                <s.icon className={`h-[18px] w-[18px] ${s.color}`} />
               </div>
-              <p className="text-2xl font-bold text-white">{s.value}</p>
+              <p className="tnum" style={{ fontSize: 28, fontWeight: 700, color: 'var(--ink-900)', letterSpacing: '-0.02em', lineHeight: 1.1 }}>{s.value}</p>
             </div>
           </motion.div>
         ))}
       </div>
 
       {/* AI Insight Banner */}
-      <div className="flex items-center gap-3 rounded-xl bg-indigo-500/[0.07] border border-indigo-500/20 p-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/20 flex-shrink-0">
-          <Sparkles className="h-4 w-4 text-indigo-400" />
+      <div className="flex items-center gap-4 rounded-xl bg-indigo-500/[0.07] border border-indigo-500/20" style={{ padding: '16px 18px' }}>
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/20 flex-shrink-0">
+          <Sparkles className="h-[18px] w-[18px] text-indigo-400" />
         </div>
-        <p className="text-sm text-slate-300 flex-1">
-          <span className="text-indigo-400 font-medium">AI: </span>
+        <p style={{ fontSize: 13.5, color: 'var(--ink-700)', lineHeight: 1.55 }} className="flex-1">
+          <span className="text-indigo-400 font-semibold">AI: </span>
           3 customers haven&apos;t booked in 30+ days — Sarah Mitchell, Jennifer Park, Christopher Lee.
           Consider sending a re-engagement offer.
         </p>
@@ -143,7 +143,7 @@ export default function CustomersPage() {
       </div>
 
       {/* Customer Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
         {filtered.map((customer, i) => {
           const color = AVATAR_COLORS[CUSTOMERS.indexOf(customer) % AVATAR_COLORS.length]
           const initials = customer.name.split(' ').map(n => n[0]).join('')
@@ -163,63 +163,64 @@ export default function CustomersPage() {
             >
               <button
                 onClick={() => setSelected(isSelected ? null : customer)}
-                className={`w-full text-left rounded-xl border p-4 transition-all duration-200 group
+                className={`w-full text-left rounded-2xl border transition-all duration-200 group
                   ${isSelected
                     ? 'bg-[#141c2e] border-indigo-500/40 ring-1 ring-indigo-500/20'
                     : 'bg-[#111827] border-[#1e2a3a] hover:border-indigo-500/30 hover:bg-[#141c2e]'
                   }`}
+                style={{ padding: 18 }}
               >
                 {/* Header row: avatar + name + source badge */}
-                <div className="flex items-start gap-3 mb-3">
+                <div className="flex items-start gap-3.5" style={{ marginBottom: 16 }}>
                   <Avatar initials={initials} color={color} size="md" />
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-slate-100 truncate group-hover:text-indigo-300 transition-colors">
+                    <p style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--ink-900)' }} className="truncate group-hover:text-indigo-300 transition-colors">
                       {customer.name}
                     </p>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <MapPin className="h-3 w-3 text-slate-600 flex-shrink-0" />
-                      <p className="text-xs text-slate-500 truncate">{customer.city}</p>
+                    <div className="flex items-center gap-1.5" style={{ marginTop: 3 }}>
+                      <MapPin className="h-3.5 w-3.5 text-slate-500 flex-shrink-0" />
+                      <p style={{ fontSize: 12.5, color: 'var(--ink-500)' }} className="truncate">{customer.city}</p>
                       <span className="text-slate-700">·</span>
-                      <p className="text-xs text-slate-600">{customer.jobHistory.length} jobs</p>
+                      <p style={{ fontSize: 12.5, color: 'var(--ink-400)' }}>{customer.jobHistory.length} jobs</p>
                     </div>
                   </div>
                   <Badge
                     variant={SOURCE_BADGE[customer.source] ?? 'neutral'}
-                    className="text-[10px] capitalize flex-shrink-0"
+                    className="capitalize flex-shrink-0"
                   >
                     {customer.source}
                   </Badge>
                 </div>
 
                 {/* Spend + last job */}
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-bold text-emerald-400">{formatCurrency(customer.totalSpent)}</p>
-                    <p className="text-xs text-slate-600">total spent</p>
+                    <p className="tnum" style={{ fontSize: 17, fontWeight: 700, color: 'var(--green-500)', letterSpacing: '-0.01em' }}>{formatCurrency(customer.totalSpent)}</p>
+                    <p style={{ fontSize: 11.5, color: 'var(--ink-400)', marginTop: 2 }}>total spent</p>
                   </div>
                   {lastJob ? (
                     <div className="text-right">
-                      <p className="text-xs text-slate-500">Last job</p>
-                      <p className="text-xs text-slate-400">{lastJob.scheduledDate}</p>
+                      <p style={{ fontSize: 11.5, color: 'var(--ink-400)' }}>Last job</p>
+                      <p style={{ fontSize: 12.5, color: 'var(--ink-500)', marginTop: 2 }} className="tnum">{lastJob.scheduledDate}</p>
                     </div>
                   ) : (
-                    <p className="text-xs text-slate-700 italic">No jobs yet</p>
+                    <p style={{ fontSize: 12, color: 'var(--ink-300)', fontStyle: 'italic' }}>No jobs yet</p>
                   )}
                 </div>
 
                 {/* Preferred cleaners */}
                 {preferredCleaners.length > 0 && (
-                  <div className="mt-2.5 flex items-center gap-1.5">
-                    <Star className="h-3 w-3 text-amber-500 flex-shrink-0" />
-                    <p className="text-[10px] text-slate-500 truncate">
+                  <div className="flex items-center gap-2" style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--ink-200)' }}>
+                    <Star className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
+                    <p style={{ fontSize: 12, color: 'var(--ink-500)' }} className="truncate">
                       Prefers {preferredCleaners.map(c => c.name.split(' ')[0]).join(' + ')}
                     </p>
                   </div>
                 )}
 
                 {/* Notes */}
-                {customer.notes && (
-                  <p className="mt-1.5 text-[11px] text-slate-600 truncate">{customer.notes}</p>
+                {customer.notes && !preferredCleaners.length && (
+                  <p style={{ fontSize: 12, color: 'var(--ink-400)', marginTop: 10 }} className="truncate">{customer.notes}</p>
                 )}
               </button>
             </motion.div>
@@ -227,9 +228,9 @@ export default function CustomersPage() {
         })}
 
         {filtered.length === 0 && (
-          <div className="col-span-full py-16 text-center">
-            <Users className="h-8 w-8 text-slate-700 mx-auto mb-3" />
-            <p className="text-sm text-slate-500">No customers match your search</p>
+          <div className="col-span-full py-20 text-center">
+            <Users className="h-10 w-10 text-slate-700 mx-auto mb-4" />
+            <p style={{ fontSize: 14, color: 'var(--ink-400)' }}>No customers match your search</p>
           </div>
         )}
       </div>

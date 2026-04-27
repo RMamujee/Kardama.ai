@@ -1,19 +1,25 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { CLEANERS, JOBS } from '@/lib/mock-data'
-import { buildOptimizedRoutes, TeamRoute, RouteStop } from '@/lib/routing-engine'
+import {
+  buildOptimizedRoutes, TeamRoute, RouteStop, RealLegOverrides,
+} from '@/lib/routing-engine'
 import { fetchTeamRoute, RealRoute, CONGESTION_COLOR } from '@/lib/mapbox-routing'
 import { RoutingPanel } from './RoutingPanel'
 import { Crosshair, WifiOff, AlertTriangle, X, Loader2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 // Free tile layers — no API key required
 const TILE_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
 const TILE_SAT  = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
 const ATTR_CARTO = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>'
 const ATTR_SAT   = '© Esri — Source: Esri, Maxar, GeoEye, Earthstar Geographics'
+
+// localStorage key — overrides are scoped to the day so they reset overnight.
+const OVERRIDES_KEY = 'kardama:dispatch:overrides'
 
 function fixLeafletIcons() {
   // @ts-ignore
@@ -76,10 +82,37 @@ function FlyTo({ lat, lng }: { lat: number; lng: number }) {
 
 interface GpsPos { lat: number; lng: number; accuracy: number; speed: number | null }
 
+function todayStr() { return new Date().toISOString().split('T')[0] }
+
+function loadOverrides(): Record<string, RouteStop['status']> {
+  if (typeof window === 'undefined') return {}
+  try {
+    const raw = window.localStorage.getItem(OVERRIDES_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw) as { date?: string; overrides?: Record<string, RouteStop['status']> }
+    if (parsed?.date !== todayStr()) return {}
+    return parsed.overrides ?? {}
+  } catch {
+    return {}
+  }
+}
+
+function saveOverrides(overrides: Record<string, RouteStop['status']>) {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(OVERRIDES_KEY, JSON.stringify({
+      date: todayStr(),
+      overrides,
+    }))
+  } catch {
+    // quota / private mode — fail silently
+  }
+}
+
 export function LiveMapView() {
   const [mounted, setMounted]           = useState(false)
   const [satellite, setSatellite]       = useState(false)
-  const [routes, setRoutes]             = useState<TeamRoute[]>([])
+  const [overrides, setOverrides]       = useState<Record<string, RouteStop['status']>>({})
   const [realRoutes, setRealRoutes]     = useState<Record<string, RealRoute | null>>({})
   const [loadingRoutes, setLoadingRoutes] = useState(false)
   const [gpsPos, setGpsPos]             = useState<GpsPos | null>(null)
@@ -93,20 +126,51 @@ export function LiveMapView() {
 
   useEffect(() => {
     fixLeafletIcons()
+    setOverrides(loadOverrides())
     setMounted(true)
-    const todayStr = new Date().toISOString().split('T')[0]
-    setRoutes(buildOptimizedRoutes(JOBS.filter(j => j.scheduledDate === todayStr), CLEANERS))
   }, [])
 
-  // Fetch real road geometry from OSRM whenever routes change
+  // Today's jobs with cancellation overrides applied. Memoised so referential
+  // equality only changes when overrides change.
+  const todayJobs = useMemo(() => {
+    const t = todayStr()
+    return JOBS
+      .filter(j => j.scheduledDate === t)
+      .map(j => overrides[j.id] === 'cancelled' ? { ...j, status: 'cancelled' as const } : j)
+  }, [overrides])
+
+  // First pass: build routes with haversine estimates so the UI shows
+  // something immediately. Then we ask OSRM for real geometry below.
+  const haversineRoutes = useMemo(
+    () => buildOptimizedRoutes(todayJobs, CLEANERS),
+    [todayJobs],
+  )
+
+  // Re-build using OSRM real durations once they arrive.
+  const routes: TeamRoute[] = useMemo(() => {
+    const overridesByTeam: RealLegOverrides = {}
+    for (const r of haversineRoutes) {
+      const real = realRoutes[r.teamId]
+      // OSRM legs are start → stop1, stop1 → stop2, ... so length should equal
+      // the number of stops on this route.
+      if (real && real.legs.length === r.stops.length) {
+        overridesByTeam[r.teamId] = real.legs
+      }
+    }
+    return Object.keys(overridesByTeam).length > 0
+      ? buildOptimizedRoutes(todayJobs, CLEANERS, overridesByTeam)
+      : haversineRoutes
+  }, [haversineRoutes, todayJobs, realRoutes])
+
+  // Fetch real road geometry from OSRM whenever the route shape changes.
   useEffect(() => {
-    if (routes.length === 0) return
+    if (haversineRoutes.length === 0) return
     fetchAbort.current?.abort()
     fetchAbort.current = new AbortController()
     setLoadingRoutes(true)
 
     Promise.all(
-      routes.map(route => {
+      haversineRoutes.map(route => {
         const waypoints = [
           { lat: route.startLat, lng: route.startLng },
           ...route.stops.filter(s => s.status !== 'cancelled').map(s => ({ lat: s.job.lat, lng: s.job.lng })),
@@ -115,18 +179,22 @@ export function LiveMapView() {
       })
     ).then(results => {
       const map: Record<string, RealRoute | null> = {}
-      results.forEach((r, i) => { map[routes[i].teamId] = r })
+      results.forEach((r, i) => { map[haversineRoutes[i].teamId] = r })
       setRealRoutes(map)
       setLoadingRoutes(false)
-    }).catch(() => setLoadingRoutes(false))
-  }, [routes])
+    }).catch(err => {
+      if ((err as { name?: string })?.name !== 'AbortError') setLoadingRoutes(false)
+    })
+  }, [haversineRoutes])
 
-  function refreshRoutes(overrides: Record<string, RouteStop['status']>) {
-    const todayStr = new Date().toISOString().split('T')[0]
-    const todayJobs = JOBS
-      .filter(j => j.scheduledDate === todayStr)
-      .map(j => overrides[j.id] === 'cancelled' ? { ...j, status: 'cancelled' as const } : j)
-    setRoutes(buildOptimizedRoutes(todayJobs, CLEANERS))
+  function setStopStatus(jobId: string, status: RouteStop['status'] | null) {
+    setOverrides(prev => {
+      const next = { ...prev }
+      if (status === null) delete next[jobId]
+      else next[jobId] = status
+      saveOverrides(next)
+      return next
+    })
   }
 
   function startGPS(cleanerId: string | null = null) {
@@ -164,7 +232,8 @@ export function LiveMapView() {
       <RoutingPanel
         routes={routes}
         cleaners={CLEANERS}
-        onRefreshRoutes={refreshRoutes}
+        overrides={overrides}
+        onSetStopStatus={setStopStatus}
         gpsTracking={gpsTracking}
         trackedCleaner={trackedAs}
         onStartGPS={startGPS}
@@ -249,42 +318,40 @@ export function LiveMapView() {
         {/* Map controls — bottom right */}
         <div className="absolute bottom-6 right-4 z-[1000] flex flex-col items-end gap-2">
           {loadingRoutes && (
-            <div className="flex items-center gap-2 rounded-xl px-3 py-2"
-              style={{ background: 'var(--bg-card)', border: '1px solid var(--ink-200)', fontSize: 12, color: 'var(--ink-400)' }}>
+            <div className="flex items-center gap-2 rounded-xl px-3 py-2 bg-card border border-ink-200 text-[12px] text-ink-400">
               <Loader2 className="h-3.5 w-3.5 animate-spin" /> Routing…
             </div>
           )}
 
           {/* Map / Satellite toggle */}
-          <div className="flex overflow-hidden rounded-xl" style={{ border: '1px solid var(--ink-200)', boxShadow: '0 4px 12px rgba(0,0,0,0.4)' }}>
+          <div className="flex overflow-hidden rounded-xl border border-ink-200 shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
             {(['Map', 'Satellite'] as const).map((label, i) => {
               const active = (label === 'Satellite') === satellite
               return (
-                <button key={label} onClick={() => setSatellite(label === 'Satellite')}
-                  style={{
-                    padding: '7px 14px', fontSize: 12, fontWeight: 600,
-                    borderLeft: i > 0 ? '1px solid var(--ink-200)' : 'none',
-                    background: active ? 'var(--blue-500)' : 'var(--bg-card)',
-                    color: active ? '#fff' : 'var(--ink-400)',
-                    border: 'none', cursor: 'pointer', transition: 'all 120ms',
-                  }}
+                <button
+                  key={label}
+                  onClick={() => setSatellite(label === 'Satellite')}
+                  className={cn(
+                    'px-[14px] py-[7px] text-[12px] font-semibold cursor-pointer transition-colors',
+                    i > 0 && 'border-l border-ink-200',
+                    active ? 'bg-violet-500 text-white' : 'bg-card text-ink-400 hover:text-ink-700'
+                  )}
                 >{label}</button>
               )
             })}
           </div>
 
           {/* Centre on GPS */}
-          <button onClick={() => gpsPos && setFlyTarget({ lat: gpsPos.lat, lng: gpsPos.lng })}
+          <button
+            onClick={() => gpsPos && setFlyTarget({ lat: gpsPos.lat, lng: gpsPos.lng })}
             disabled={!gpsPos}
-            style={{
-              width: 36, height: 36, borderRadius: 10,
-              background: gpsPos ? 'var(--blue-500)' : 'var(--bg-card)',
-              border: '1px solid var(--ink-200)',
-              color: gpsPos ? '#fff' : 'var(--ink-300)',
-              cursor: gpsPos ? 'pointer' : 'not-allowed',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
-            }}>
+            className={cn(
+              'h-9 w-9 rounded-[10px] border border-ink-200 flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.4)] transition-colors',
+              gpsPos
+                ? 'bg-violet-500 text-white cursor-pointer'
+                : 'bg-card text-ink-300 cursor-not-allowed'
+            )}
+          >
             <Crosshair className="h-4 w-4" />
           </button>
         </div>
@@ -292,12 +359,11 @@ export function LiveMapView() {
         {/* GPS error */}
         {gpsError && (
           <div className="absolute top-4 left-1/2 z-[1001] -translate-x-1/2">
-            <div className="flex items-center gap-2 rounded-xl px-4 py-2.5"
-              style={{ background: 'var(--bg-card)', border: '1px solid var(--red-500)', boxShadow: '0 4px 16px rgba(0,0,0,0.5)' }}>
-              <AlertTriangle className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--red-500)' }} />
-              <span style={{ fontSize: 12, color: 'var(--ink-700)' }}>{gpsError}</span>
-              <button onClick={() => setGpsError(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', marginLeft: 4 }}>
-                <X className="h-3.5 w-3.5" style={{ color: 'var(--ink-400)' }} />
+            <div className="flex items-center gap-2 rounded-xl px-4 py-2.5 bg-card border border-rose-500 shadow-[0_4px_16px_rgba(0,0,0,0.5)]">
+              <AlertTriangle className="h-4 w-4 flex-shrink-0 text-rose-500" />
+              <span className="text-[12px] text-ink-700">{gpsError}</span>
+              <button onClick={() => setGpsError(null)} className="ml-1 cursor-pointer">
+                <X className="h-3.5 w-3.5 text-ink-400" />
               </button>
             </div>
           </div>
@@ -306,20 +372,16 @@ export function LiveMapView() {
         {/* GPS live bar */}
         {gpsTracking && gpsPos && (
           <div className="absolute top-4 right-4 z-[1000]">
-            <div className="flex items-center gap-3 rounded-xl px-4 py-2.5"
-              style={{ background: 'var(--bg-card)', border: '1px solid var(--blue-200)', boxShadow: '0 4px 16px rgba(0,0,0,0.5)' }}>
-              <span className="gps-dot inline-block h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: 'var(--blue-500)' }} />
-              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--blue-400)' }}>
+            <div className="flex items-center gap-3 rounded-xl px-4 py-2.5 bg-card border border-violet-200 shadow-[0_4px_16px_rgba(0,0,0,0.5)]">
+              <span className="gps-dot inline-block h-2.5 w-2.5 rounded-full flex-shrink-0 bg-violet-500" />
+              <span className="text-[12px] font-semibold text-violet-400">
                 {trackedAs ? `${CLEANERS.find(c => c.id === trackedAs)?.name.split(' ')[0]} — Live` : 'GPS Active'}
               </span>
-              <span style={{ fontSize: 11, color: 'var(--ink-400)' }}>±{Math.round(gpsPos.accuracy)}m</span>
-              <button onClick={stopGPS}
-                style={{
-                  marginLeft: 4, borderRadius: 6, padding: '2px 8px', fontSize: 11, fontWeight: 600,
-                  background: 'var(--red-50)', border: '1px solid var(--red-500)',
-                  color: 'var(--red-500)', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 4,
-                }}>
+              <span className="text-[11px] text-ink-400">±{Math.round(gpsPos.accuracy)}m</span>
+              <button
+                onClick={stopGPS}
+                className="ml-1 flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold bg-rose-500/10 border border-rose-500 text-rose-500 cursor-pointer"
+              >
                 <WifiOff className="h-2.5 w-2.5" /> Stop
               </button>
             </div>

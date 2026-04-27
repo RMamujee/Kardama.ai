@@ -11,21 +11,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { StatTile } from '@/components/ui/stat-tile'
 import { useSocialStore } from '@/store/useSocialStore'
 import { SocialLead, LeadPlatform, LeadStatus } from '@/types'
 import { cn } from '@/lib/utils'
 
 const PLATFORM_CONFIG: Record<LeadPlatform, { label: string; color: string; bg: string; Icon: React.ElementType }> = {
-  'facebook-group': { label: 'FB Group', color: 'text-blue-400', bg: 'bg-blue-500/15', Icon: Globe2 },
-  'facebook-page': { label: 'FB Page', color: 'text-blue-400', bg: 'bg-blue-500/15', Icon: Globe2 },
-  'instagram': { label: 'Instagram', color: 'text-pink-400', bg: 'bg-pink-500/15', Icon: Camera },
-  'nextdoor': { label: 'Nextdoor', color: 'text-emerald-400', bg: 'bg-emerald-500/15', Icon: MapPin },
+  'facebook-group': { label: 'FB Group', color: 'text-violet-400', bg: 'bg-violet-500/15', Icon: Globe2 },
+  'facebook-page':  { label: 'FB Page',  color: 'text-violet-400', bg: 'bg-violet-500/15', Icon: Globe2 },
+  'instagram':      { label: 'Instagram', color: 'text-pink-500',  bg: 'bg-pink-500/15',   Icon: Camera },
+  'nextdoor':       { label: 'Nextdoor',  color: 'text-emerald-500', bg: 'bg-emerald-500/15', Icon: MapPin },
 }
 
 const URGENCY_CONFIG = {
-  high: { label: 'Urgent', color: 'text-red-400', bg: 'bg-red-500/15' },
-  medium: { label: 'Normal', color: 'text-amber-400', bg: 'bg-amber-500/15' },
-  low: { label: 'Low', color: 'text-slate-400', bg: 'bg-slate-500/15' },
+  high:   { label: 'Urgent', color: 'text-rose-500',   bg: 'bg-rose-500/15' },
+  medium: { label: 'Normal', color: 'text-amber-500',  bg: 'bg-amber-500/15' },
+  low:    { label: 'Low',    color: 'text-ink-400',    bg: 'bg-ink-500/15' },
 }
 
 const STATUS_FILTERS: { value: LeadStatus | 'all'; label: string }[] = [
@@ -77,37 +78,37 @@ function RespondModal({ lead, onClose }: RespondModalProps) {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="w-full max-w-2xl rounded-2xl bg-[#0d1321] border border-[#1e2a3a] shadow-2xl overflow-hidden"
+        className="w-full max-w-2xl rounded-2xl bg-card border border-ink-200 shadow-2xl overflow-hidden"
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#1e2a3a]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-ink-200">
           <div>
-            <p className="text-sm font-semibold text-white">Respond to {lead.author}</p>
-            <p className="text-xs text-slate-500">{lead.groupOrPage}</p>
+            <p className="text-[13px] font-semibold text-ink-900">Respond to {lead.author}</p>
+            <p className="text-[12px] text-ink-500">{lead.groupOrPage}</p>
           </div>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-300 transition-colors">
+          <button onClick={onClose} className="text-ink-500 hover:text-ink-700 transition-colors">
             <XCircle className="h-5 w-5" />
           </button>
         </div>
 
         <div className="p-6 space-y-4">
           {/* Original post */}
-          <div className="rounded-xl bg-[#070b14] border border-[#1e2a3a] p-3">
-            <p className="text-xs text-slate-400 leading-relaxed italic">"{lead.content}"</p>
+          <div className="rounded-xl bg-page border border-ink-200 p-3">
+            <p className="text-[12px] text-ink-400 leading-relaxed italic">&quot;{lead.content}&quot;</p>
           </div>
 
           {/* Template picker */}
           <div>
-            <p className="text-xs font-medium text-slate-400 mb-2">Quick Templates</p>
+            <p className="text-[12px] font-medium text-ink-400 mb-2">Quick Templates</p>
             <div className="flex flex-wrap gap-1.5">
               {relevantTemplates.map(t => (
                 <button
                   key={t.id}
                   onClick={() => handleTemplateSelect(t.id)}
                   className={cn(
-                    'rounded-lg border px-2.5 py-1 text-xs font-medium transition-all',
+                    'rounded-lg border px-2.5 py-1 text-[12px] font-medium transition-colors',
                     selectedTemplate === t.id
-                      ? 'border-indigo-500/60 bg-indigo-500/15 text-indigo-300'
-                      : 'border-[#1e2a3a] text-slate-500 hover:border-[#2d3f56] hover:text-slate-400'
+                      ? 'border-violet-500/60 bg-violet-500/15 text-violet-400'
+                      : 'border-ink-200 text-ink-500 hover:border-ink-100 hover:text-ink-700'
                   )}
                 >
                   {t.title}
@@ -118,15 +119,15 @@ function RespondModal({ lead, onClose }: RespondModalProps) {
 
           {/* Message editor */}
           <div>
-            <p className="text-xs font-medium text-slate-400 mb-1.5">Your Response</p>
+            <p className="text-[12px] font-medium text-ink-400 mb-1.5">Your Response</p>
             <textarea
               value={message}
               onChange={e => setMessage(e.target.value)}
               rows={8}
               placeholder="Type your response or select a template above..."
-              className="w-full rounded-xl bg-[#070b14] border border-[#1e2a3a] px-3 py-2.5 text-xs text-slate-300 placeholder:text-slate-600 resize-none focus:outline-none focus:border-indigo-500/50 transition-colors"
+              className="w-full rounded-xl bg-page border border-ink-200 px-3 py-2.5 text-[12px] text-ink-700 placeholder:text-ink-400 resize-none focus:outline-none focus:border-violet-500/50 transition-colors"
             />
-            <p className="text-right text-[10px] text-slate-600 mt-1">{message.length} chars</p>
+            <p className="text-right text-[11px] text-ink-400 mt-1">{message.length} chars</p>
           </div>
 
           <div className="flex gap-2">
@@ -137,7 +138,7 @@ function RespondModal({ lead, onClose }: RespondModalProps) {
               disabled={sending || sent || !message.trim()}
             >
               {sent ? (
-                <><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Sent!</>
+                <><CheckCircle2 className="h-4 w-4 text-emerald-500" /> Sent!</>
               ) : sending ? (
                 <><span className="animate-spin">⟳</span> Sending...</>
               ) : (
@@ -175,11 +176,11 @@ function LeadCard({ lead, onRespond }: LeadCardProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       className={cn(
-        'rounded-xl border transition-all',
+        'rounded-xl border transition-colors',
         isCaptured && 'border-emerald-500/30 bg-emerald-500/[0.04]',
-        isResponded && 'border-indigo-500/20 bg-indigo-500/[0.03]',
-        isDismissed && 'border-[#1a2537] bg-transparent opacity-50',
-        isNew && 'border-[#1e2a3a] bg-[#0d1321]',
+        isResponded && 'border-violet-500/20 bg-violet-500/[0.03]',
+        isDismissed && 'border-ink-200 bg-transparent opacity-50',
+        isNew && 'border-ink-200 bg-card',
       )}
     >
       <button
@@ -188,38 +189,38 @@ function LeadCard({ lead, onRespond }: LeadCardProps) {
       >
         <div className="flex items-start gap-3">
           {/* Avatar */}
-          <div className={cn('flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold', platform.bg, platform.color)}>
+          <div className={cn('flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-[12px] font-bold', platform.bg, platform.color)}>
             {lead.authorInitials}
           </div>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-medium text-slate-200">{lead.author}</span>
-              <span className={cn('flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium', platform.bg, platform.color)}>
+              <span className="text-[13px] font-medium text-ink-900">{lead.author}</span>
+              <span className={cn('flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium', platform.bg, platform.color)}>
                 <PlatformIcon className="h-2.5 w-2.5" />
                 {platform.label}
               </span>
               {isNew && (
-                <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-medium', urgency.bg, urgency.color)}>
+                <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-medium', urgency.bg, urgency.color)}>
                   {urgency.label}
                 </span>
               )}
               {isCaptured && (
-                <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-emerald-500/15 text-emerald-400">
+                <span className="rounded-full px-2 py-0.5 text-[11px] font-medium bg-emerald-500/15 text-emerald-500">
                   Lead Captured
                 </span>
               )}
               {isResponded && (
-                <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-indigo-500/15 text-indigo-400">
+                <span className="rounded-full px-2 py-0.5 text-[11px] font-medium bg-violet-500/15 text-violet-400">
                   Responded
                 </span>
               )}
             </div>
 
-            <p className="mt-0.5 text-[11px] text-slate-500 truncate">{lead.groupOrPage}</p>
-            <p className="mt-1.5 text-xs text-slate-400 line-clamp-2 leading-relaxed">{lead.content}</p>
+            <p className="mt-0.5 text-[11px] text-ink-500 truncate">{lead.groupOrPage}</p>
+            <p className="mt-1.5 text-[12px] text-ink-400 line-clamp-2 leading-relaxed">{lead.content}</p>
 
-            <div className="mt-2 flex items-center gap-3 text-[10px] text-slate-600">
+            <div className="mt-2 flex items-center gap-3 text-[11px] text-ink-400">
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 {formatDistanceToNow(new Date(lead.postedAt), { addSuffix: true })}
@@ -243,7 +244,7 @@ function LeadCard({ lead, onRespond }: LeadCardProps) {
             </div>
           </div>
 
-          <ChevronDown className={cn('h-4 w-4 flex-shrink-0 text-slate-600 transition-transform', expanded && 'rotate-180')} />
+          <ChevronDown className={cn('h-4 w-4 flex-shrink-0 text-ink-400 transition-transform', expanded && 'rotate-180')} />
         </div>
       </button>
 
@@ -257,14 +258,14 @@ function LeadCard({ lead, onRespond }: LeadCardProps) {
           >
             <div className="px-4 pb-4 space-y-3">
               {/* Full post */}
-              <div className="rounded-xl bg-[#070b14] border border-[#1e2a3a] p-3">
-                <p className="text-xs text-slate-300 leading-relaxed">{lead.content}</p>
+              <div className="rounded-xl bg-page border border-ink-200 p-3">
+                <p className="text-[12px] text-ink-700 leading-relaxed">{lead.content}</p>
               </div>
 
               {/* Response info if responded */}
               {(isResponded || isCaptured) && lead.respondedAt && (
-                <div className="flex items-center gap-2 text-xs text-slate-500">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                <div className="flex items-center gap-2 text-[12px] text-ink-500">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                   Responded {formatDistanceToNow(new Date(lead.respondedAt), { addSuffix: true })}
                 </div>
               )}
@@ -280,7 +281,7 @@ function LeadCard({ lead, onRespond }: LeadCardProps) {
                       <Button size="sm" variant="outline" className="flex-1 min-w-[120px]" onClick={() => captureLead(lead.id)}>
                         <UserPlus className="h-3.5 w-3.5" /> Mark as Lead
                       </Button>
-                      <Button size="sm" variant="outline" className="text-slate-500" onClick={() => dismissLead(lead.id)}>
+                      <Button size="sm" variant="outline" className="text-ink-500" onClick={() => dismissLead(lead.id)}>
                         <XCircle className="h-3.5 w-3.5" />
                       </Button>
                     </>
@@ -296,7 +297,7 @@ function LeadCard({ lead, onRespond }: LeadCardProps) {
                     </>
                   )}
                   {isCaptured && (
-                    <div className="flex items-center gap-2 text-xs text-emerald-400">
+                    <div className="flex items-center gap-2 text-[12px] text-emerald-500">
                       <CheckCircle2 className="h-4 w-4" />
                       <span>Added to leads — book from the Scheduling tab!</span>
                     </div>
@@ -306,7 +307,7 @@ function LeadCard({ lead, onRespond }: LeadCardProps) {
               {isDismissed && (
                 <button
                   onClick={() => restoreLead(lead.id)}
-                  className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                  className="flex items-center gap-1.5 text-[12px] text-ink-500 hover:text-ink-700 transition-colors"
                 >
                   <RotateCcw className="h-3.5 w-3.5" /> Restore
                 </button>
@@ -344,17 +345,10 @@ export function LeadMonitor() {
     <div className="space-y-5">
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {[
-          { label: 'New Leads', value: newCount, color: 'text-indigo-400', glow: 'shadow-[0_0_16px_rgba(99,102,241,0.1)]' },
-          { label: 'Urgent', value: urgentCount, color: 'text-red-400', glow: 'shadow-[0_0_16px_rgba(239,68,68,0.1)]' },
-          { label: 'Responded', value: respondedCount, color: 'text-amber-400', glow: '' },
-          { label: 'Captured', value: capturedCount, color: 'text-emerald-400', glow: 'shadow-[0_0_16px_rgba(16,185,129,0.1)]' },
-        ].map(s => (
-          <div key={s.label} className={cn('kpi-card rounded-xl p-3', s.glow)}>
-            <p className="text-[11px] text-slate-500 uppercase tracking-wide">{s.label}</p>
-            <p className={cn('mt-0.5 text-2xl font-bold', s.color)}>{s.value}</p>
-          </div>
-        ))}
+        <StatTile label="New Leads" value={newCount} tone="violet" />
+        <StatTile label="Urgent" value={urgentCount} tone="rose" />
+        <StatTile label="Responded" value={respondedCount} tone="amber" />
+        <StatTile label="Captured" value={capturedCount} tone="emerald" />
       </div>
 
       {/* Filters */}
@@ -362,13 +356,13 @@ export function LeadMonitor() {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-500/20">
-                <Eye className="h-3.5 w-3.5 text-indigo-400" />
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-500/20">
+                <Eye className="h-3.5 w-3.5 text-violet-400" />
               </div>
               <CardTitle>Social Lead Monitor</CardTitle>
             </div>
             {urgentCount > 0 && (
-              <span className="flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-medium text-red-400">
+              <span className="flex items-center gap-1.5 rounded-full bg-rose-500/15 px-2.5 py-1 text-[12px] font-medium text-rose-500">
                 <AlertTriangle className="h-3 w-3" />
                 {urgentCount} urgent
               </span>
@@ -380,7 +374,7 @@ export function LeadMonitor() {
             placeholder="Search by keyword, author, or location..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="text-xs"
+            className="text-[12px]"
           />
 
           <div className="flex flex-wrap gap-2">
@@ -391,10 +385,10 @@ export function LeadMonitor() {
                   key={f.value}
                   onClick={() => setStatusFilter(f.value)}
                   className={cn(
-                    'rounded-lg border px-2.5 py-1 text-xs font-medium transition-all',
+                    'rounded-lg border px-2.5 py-1 text-[12px] font-medium transition-colors',
                     statusFilter === f.value
-                      ? 'border-indigo-500/60 bg-indigo-500/15 text-indigo-300'
-                      : 'border-[#1e2a3a] text-slate-500 hover:border-[#2d3f56] hover:text-slate-400'
+                      ? 'border-violet-500/60 bg-violet-500/15 text-violet-400'
+                      : 'border-ink-200 text-ink-500 hover:border-ink-100 hover:text-ink-700'
                   )}
                 >
                   {f.label}
@@ -402,7 +396,7 @@ export function LeadMonitor() {
               ))}
             </div>
 
-            <div className="h-5 w-px bg-[#1e2a3a] self-center" />
+            <div className="h-5 w-px bg-ink-200 self-center" />
 
             {/* Platform filter */}
             <div className="flex gap-1 flex-wrap">
@@ -416,10 +410,10 @@ export function LeadMonitor() {
                   key={f.value}
                   onClick={() => setPlatformFilter(f.value as any)}
                   className={cn(
-                    'rounded-lg border px-2.5 py-1 text-xs font-medium transition-all',
+                    'rounded-lg border px-2.5 py-1 text-[12px] font-medium transition-colors',
                     platformFilter === f.value
-                      ? 'border-violet-500/60 bg-violet-500/15 text-violet-300'
-                      : 'border-[#1e2a3a] text-slate-500 hover:border-[#2d3f56] hover:text-slate-400'
+                      ? 'border-purple-500/60 bg-purple-500/15 text-purple-500'
+                      : 'border-ink-200 text-ink-500 hover:border-ink-100 hover:text-ink-700'
                   )}
                 >
                   {f.label}
@@ -437,10 +431,10 @@ export function LeadMonitor() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="rounded-xl border border-[#1e2a3a] bg-[#0d1321] p-10 text-center"
+              className="rounded-xl border border-ink-200 bg-card p-10 text-center"
             >
-              <Filter className="h-8 w-8 text-slate-600 mx-auto mb-3" />
-              <p className="text-sm text-slate-500">No leads match your filters</p>
+              <Filter className="h-8 w-8 text-ink-400 mx-auto mb-3" />
+              <p className="text-[13px] text-ink-500">No leads match your filters</p>
             </motion.div>
           ) : (
             filtered.map(lead => (

@@ -10,12 +10,13 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { StatTile } from '@/components/ui/stat-tile'
 import { useCampaignStore } from '@/store/useCampaignStore'
 import { CUSTOMERS, CLEANERS, JOBS } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
 import { NurturingCampaign, BookingSlot } from '@/types'
 
-const AVATAR_COLORS = ['#6366f1','#8b5cf6','#ec4899','#10b981','#f59e0b','#3b82f6','#14b8a6','#f43f5e','#a855f7','#06b6d4','#22c55e','#ef4444']
+const AVATAR_COLORS = ['#8B85F2','#A78BFA','#F472B6','#34D399','#FBBF24','#7A75E0','#2DD4BF','#F87171','#A78BFA','#06b6d4','#34D399','#F87171']
 
 const STATUS_CONFIG: Record<string, { label: string; variant: 'default' | 'success' | 'warning' | 'neutral' | 'danger' | 'purple'; icon: React.ReactNode }> = {
   pending: { label: 'Ready to Send', variant: 'warning', icon: <Clock className="h-3 w-3" /> },
@@ -57,19 +58,19 @@ function CampaignRow({ campaign }: { campaign: NurturingCampaign }) {
   }
 
   return (
-    <div className={cn('border-b border-[#1e2a3a] last:border-0 transition-colors', campaign.status === 'pending' && 'bg-amber-500/[0.02]')}>
+    <div className={cn('border-b border-ink-200 last:border-0 transition-colors', campaign.status === 'pending' && 'bg-amber-500/[0.02]')}>
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex w-full items-center gap-3 px-4 py-4 text-left hover:bg-white/[0.02] transition-colors"
+        className="flex w-full items-center gap-3 px-4 py-4 text-left hover:bg-hover transition-colors"
       >
         <Avatar initials={initials} color={avatarColor} size="sm" />
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <p className="text-sm font-semibold text-slate-200 truncate">{customer.name}</p>
-            <span className="hidden sm:inline text-slate-600" style={{ fontSize: 12 }}>{customer.city}</span>
+            <p className="text-[14px] font-semibold text-ink-900 truncate">{customer.name}</p>
+            <span className="hidden sm:inline text-ink-400 text-[12px]">{customer.city}</span>
           </div>
-          <p className="text-slate-500 mt-0.5" style={{ fontSize: 12 }}>
+          <p className="text-ink-500 mt-0.5 text-[12px]">
             Last cleaned {campaign.daysSinceLastJob}d ago · {TRIGGER_LABELS[campaign.trigger]}
           </p>
         </div>
@@ -78,7 +79,7 @@ function CampaignRow({ campaign }: { campaign: NurturingCampaign }) {
           <Badge variant={status.variant} className="flex items-center gap-1">
             {status.icon} {status.label}
           </Badge>
-          {expanded ? <ChevronDown className="h-4 w-4 text-slate-600" /> : <ChevronRight className="h-4 w-4 text-slate-600" />}
+          {expanded ? <ChevronDown className="h-4 w-4 text-ink-400" /> : <ChevronRight className="h-4 w-4 text-ink-400" />}
         </div>
       </button>
 
@@ -92,20 +93,19 @@ function CampaignRow({ campaign }: { campaign: NurturingCampaign }) {
           >
             <div className="px-4 pb-4 pl-16 space-y-3">
               {/* Message preview */}
-              <div className="rounded-xl bg-[#070b14] border border-[#1e2a3a] p-4">
-                <p className="mb-2" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', color: 'var(--ink-400)', textTransform: 'uppercase' }}>Follow-up Message</p>
-                <p className="text-sm text-slate-300 leading-relaxed">{campaign.message}</p>
+              <div className="rounded-[14px] bg-page border border-ink-200 p-4">
+                <p className="mb-2 text-[11px] font-bold tracking-[0.09em] text-ink-400 uppercase">Follow-up Message</p>
+                <p className="text-[14px] text-ink-700 leading-relaxed">{campaign.message}</p>
               </div>
 
               {/* Booking link */}
               {bookingUrl && (
-                <div className="flex items-center gap-2 rounded-lg bg-[#0d1321] border border-[#1e2a3a] p-3.5">
-                  <Link2 className="h-4 w-4 text-indigo-400 flex-shrink-0" />
-                  <span className="flex-1 text-slate-400 font-mono truncate" style={{ fontSize: 12.5 }}>{bookingUrl}</span>
+                <div className="flex items-center gap-2 rounded-lg bg-soft border border-ink-200 p-3.5">
+                  <Link2 className="h-4 w-4 text-violet-400 flex-shrink-0" />
+                  <span className="flex-1 text-ink-500 font-mono truncate text-[13px]">{bookingUrl}</span>
                   <button
                     onClick={handleCopy}
-                    className="text-indigo-400 hover:text-indigo-300 flex-shrink-0 font-medium"
-                    style={{ fontSize: 12.5 }}
+                    className="text-violet-400 hover:text-violet-500 flex-shrink-0 font-medium text-[13px]"
                   >
                     {copied ? '✓ Copied' : 'Copy'}
                   </button>
@@ -134,7 +134,7 @@ function CampaignRow({ campaign }: { campaign: NurturingCampaign }) {
               )}
 
               {campaign.status === 'sent' && (
-                <p className="text-slate-500 flex items-center gap-1.5" style={{ fontSize: 12 }}>
+                <p className="text-ink-500 flex items-center gap-1.5 text-[12px]">
                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                   Sent {campaign.sentAt ? new Date(campaign.sentAt).toLocaleString() : 'today'}
                 </p>
@@ -156,44 +156,44 @@ function SlotCard({ slot, onSelect, selected }: { slot: BookingSlot; onSelect: (
     <button
       onClick={onSelect}
       className={cn(
-        'w-full rounded-xl border p-4 text-left transition-all',
+        'w-full rounded-[14px] border p-4 text-left transition-colors',
         selected
-          ? 'border-indigo-500/60 bg-indigo-500/10 shadow-[0_0_12px_rgba(99,102,241,0.15)]'
-          : 'border-[#1e2a3a] bg-[#0d1321] hover:border-[#2e3d52] hover:bg-[#111827]'
+          ? 'border-violet-500/60 bg-violet-500/10 shadow-[0_0_12px_rgba(139,133,242,0.18)]'
+          : 'border-ink-200 bg-soft hover:border-ink-300 hover:bg-hover'
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-slate-200 truncate">{slot.label}</p>
+          <p className="text-[14px] font-semibold text-ink-900 truncate">{slot.label}</p>
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             {slot.insertionLabel ? (
               <div className="flex items-center gap-1">
                 {isOnRoute
-                  ? <Zap className="h-3.5 w-3.5 text-emerald-400" />
+                  ? <Zap className="h-3.5 w-3.5 text-emerald-500" />
                   : isGood
-                  ? <Route className="h-3.5 w-3.5 text-indigo-400" />
+                  ? <Route className="h-3.5 w-3.5 text-violet-400" />
                   : null}
-                <span className={cn('font-medium',
-                  isOnRoute ? 'text-emerald-400' : isGood ? 'text-indigo-400' : 'text-slate-500'
-                )} style={{ fontSize: 12 }}>
+                <span className={cn('font-medium text-[12px]',
+                  isOnRoute ? 'text-emerald-500' : isGood ? 'text-violet-400' : 'text-ink-500'
+                )}>
                   {slot.insertionLabel}
                 </span>
               </div>
             ) : (
-              <span className="text-slate-500" style={{ fontSize: 12 }}>Available</span>
+              <span className="text-ink-500 text-[12px]">Available</span>
             )}
-            <span className="text-slate-700" style={{ fontSize: 12 }}>·</span>
-            <span className="text-slate-600" style={{ fontSize: 12 }}>{cleaners.map(c => c.name.split(' ')[0]).join(' & ')}</span>
+            <span className="text-ink-300 text-[12px]">·</span>
+            <span className="text-ink-400 text-[12px]">{cleaners.map(c => c.name.split(' ')[0]).join(' & ')}</span>
           </div>
         </div>
         <div className="flex -space-x-1.5 flex-shrink-0">
           {cleaners.map(c => (
-            <Avatar key={c.id} initials={c.initials} color={c.color} size="sm" className="ring-2 ring-[#0d1321]" />
+            <Avatar key={c.id} initials={c.initials} color={c.color} size="sm" className="ring-2 ring-soft" />
           ))}
         </div>
       </div>
       {selected && (
-        <div className="mt-2.5 flex items-center gap-1.5 text-indigo-400" style={{ fontSize: 12 }}>
+        <div className="mt-2.5 flex items-center gap-1.5 text-violet-400 text-[12px]">
           <CheckCircle2 className="h-3.5 w-3.5" /> Selected — copy link to share
         </div>
       )}
@@ -231,24 +231,14 @@ export default function CampaignsPage() {
     <div className="space-y-7 max-w-6xl">
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {[
-          { label: 'Ready to Send', value: pendingCount, icon: Bell, color: 'text-amber-400', glow: 'shadow-[0_0_20px_rgba(245,158,11,0.10)]' },
-          { label: 'Sent This Cycle', value: sentCount, icon: Send, color: 'text-indigo-400', glow: 'shadow-[0_0_20px_rgba(99,102,241,0.10)]' },
-          { label: 'Total Campaigns', value: totalReach, icon: Users, color: 'text-violet-400', glow: 'shadow-[0_0_20px_rgba(139,92,246,0.10)]' },
-          { label: 'Links Generated', value: bookingLinks.length, icon: Link2, color: 'text-emerald-400', glow: 'shadow-[0_0_20px_rgba(16,185,129,0.10)]' },
-        ].map((s, i) => (
+        {([
+          { label: 'Ready to Send',   value: pendingCount,        icon: Bell,  tone: 'amber'   as const },
+          { label: 'Sent This Cycle', value: sentCount,           icon: Send,  tone: 'violet'  as const },
+          { label: 'Total Campaigns', value: totalReach,          icon: Users, tone: 'purple'  as const },
+          { label: 'Links Generated', value: bookingLinks.length, icon: Link2, tone: 'emerald' as const },
+        ]).map((s, i) => (
           <motion.div key={s.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>
-            <div className={`kpi-card rounded-xl p-5 ${s.glow}`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', color: 'var(--ink-400)', textTransform: 'uppercase' }}>{s.label}</p>
-                  <p className="mt-1 tnum text-white" style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em' }}>{s.value}</p>
-                </div>
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#1a2537]">
-                  <s.icon className={`h-4 w-4 ${s.color}`} />
-                </div>
-              </div>
-            </div>
+            <StatTile label={s.label} value={s.value} icon={s.icon} tone={s.tone} />
           </motion.div>
         ))}
       </div>
@@ -259,7 +249,7 @@ export default function CampaignsPage() {
             <Bell className="h-3.5 w-3.5 mr-1.5" />
             Nurturing Campaigns
             {pendingCount > 0 && (
-              <span className="ml-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-amber-500/20 px-1 font-bold text-amber-400" style={{ fontSize: 11 }}>
+              <span className="ml-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-amber-500/20 px-1 font-bold text-amber-500 text-[11px]">
                 {pendingCount}
               </span>
             )}
@@ -273,13 +263,13 @@ export default function CampaignsPage() {
         {/* Nurturing Campaigns Tab */}
         <TabsContent value="nurturing" className="space-y-4">
           {/* Info banner */}
-          <div className="flex items-start gap-3 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 p-4">
+          <div className="flex items-start gap-3 rounded-[14px] bg-gradient-to-r from-amber-500/10 to-rose-500/10 border border-amber-500/20 p-4">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/20 flex-shrink-0">
-              <Sparkles className="h-4 w-4 text-amber-400" />
+              <Sparkles className="h-4 w-4 text-amber-500" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-200">3-Week Follow-up Automation</p>
-              <p className="text-slate-500 mt-1 leading-relaxed" style={{ fontSize: 13 }}>
+              <p className="text-[14px] font-semibold text-ink-900">3-Week Follow-up Automation</p>
+              <p className="text-ink-500 mt-1 leading-relaxed text-[13px]">
                 AI detects customers whose last cleaning was 21+ days ago and generates personalized follow-up messages with booking links. Each link shows route-optimized time slots.
               </p>
             </div>
@@ -294,7 +284,7 @@ export default function CampaignsPage() {
             </CardHeader>
             <CardContent className="p-0">
               {campaigns.length === 0 ? (
-                <div className="px-4 py-8 text-center text-sm text-slate-500">
+                <div className="px-4 py-8 text-center text-[14px] text-ink-500">
                   No customers need follow-up yet.
                 </div>
               ) : (
@@ -306,13 +296,13 @@ export default function CampaignsPage() {
 
         {/* Booking Links Tab */}
         <TabsContent value="booking-links" className="space-y-4">
-          <div className="flex items-start gap-3 rounded-xl bg-gradient-to-r from-indigo-500/10 to-violet-500/10 border border-indigo-500/20 p-4">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500/20 flex-shrink-0">
-              <Link2 className="h-4 w-4 text-indigo-400" />
+          <div className="flex items-start gap-3 rounded-[14px] bg-gradient-to-r from-violet-500/10 to-purple-500/10 border border-violet-500/20 p-4">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-500/20 flex-shrink-0">
+              <Link2 className="h-4 w-4 text-violet-400" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-200">Route-Smart Booking Links</p>
-              <p className="text-slate-500 mt-1 leading-relaxed" style={{ fontSize: 13 }}>
+              <p className="text-[14px] font-semibold text-ink-900">Route-Smart Booking Links</p>
+              <p className="text-ink-500 mt-1 leading-relaxed text-[13px]">
                 Generate a personalized booking link for any customer. Available time slots are calculated based on team schedules and cleaning routes — prioritizing slots that cluster nearby jobs to reduce drive time.
               </p>
             </div>
@@ -327,7 +317,7 @@ export default function CampaignsPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <label className="mb-2.5 block" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', color: 'var(--ink-400)', textTransform: 'uppercase' }}>Select Customer</label>
+                    <label className="mb-2.5 block text-[11px] font-bold tracking-[0.09em] text-ink-400 uppercase">Select Customer</label>
                     <div className="space-y-1.5 max-h-64 overflow-y-auto">
                       {CUSTOMERS.map((c, i) => {
                         const initials = c.name.split(' ').map(n => n[0]).join('')
@@ -339,16 +329,16 @@ export default function CampaignsPage() {
                             className={cn(
                               'flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left transition-colors',
                               bookingCustomerId === c.id
-                                ? 'bg-indigo-500/15 border border-indigo-500/30'
-                                : 'hover:bg-white/[0.03] border border-transparent'
+                                ? 'bg-violet-500/15 border border-violet-500/30'
+                                : 'hover:bg-hover border border-transparent'
                             )}
                           >
                             <Avatar initials={initials} color={color} size="sm" />
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-slate-200 truncate" style={{ fontSize: 13 }}>{c.name}</p>
-                              <p className="text-slate-500" style={{ fontSize: 11.5 }}>{c.city}</p>
+                              <p className="font-medium text-ink-900 truncate text-[13px]">{c.name}</p>
+                              <p className="text-ink-500 text-[11px]">{c.city}</p>
                             </div>
-                            {bookingCustomerId === c.id && <CheckCircle2 className="h-3.5 w-3.5 text-indigo-400 flex-shrink-0" />}
+                            {bookingCustomerId === c.id && <CheckCircle2 className="h-3.5 w-3.5 text-violet-400 flex-shrink-0" />}
                           </button>
                         )
                       })}
@@ -365,11 +355,11 @@ export default function CampaignsPage() {
 
                   {activeLink && (
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2 rounded-lg bg-[#070b14] border border-emerald-500/30 p-3.5">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                      <div className="flex items-center gap-2 rounded-lg bg-page border border-emerald-500/30 p-3.5">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-emerald-400" style={{ fontSize: 12.5 }}>Link Generated!</p>
-                          <p className="text-slate-500 font-mono truncate" style={{ fontSize: 11.5 }}>
+                          <p className="font-medium text-emerald-500 text-[13px]">Link Generated!</p>
+                          <p className="text-ink-500 font-mono truncate text-[11px]">
                             /book/{activeLink.token.slice(0, 18)}…
                           </p>
                         </div>
@@ -383,7 +373,7 @@ export default function CampaignsPage() {
                         <Copy className="h-3.5 w-3.5" />
                         {copiedLink ? '✓ Copied!' : 'Copy Link to Share'}
                       </Button>
-                      <p className="text-slate-600 text-center" style={{ fontSize: 11.5 }}>
+                      <p className="text-ink-400 text-center text-[11px]">
                         Expires {new Date(activeLink.expiresAt + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </p>
                     </div>
@@ -399,7 +389,7 @@ export default function CampaignsPage() {
                   <CardTitle>
                     Available Slots
                     {selectedCustomer && (
-                      <span className="text-slate-500 font-normal text-sm ml-1">— {selectedCustomer.name}</span>
+                      <span className="text-ink-500 font-normal text-[14px] ml-1">— {selectedCustomer.name}</span>
                     )}
                   </CardTitle>
                 </CardHeader>
@@ -407,11 +397,11 @@ export default function CampaignsPage() {
                   {loadingSlots ? (
                     <div className="space-y-2">
                       {Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="h-16 rounded-xl bg-[#0d1321] animate-pulse" />
+                        <div key={i} className="h-16 rounded-[14px] bg-soft animate-pulse" />
                       ))}
                     </div>
                   ) : availableSlots.length === 0 ? (
-                    <div className="py-12 text-center text-sm text-slate-500">
+                    <div className="py-12 text-center text-[14px] text-ink-500">
                       Select a customer and click &ldquo;Generate Booking Link&rdquo; to see available slots based on team schedules and cleaning routes.
                     </div>
                   ) : (
@@ -445,18 +435,17 @@ export default function CampaignsPage() {
                   const color = AVATAR_COLORS[CUSTOMERS.indexOf(customer) % AVATAR_COLORS.length]
                   const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/book/${link.token}`
                   return (
-                    <div key={link.token} className="flex items-center gap-3 px-4 py-3.5 border-b border-[#1e2a3a] last:border-0">
+                    <div key={link.token} className="flex items-center gap-3 px-4 py-3.5 border-b border-ink-200 last:border-0">
                       <Avatar initials={initials} color={color} size="sm" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-200">{customer.name}</p>
-                        <p className="text-slate-500 font-mono truncate" style={{ fontSize: 12 }}>/book/{link.token.slice(0, 20)}…</p>
+                        <p className="text-[14px] font-medium text-ink-900">{customer.name}</p>
+                        <p className="text-ink-500 font-mono truncate text-[12px]">/book/{link.token.slice(0, 20)}…</p>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <Badge variant="neutral">{link.slots.length} slots</Badge>
                         <button
                           onClick={() => { navigator.clipboard.writeText(url) }}
-                          className="text-indigo-400 hover:text-indigo-300"
-                          style={{ fontSize: 12.5 }}
+                          className="text-violet-400 hover:text-violet-500"
                         >
                           <Copy className="h-4 w-4" />
                         </button>

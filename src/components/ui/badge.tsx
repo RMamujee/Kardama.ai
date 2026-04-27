@@ -3,53 +3,43 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const badgeVariants = cva(
-  'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-semibold transition-colors',
+  'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-[0.01em] transition-colors',
   {
     variants: {
       variant: {
-        default: 'text-[11.5px]',
-        success: 'text-[11.5px]',
-        warning: 'text-[11.5px]',
-        danger:  'text-[11.5px]',
-        neutral: 'text-[11.5px]',
-        purple:  'text-[11.5px]',
-        teal:    'text-[11.5px]',
+        default: 'bg-violet-500/15 text-violet-400',
+        success: 'bg-emerald-500/15 text-emerald-500',
+        warning: 'bg-amber-500/15 text-amber-500',
+        danger:  'bg-rose-500/15 text-rose-500',
+        neutral: 'bg-ink-500/15 text-ink-500',
+        purple:  'bg-purple-500/15 text-purple-500',
+        teal:    'bg-teal-500/15 text-teal-500',
       },
     },
     defaultVariants: { variant: 'default' },
   }
 )
 
-const BADGE_STYLES: Record<string, React.CSSProperties> = {
-  default: { background: 'rgba(139,133,242,0.15)', color: '#A8A2F7' },
-  success: { background: 'rgba(52,211,153,0.14)',  color: '#34D399' },
-  warning: { background: 'rgba(251,191,36,0.14)',  color: '#FBBF24' },
-  danger:  { background: 'rgba(248,113,113,0.14)', color: '#F87171' },
-  neutral: { background: 'rgba(144,153,174,0.12)', color: 'var(--ink-500)' },
-  purple:  { background: 'rgba(167,139,250,0.14)', color: '#C4B5FD' },
-  teal:    { background: 'rgba(45,212,191,0.14)',  color: '#5EEAD4' },
+const DOT_COLOR: Record<string, string> = {
+  default: 'bg-violet-400',
+  success: 'bg-emerald-500',
+  warning: 'bg-amber-500',
+  danger:  'bg-rose-500',
+  neutral: 'bg-ink-500',
+  purple:  'bg-purple-500',
+  teal:    'bg-teal-500',
 }
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement>, VariantProps<typeof badgeVariants> {
   dot?: boolean
 }
 
-export function Badge({ className, variant = 'default', dot, style, ...props }: BadgeProps) {
+export function Badge({ className, variant = 'default', dot, children, ...props }: BadgeProps) {
   const v = variant ?? 'default'
-  const tokenStyle = BADGE_STYLES[v] ?? BADGE_STYLES.default
   return (
-    <span
-      className={cn(badgeVariants({ variant }), className)}
-      style={{ ...tokenStyle, ...style }}
-      {...props}
-    >
-      {dot && (
-        <span
-          className="inline-block rounded-full"
-          style={{ width: 6, height: 6, background: tokenStyle.color as string }}
-        />
-      )}
-      {props.children}
+    <span className={cn(badgeVariants({ variant }), className)} {...props}>
+      {dot && <span className={cn('inline-block h-1.5 w-1.5 rounded-full', DOT_COLOR[v])} />}
+      {children}
     </span>
   )
 }

@@ -11,6 +11,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { StatTile } from '@/components/ui/stat-tile'
 import { JOBS, CUSTOMERS, CLEANERS } from '@/lib/mock-data'
 import { formatCurrency } from '@/lib/utils'
 
@@ -27,11 +28,11 @@ function generateMonthlyData() {
 }
 
 const SERVICE_DATA = [
-  { name: 'Standard Clean',      value: 52, color: '#6366f1' },
-  { name: 'Deep Clean',          value: 24, color: '#8b5cf6' },
-  { name: 'Move-Out',            value: 12, color: '#f59e0b' },
-  { name: 'Airbnb',              value:  8, color: '#10b981' },
-  { name: 'Post-Construction',   value:  4, color: '#ef4444' },
+  { name: 'Standard Clean',      value: 52, color: '#8B85F2' },
+  { name: 'Deep Clean',          value: 24, color: '#A78BFA' },
+  { name: 'Move-Out',            value: 12, color: '#FBBF24' },
+  { name: 'Airbnb',              value:  8, color: '#34D399' },
+  { name: 'Post-Construction',   value:  4, color: '#F87171' },
 ]
 
 const AREA_CITIES = [
@@ -51,14 +52,14 @@ const AI_INSIGHTS = [
 
 const TOOLTIP_STYLE = {
   contentStyle: {
-    background: '#111827',
-    border: '1px solid #1e2a3a',
+    background: '#111726',
+    border: '1px solid #3A4258',
     borderRadius: 10,
-    color: '#f1f5f9',
+    color: '#F2F5FA',
     boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
   },
-  labelStyle: { color: '#94a3b8' },
-  itemStyle: { color: '#f1f5f9' },
+  labelStyle: { color: '#9099AE' },
+  itemStyle: { color: '#F2F5FA' },
 }
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
@@ -107,10 +108,10 @@ export default function AnalyticsPage() {
   })
 
   const kpis = [
-    { label: 'Annual Revenue',   value: formatCurrency(totalRevenue),  change: '+18%', up: true,  icon: DollarSign, color: 'text-indigo-400' },
-    { label: 'Jobs Completed',   value: completedJobs.toString(),      change: '+12%', up: true,  icon: Briefcase,  color: 'text-emerald-400' },
-    { label: 'Avg Job Value',    value: formatCurrency(avgJobValue),   change: '+5%',  up: true,  icon: TrendingUp, color: 'text-violet-400' },
-    { label: 'Completion Rate',  value: `${completionRate}%`,          change: '-2%',  up: false, icon: Star,       color: 'text-amber-400' },
+    { label: 'Annual Revenue',  value: formatCurrency(totalRevenue),  change: '+18%', up: true,  icon: DollarSign, tone: 'violet'  as const },
+    { label: 'Jobs Completed',  value: completedJobs.toString(),      change: '+12%', up: true,  icon: Briefcase,  tone: 'emerald' as const },
+    { label: 'Avg Job Value',   value: formatCurrency(avgJobValue),   change: '+5%',  up: true,  icon: TrendingUp, tone: 'purple'  as const },
+    { label: 'Completion Rate', value: `${completionRate}%`,          change: '-2%',  up: false, icon: Star,       tone: 'amber'   as const },
   ]
 
   return (
@@ -119,8 +120,8 @@ export default function AnalyticsPage() {
       {/* ── Period selector ───────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-100">Analytics &amp; Reports</h1>
-          <p className="text-sm text-slate-500 mt-1">Long Beach service area · all teams</p>
+          <h1 className="text-[20px] font-bold text-ink-900">Analytics &amp; Reports</h1>
+          <p className="text-[14px] text-ink-500 mt-1">Long Beach service area · all teams</p>
         </div>
         <Tabs defaultValue="year" onValueChange={v => setPeriod(v as typeof period)}>
           <TabsList>
@@ -141,20 +142,22 @@ export default function AnalyticsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.07 }}
           >
-            <div className="kpi-card rounded-xl p-5">
-              <div className="flex items-center justify-between mb-3">
-                <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', color: 'var(--ink-400)', textTransform: 'uppercase' }}>{kpi.label}</p>
-                <kpi.icon className={`h-4 w-4 ${kpi.color}`} />
-              </div>
-              <p className="tnum text-white mb-1" style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em' }}>{kpi.value}</p>
-              <div className={`flex items-center gap-1 font-medium ${kpi.up ? 'text-emerald-400' : 'text-red-400'}`} style={{ fontSize: 12 }}>
-                {kpi.up
-                  ? <ArrowUpRight className="h-3.5 w-3.5" />
-                  : <ArrowDownRight className="h-3.5 w-3.5" />
-                }
-                {kpi.change} vs last year
-              </div>
-            </div>
+            <StatTile
+              label={kpi.label}
+              value={kpi.value}
+              icon={kpi.icon}
+              tone={kpi.tone}
+              trend={
+                <span className={`flex items-center gap-1 text-[12px] font-medium ${kpi.up ? 'text-emerald-500' : 'text-rose-500'}`}>
+                  {kpi.up
+                    ? <ArrowUpRight className="h-3.5 w-3.5" />
+                    : <ArrowDownRight className="h-3.5 w-3.5" />
+                  }
+                  {kpi.change}
+                </span>
+              }
+              sub="vs last year"
+            />
           </motion.div>
         ))}
       </div>
@@ -176,19 +179,19 @@ export default function AnalyticsPage() {
               <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#6366f1" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                    <stop offset="5%"  stopColor="#8B85F2" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#8B85F2" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e2a3a" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#3A4258" />
                 <XAxis
                   dataKey="month"
-                  tick={{ fill: '#475569', fontSize: 12 }}
+                  tick={{ fill: '#6E778C', fontSize: 12 }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fill: '#475569', fontSize: 12 }}
+                  tick={{ fill: '#6E778C', fontSize: 12 }}
                   axisLine={false}
                   tickLine={false}
                   tickFormatter={(v: number) => `$${(v / 1000).toFixed(1)}k`}
@@ -200,11 +203,11 @@ export default function AnalyticsPage() {
                 <Area
                   type="monotone"
                   dataKey="revenue"
-                  stroke="#6366f1"
+                  stroke="#8B85F2"
                   fill="url(#revenueGrad)"
                   strokeWidth={2.5}
                   dot={false}
-                  activeDot={{ r: 5, fill: '#6366f1', stroke: '#111827', strokeWidth: 2 }}
+                  activeDot={{ r: 5, fill: '#8B85F2', stroke: '#111726', strokeWidth: 2 }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -226,19 +229,19 @@ export default function AnalyticsPage() {
               <div className="space-y-4">
                 {topCustomers.map((c, i) => (
                   <div key={c.name} className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center justify-between text-[14px]">
                       <div className="flex items-center gap-2.5">
-                        <span style={{ fontSize: 12 }} className="font-mono text-slate-600 w-4">{i + 1}</span>
-                        <span className="text-slate-200 font-medium">{c.name}</span>
+                        <span className="text-[12px] font-mono text-ink-400 w-4">{i + 1}</span>
+                        <span className="text-ink-900 font-medium">{c.name}</span>
                       </div>
-                      <span className="text-emerald-400 font-bold text-sm tnum">{formatCurrency(c.value)}</span>
+                      <span className="text-emerald-500 font-bold text-[14px] tnum">{formatCurrency(c.value)}</span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-[#1a2537] overflow-hidden">
+                    <div className="h-1.5 rounded-full bg-soft overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${(c.value / maxCustomerSpend) * 100}%` }}
                         transition={{ delay: 0.5 + i * 0.1, duration: 0.6 }}
-                        className="h-full rounded-full bg-gradient-to-r from-indigo-600 to-violet-600"
+                        className="h-full rounded-full bg-gradient-to-r from-violet-600 to-purple-500"
                       />
                     </div>
                   </div>
@@ -266,9 +269,9 @@ export default function AnalyticsPage() {
                 {SERVICE_DATA.map(s => (
                   <div key={s.name} className="flex items-center gap-3">
                     <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
-                    <span className="text-sm text-slate-300 flex-1">{s.name}</span>
+                    <span className="text-[14px] text-ink-700 flex-1">{s.name}</span>
                     <div className="flex items-center gap-2.5">
-                      <div className="h-1.5 w-24 rounded-full bg-[#1a2537] overflow-hidden">
+                      <div className="h-1.5 w-24 rounded-full bg-soft overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${s.value}%` }}
@@ -277,7 +280,7 @@ export default function AnalyticsPage() {
                           style={{ backgroundColor: s.color }}
                         />
                       </div>
-                      <span style={{ fontSize: 12 }} className="text-slate-500 w-8 text-right tnum">{s.value}%</span>
+                      <span className="text-[12px] text-ink-500 w-8 text-right tnum">{s.value}%</span>
                     </div>
                   </div>
                 ))}
@@ -295,16 +298,16 @@ export default function AnalyticsPage() {
               <div className="space-y-3.5">
                 {AREA_CITIES.map(a => (
                   <div key={a.city} className="flex items-center gap-3">
-                    <span className="text-sm text-slate-300 w-32 flex-shrink-0">{a.city}</span>
-                    <div className="flex-1 h-1.5 rounded-full bg-[#1a2537] overflow-hidden">
+                    <span className="text-[14px] text-ink-700 w-32 flex-shrink-0">{a.city}</span>
+                    <div className="flex-1 h-1.5 rounded-full bg-soft overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${a.pct}%` }}
                         transition={{ delay: 0.7, duration: 0.5 }}
-                        className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500"
+                        className="h-full rounded-full bg-gradient-to-r from-violet-500 to-purple-500"
                       />
                     </div>
-                    <span style={{ fontSize: 12 }} className="text-slate-500 w-14 text-right tnum">{a.jobs} jobs</span>
+                    <span className="text-[12px] text-ink-500 w-14 text-right tnum">{a.jobs} jobs</span>
                   </div>
                 ))}
               </div>
@@ -323,7 +326,7 @@ export default function AnalyticsPage() {
           <CardContent>
             <div className="space-y-1">
               {/* Header row */}
-              <div className="grid grid-cols-6 gap-4 px-3 pb-2.5 border-b border-[#1e2a3a]" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', color: 'var(--ink-400)', textTransform: 'uppercase' }}>
+              <div className="grid grid-cols-6 gap-4 px-3 pb-2.5 border-b border-ink-200 text-[11px] font-bold tracking-[0.09em] text-ink-400 uppercase">
                 <div className="col-span-2">Team</div>
                 <div>Jobs</div>
                 <div>Revenue</div>
@@ -334,20 +337,20 @@ export default function AnalyticsPage() {
               {teamData.map((team) => (
                 <div
                   key={team.team}
-                  className="grid grid-cols-6 gap-4 items-center px-3 py-4 rounded-lg hover:bg-white/[0.02] transition-colors"
+                  className="grid grid-cols-6 gap-4 items-center px-3 py-4 rounded-lg hover:bg-hover transition-colors"
                 >
                   <div className="col-span-2">
-                    <p className="text-sm font-medium text-slate-200">Team {team.team}</p>
-                    <p style={{ fontSize: 12 }} className="text-slate-600 mt-0.5">{team.cleaners}</p>
+                    <p className="text-[14px] font-medium text-ink-900">Team {team.team}</p>
+                    <p className="text-[12px] text-ink-400 mt-0.5">{team.cleaners}</p>
                   </div>
-                  <div className="text-sm text-slate-300 tnum">{team.jobs}</div>
-                  <div className="text-sm font-medium text-emerald-400 tnum">{formatCurrency(team.revenue)}</div>
+                  <div className="text-[14px] text-ink-700 tnum">{team.jobs}</div>
+                  <div className="text-[14px] font-medium text-emerald-500 tnum">{formatCurrency(team.revenue)}</div>
                   <div>
-                    <span className={`text-sm font-medium tnum ${team.completionRate >= 80 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    <span className={`text-[14px] font-medium tnum ${team.completionRate >= 80 ? 'text-emerald-500' : 'text-amber-500'}`}>
                       {team.completionRate}%
                     </span>
                   </div>
-                  <div className="text-sm text-amber-400 tnum">⭐ {team.rating}</div>
+                  <div className="text-[14px] text-amber-500 tnum">⭐ {team.rating}</div>
                 </div>
               ))}
             </div>
@@ -357,11 +360,11 @@ export default function AnalyticsPage() {
 
       {/* ── AI Business Summary ───────────────────────────────────────────── */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
-        <Card className="border-indigo-500/20">
+        <Card className="border-violet-500/20">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-indigo-400" />
-              <CardTitle className="text-indigo-300">AI Business Summary</CardTitle>
+              <Sparkles className="h-4 w-4 text-violet-400" />
+              <CardTitle className="text-violet-400">AI Business Summary</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
@@ -369,10 +372,10 @@ export default function AnalyticsPage() {
               {AI_INSIGHTS.map((insight, i) => (
                 <div
                   key={i}
-                  className="flex items-start gap-3 rounded-xl bg-indigo-500/[0.06] border border-indigo-500/15 p-4"
+                  className="flex items-start gap-3 rounded-[14px] bg-violet-500/[0.06] border border-violet-500/15 p-4"
                 >
-                  <span className="text-lg flex-shrink-0">{insight.icon}</span>
-                  <p className="text-sm text-slate-300 leading-relaxed">{insight.text}</p>
+                  <span className="text-[18px] flex-shrink-0">{insight.icon}</span>
+                  <p className="text-[14px] text-ink-700 leading-relaxed">{insight.text}</p>
                 </div>
               ))}
             </div>

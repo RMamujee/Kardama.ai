@@ -3,13 +3,17 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, CalendarDays, Map, DollarSign, Megaphone,
-  Users, UserCheck, BarChart3, MessageSquare, Send, Bell, Sparkles, LogOut
+  Users, UserCheck, BarChart3, MessageSquare, Send, Bell, Sparkles, LogOut,
+  type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const NAV_SECTIONS = [
+type NavItem = { label: string; href: string; icon: LucideIcon; badge?: number }
+type NavSection = { label: string; items: NavItem[] }
+
+const NAV_SECTIONS: NavSection[] = [
   {
-    label: 'AI Field Service',
+    label: 'Field Service',
     items: [
       { label: 'Dashboard',  href: '/dashboard',  icon: LayoutDashboard },
       { label: 'Scheduling', href: '/scheduling', icon: CalendarDays },
@@ -27,11 +31,11 @@ const NAV_SECTIONS = [
   {
     label: 'Growth',
     items: [
-      { label: 'Analytics',  href: '/analytics',  icon: BarChart3 },
-      { label: 'Marketing',  href: '/marketing',  icon: Megaphone },
-      { label: 'Campaigns',  href: '/campaigns',  icon: Bell },
-      { label: 'Inbox',      href: '/inbox',      icon: MessageSquare, badge: 2 },
-      { label: 'Messages',   href: '/messages',   icon: Send },
+      { label: 'Analytics', href: '/analytics', icon: BarChart3 },
+      { label: 'Marketing', href: '/marketing', icon: Megaphone },
+      { label: 'Campaigns', href: '/campaigns', icon: Bell },
+      { label: 'Inbox',     href: '/inbox',     icon: MessageSquare, badge: 2 },
+      { label: 'Messages',  href: '/messages',  icon: Send },
     ],
   },
 ]
@@ -40,129 +44,80 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname()
 
   return (
-    <div
-      className="flex h-screen flex-shrink-0 flex-col"
-      style={{
-        width: 240,
-        background: 'var(--bg-rail)',
-        borderRight: '1px solid var(--ink-200)',
-      }}
-    >
+    <div className="flex h-screen w-[244px] flex-col bg-rail border-r border-ink-200">
       {/* Logo */}
-      <div className="flex items-center gap-3" style={{ padding: '22px 18px 18px' }}>
-        <div
-          className="flex h-9 w-9 items-center justify-center rounded-xl"
-          style={{ background: 'linear-gradient(135deg, var(--blue-500), var(--blue-700))' }}
-        >
-          <Sparkles className="h-4 w-4 text-white" />
+      <div className="flex items-center gap-3 px-5 pt-5 pb-4">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-violet-700 shadow-[0_4px_12px_rgba(111,105,229,0.35)]">
+          <Sparkles className="h-[15px] w-[15px] text-white" />
         </div>
-        <div>
-          <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--ink-900)' }}>
-            Kardama
-          </div>
-          <div style={{ fontSize: 10.5, color: 'var(--blue-400)', fontWeight: 600, marginTop: 1, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+        <div className="leading-tight">
+          <div className="text-[15px] font-bold text-ink-900 tracking-[-0.01em]">Kardama</div>
+          <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-violet-400">
             AI Field Service
           </div>
         </div>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto" style={{ padding: '4px 10px' }}>
+      <nav className="flex-1 overflow-y-auto px-3 pb-3">
         {NAV_SECTIONS.map((section) => (
-          <div key={section.label} style={{ marginBottom: 18 }}>
-            <p
-              style={{
-                padding: '10px 12px 8px',
-                fontSize: 10.5,
-                fontWeight: 700,
-                letterSpacing: '0.09em',
-                color: 'var(--ink-400)',
-                textTransform: 'uppercase',
-              }}
-            >
+          <div key={section.label} className="mb-5">
+            <p className="px-3 pt-2 pb-2 text-[10px] font-bold uppercase tracking-[0.09em] text-ink-400">
               {section.label}
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <ul className="flex flex-col gap-0.5">
               {section.items.map(({ label, href, icon: Icon, badge }) => {
                 const active = pathname === href || pathname.startsWith(href + '/')
                 return (
-                  <Link
-                    key={href}
-                    href={href}
-                    onClick={onClose}
-                    className={cn(
-                      'group flex items-center gap-3 rounded-lg transition-all duration-[120ms]',
-                    )}
-                    style={{
-                      padding: '9px 12px',
-                      borderRadius: 9,
-                      background: active ? 'var(--blue-50)' : 'transparent',
-                      color: active ? 'var(--blue-400)' : 'var(--ink-500)',
-                      fontSize: 13.5,
-                      fontWeight: active ? 600 : 500,
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!active) {
-                        (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'
-                        ;(e.currentTarget as HTMLElement).style.color = 'var(--ink-700)'
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!active) {
-                        (e.currentTarget as HTMLElement).style.background = 'transparent'
-                        ;(e.currentTarget as HTMLElement).style.color = 'var(--ink-500)'
-                      }
-                    }}
-                  >
-                    <Icon
-                      className="h-[17px] w-[17px] flex-shrink-0"
-                      style={{ color: active ? 'var(--blue-400)' : 'var(--ink-400)', strokeWidth: 1.8 }}
-                    />
-                    <span className="flex-1">{label}</span>
-                    {badge != null && (
-                      <span
-                        style={{
-                          background: 'var(--blue-500)',
-                          color: '#fff',
-                          fontSize: 10.5,
-                          fontWeight: 700,
-                          padding: '2px 7px',
-                          borderRadius: 99,
-                          minWidth: 18,
-                          textAlign: 'center',
-                        }}
-                      >
-                        {badge}
-                      </span>
-                    )}
-                  </Link>
+                  <li key={href}>
+                    <Link
+                      href={href}
+                      onClick={onClose}
+                      aria-current={active ? 'page' : undefined}
+                      className={cn(
+                        'group flex items-center gap-3 rounded-lg px-3 py-[9px] text-[13px] font-medium transition-colors duration-100',
+                        active
+                          ? 'bg-violet-500/10 text-violet-400 font-semibold'
+                          : 'text-ink-500 hover:bg-hover hover:text-ink-700'
+                      )}
+                    >
+                      <Icon
+                        className={cn(
+                          'h-[17px] w-[17px] flex-shrink-0 transition-colors',
+                          active ? 'text-violet-400' : 'text-ink-400 group-hover:text-ink-700'
+                        )}
+                        strokeWidth={1.8}
+                      />
+                      <span className="flex-1 truncate">{label}</span>
+                      {badge != null && (
+                        <span className="min-w-[18px] rounded-full bg-violet-500 px-1.5 py-0.5 text-center text-[10px] font-bold text-white">
+                          {badge}
+                        </span>
+                      )}
+                    </Link>
+                  </li>
                 )
               })}
-            </div>
+            </ul>
           </div>
         ))}
       </nav>
 
-      {/* User section */}
-      <div style={{ borderTop: '1px solid var(--ink-200)', padding: 14 }}>
-        <div
-          className="flex cursor-pointer items-center gap-3 rounded-lg transition-colors"
-          style={{ borderRadius: 10, padding: '10px 12px' }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)' }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+      {/* User */}
+      <div className="border-t border-ink-200 p-3">
+        <button
+          type="button"
+          className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-hover"
         >
-          <div
-            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-[12px] font-bold"
-            style={{ background: 'linear-gradient(135deg, #34D399, #10B981)', color: 'var(--bg-page)' }}
-          >
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-500/70 text-[12px] font-bold text-page">
             DC
           </div>
           <div className="min-w-0 flex-1">
-            <p style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-700)' }} className="truncate">David Chen</p>
-            <p style={{ fontSize: 11.5, color: 'var(--ink-400)', marginTop: 1 }} className="truncate">Owner · Long Beach</p>
+            <p className="truncate text-[13px] font-semibold text-ink-700">David Chen</p>
+            <p className="truncate text-[11px] text-ink-400 mt-0.5">Owner · Long Beach</p>
           </div>
-          <LogOut className="h-[17px] w-[17px] flex-shrink-0" style={{ color: 'var(--ink-300)' }} />
-        </div>
+          <LogOut className="h-[17px] w-[17px] flex-shrink-0 text-ink-300 transition-colors group-hover:text-ink-500" />
+        </button>
       </div>
     </div>
   )

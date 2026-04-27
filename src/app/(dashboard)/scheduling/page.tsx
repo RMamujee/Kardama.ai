@@ -12,12 +12,12 @@ import { formatTime, getServiceLabel, cn, formatCurrency } from '@/lib/utils'
 import { BookingWizard } from '@/components/scheduling/BookingWizard'
 import { Job } from '@/types'
 
-const SERVICE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  standard:           { bg: 'rgba(139,133,242,0.18)', text: '#8B85F2', border: 'rgba(139,133,242,0.3)' },
-  deep:               { bg: 'rgba(167,139,250,0.18)', text: '#A78BFA', border: 'rgba(167,139,250,0.3)' },
-  'move-out':         { bg: 'rgba(244,114,182,0.18)', text: '#F472B6', border: 'rgba(244,114,182,0.3)' },
-  'post-construction':{ bg: 'rgba(248,113,113,0.18)', text: '#F87171', border: 'rgba(248,113,113,0.3)' },
-  airbnb:             { bg: 'rgba(45,212,191,0.18)',  text: '#2DD4BF', border: 'rgba(45,212,191,0.3)'  },
+const SERVICE_COLORS: Record<string, string> = {
+  standard:           'bg-violet-500/15 text-violet-500 border-violet-500/30',
+  deep:               'bg-purple-500/15 text-purple-500 border-purple-500/30',
+  'move-out':         'bg-pink-500/15 text-pink-500 border-pink-500/30',
+  'post-construction':'bg-rose-500/15 text-rose-500 border-rose-500/30',
+  airbnb:             'bg-teal-500/15 text-teal-500 border-teal-500/30',
 }
 
 const HOURS = Array.from({ length: 11 }, (_, i) => i + 7) // 7am to 5pm
@@ -63,7 +63,7 @@ export default function SchedulingPage() {
           <Button variant="outline" size="icon" onClick={() => setWeekOffset(weekOffset - 1)}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--ink-500)' }}>
+          <span className="text-[13px] font-medium text-ink-500">
             {weekDates[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} –{' '}
             {weekDates[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
           </span>
@@ -85,25 +85,31 @@ export default function SchedulingPage() {
           <div className="overflow-x-auto">
           <div className="min-w-[560px]">
           {/* Day headers */}
-          <div className="grid grid-cols-8" style={{ borderBottom: '1px solid var(--ink-200)' }}>
-            <div className="p-3" style={{ borderRight: '1px solid var(--ink-200)' }} />
+          <div className="grid grid-cols-8 border-b border-ink-200">
+            <div className="p-3 border-r border-ink-200" />
             {weekDates.map((d, i) => {
               const dateStr = fmtDate(d)
               const isToday = dateStr === today
               return (
                 <div
                   key={i}
-                  className="p-3 text-center"
-                  style={{
-                    borderRight: i < 6 ? '1px solid var(--ink-200)' : 'none',
-                    background: isToday ? 'var(--blue-50)' : 'transparent',
-                  }}
+                  className={cn(
+                    'p-3 text-center',
+                    i < 6 && 'border-r border-ink-200',
+                    isToday && 'bg-violet-500/10'
+                  )}
                 >
-                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: isToday ? 'var(--blue-400)' : 'var(--ink-400)' }}>{DAY_LABELS[i]}</p>
-                  <p className="tnum" style={{ fontSize: 19, fontWeight: 700, marginTop: 3, letterSpacing: '-0.02em', color: isToday ? 'var(--blue-400)' : 'var(--ink-700)' }}>{d.getDate()}</p>
+                  <p className={cn(
+                    'text-[11px] font-bold uppercase tracking-[0.09em]',
+                    isToday ? 'text-violet-400' : 'text-ink-400'
+                  )}>{DAY_LABELS[i]}</p>
+                  <p className={cn(
+                    'tnum text-[18px] font-bold mt-[3px] tracking-[-0.02em]',
+                    isToday ? 'text-violet-400' : 'text-ink-700'
+                  )}>{d.getDate()}</p>
                   {jobsByDay[dateStr]?.length > 0 && (
                     <div className="mt-1 flex justify-center">
-                      <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: 'var(--blue-500)' }} />
+                      <span className="h-1.5 w-1.5 rounded-full bg-violet-500" />
                     </div>
                   )}
                 </div>
@@ -114,8 +120,8 @@ export default function SchedulingPage() {
           {/* Time rows */}
           <div className="max-h-[500px] overflow-y-auto">
             {HOURS.map(hour => (
-              <div key={hour} className="grid grid-cols-8" style={{ borderBottom: '1px solid var(--ink-200)', minHeight: 64 }}>
-                <div className="px-3 py-2.5 font-mono tnum" style={{ borderRight: '1px solid var(--ink-200)', fontSize: 12, color: 'var(--ink-300)' }}>
+              <div key={hour} className="grid grid-cols-8 border-b border-ink-200 min-h-[64px]">
+                <div className="px-3 py-2.5 font-mono tnum border-r border-ink-200 text-[12px] text-ink-300">
                   {hour > 12 ? `${hour-12}PM` : hour === 12 ? '12PM' : `${hour}AM`}
                 </div>
                 {weekDates.map((d, di) => {
@@ -128,26 +134,26 @@ export default function SchedulingPage() {
                   return (
                     <div
                       key={di}
-                      className="p-1 space-y-1"
-                      style={{
-                        borderRight: di < 6 ? '1px solid var(--ink-200)' : 'none',
-                        background: isToday ? 'rgba(139,133,242,0.03)' : 'transparent',
-                      }}
+                      className={cn(
+                        'p-1 space-y-1',
+                        di < 6 && 'border-r border-ink-200',
+                        isToday && 'bg-violet-500/[0.03]'
+                      )}
                     >
                       {dayJobs.map(job => {
                         const cleaners = CLEANERS.filter(c => job.cleanerIds.includes(c.id))
+                        const tone = SERVICE_COLORS[job.serviceType] ?? SERVICE_COLORS.standard
                         return (
                           <button
                             key={job.id}
                             onClick={() => setSelectedJob(job)}
-                            className="w-full rounded-md border p-2 text-left transition-all"
-                            style={(() => {
-                              const sc = SERVICE_COLORS[job.serviceType] ?? SERVICE_COLORS.standard
-                              return { background: sc.bg, color: sc.text, borderColor: sc.border, fontSize: 12 }
-                            })()}
+                            className={cn(
+                              'w-full rounded-md border p-2 text-left text-[12px]',
+                              tone
+                            )}
                           >
                             <p className="font-semibold truncate">{job.address.split(',')[0]}</p>
-                            <p className="opacity-75 mt-0.5" style={{ fontSize: 11 }}>{formatTime(job.scheduledTime)} · {cleaners.map(c=>c.initials).join('+')}</p>
+                            <p className="opacity-75 mt-0.5 text-[11px]">{formatTime(job.scheduledTime)} · {cleaners.map(c=>c.initials).join('+')}</p>
                           </button>
                         )
                       })}
@@ -171,43 +177,41 @@ export default function SchedulingPage() {
                 <CardTitle>Job Details</CardTitle>
                 <button
                   onClick={() => setSelectedJob(null)}
-                  style={{ fontSize: 12, color: 'var(--ink-400)', background: 'none', border: 'none', cursor: 'pointer', transition: 'color 120ms' }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ink-700)' }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ink-400)' }}
+                  className="text-[12px] text-ink-400 hover:text-ink-700 bg-transparent border-0 cursor-pointer transition-colors"
                 >Close</button>
               </div>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-5">
                 <div>
-                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 6 }}>Address</p>
-                  <p style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-700)' }}>{selectedJob.address}</p>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.09em] text-ink-400 mb-1.5">Address</p>
+                  <p className="text-[13px] font-semibold text-ink-700">{selectedJob.address}</p>
                 </div>
                 <div>
-                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 6 }}>Service</p>
-                  <p style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-700)' }}>{getServiceLabel(selectedJob.serviceType)}</p>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.09em] text-ink-400 mb-1.5">Service</p>
+                  <p className="text-[13px] font-semibold text-ink-700">{getServiceLabel(selectedJob.serviceType)}</p>
                 </div>
                 <div>
-                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 6 }}>Time</p>
-                  <p style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-700)' }}>{formatTime(selectedJob.scheduledTime)} · {selectedJob.estimatedDuration} min</p>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.09em] text-ink-400 mb-1.5">Time</p>
+                  <p className="text-[13px] font-semibold text-ink-700">{formatTime(selectedJob.scheduledTime)} · {selectedJob.estimatedDuration} min</p>
                 </div>
                 <div>
-                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 6 }}>Price</p>
-                  <p className="tnum" style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--green-500)' }}>{formatCurrency(selectedJob.price)}</p>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.09em] text-ink-400 mb-1.5">Price</p>
+                  <p className="tnum text-[13px] font-bold text-emerald-500">{formatCurrency(selectedJob.price)}</p>
                 </div>
                 <div>
-                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 8 }}>Team</p>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.09em] text-ink-400 mb-2">Team</p>
                   <div className="flex gap-3 flex-wrap">
                     {CLEANERS.filter(c => selectedJob.cleanerIds.includes(c.id)).map(c => (
                       <div key={c.id} className="flex items-center gap-2">
                         <Avatar initials={c.initials} color={c.color} size="sm" />
-                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-600)' }}>{c.name.split(' ')[0]}</span>
+                        <span className="text-[13px] font-semibold text-ink-700">{c.name.split(' ')[0]}</span>
                       </div>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--ink-400)', marginBottom: 8 }}>Status</p>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.09em] text-ink-400 mb-2">Status</p>
                   <Badge variant="default" className="capitalize">{selectedJob.status}</Badge>
                 </div>
               </div>
@@ -217,16 +221,13 @@ export default function SchedulingPage() {
       )}
 
       {/* AI Info Banner */}
-      <div
-        className="flex items-center gap-3 rounded-xl p-4"
-        style={{ background: 'var(--blue-50)', border: '1px solid var(--blue-100)' }}
-      >
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg flex-shrink-0" style={{ background: 'rgba(139,133,242,0.18)' }}>
-          <Sparkles className="h-4 w-4" style={{ color: 'var(--blue-400)' }} />
+      <div className="flex items-center gap-3 rounded-xl p-4 bg-violet-500/10 border border-violet-500/20">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg flex-shrink-0 bg-violet-500/15">
+          <Sparkles className="h-4 w-4 text-violet-400" />
         </div>
         <div>
-          <p style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-700)' }}>AI Scheduling Active</p>
-          <p style={{ fontSize: 12.5, color: 'var(--ink-400)', marginTop: 3, lineHeight: 1.5 }}>Click &quot;New Job&quot; to get AI-powered team recommendations based on location, availability, and reliability.</p>
+          <p className="text-[13px] font-semibold text-ink-700">AI Scheduling Active</p>
+          <p className="text-[12px] text-ink-400 mt-[3px] leading-[1.5]">Click &quot;New Job&quot; to get AI-powered team recommendations based on location, availability, and reliability.</p>
         </div>
       </div>
 

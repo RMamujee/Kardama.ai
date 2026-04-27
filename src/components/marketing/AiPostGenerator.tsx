@@ -41,33 +41,33 @@ export function AiPostGenerator() {
   }
 
   return (
-    <Card className="bg-[#0d1321] border-[#1e2a3a]">
+    <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-500/20">
-            <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-500/20">
+            <Sparkles className="h-3.5 w-3.5 text-violet-400" />
           </div>
           <CardTitle>AI Post Generator</CardTitle>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <div>
-          <Label className="text-xs text-slate-400">Theme</Label>
+          <Label className="text-[12px] text-ink-400">Theme</Label>
           <Select value={selectedTheme} onChange={e => setTheme(e.target.value as MarketingTheme)} className="mt-1">
             {THEMES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
           </Select>
         </div>
         <div>
-          <Label className="text-xs text-slate-400">Tone</Label>
+          <Label className="text-[12px] text-ink-400">Tone</Label>
           <div className="mt-1 grid grid-cols-2 gap-1.5">
             {TONES.map(t => (
               <button
                 key={t.value}
                 onClick={() => setTone(t.value)}
-                className={`rounded-lg border px-2 py-1.5 text-xs font-medium transition-all ${
+                className={`rounded-lg border px-2 py-1.5 text-[12px] font-medium transition-colors ${
                   selectedTone === t.value
-                    ? 'border-indigo-500/60 bg-indigo-500/15 text-indigo-300'
-                    : 'border-[#1e2a3a] text-slate-500 hover:border-[#2d3f56] hover:text-slate-400'
+                    ? 'border-violet-500/60 bg-violet-500/15 text-violet-400'
+                    : 'border-ink-200 text-ink-500 hover:border-ink-100 hover:text-ink-700'
                 }`}
               >
                 {t.label}
@@ -85,23 +85,23 @@ export function AiPostGenerator() {
         </Button>
 
         {generatedContent && (
-          <div className="relative rounded-xl bg-[#070b14] border border-[#1e2a3a] p-3">
-            <p className="text-xs text-slate-300 whitespace-pre-line leading-relaxed">{generatedContent}</p>
+          <div className="relative rounded-xl bg-page border border-ink-200 p-3">
+            <p className="text-[12px] text-ink-700 whitespace-pre-line leading-relaxed">{generatedContent}</p>
             <div className="absolute right-2 top-2 flex items-center gap-1.5">
               {generatedSource === 'openai' ? (
-                <span className="rounded-md bg-emerald-500/15 px-2 py-1 text-[9.5px] font-semibold text-emerald-400 border border-emerald-500/30">
+                <span className="rounded-md bg-emerald-500/15 px-2 py-1 text-[11px] font-semibold text-emerald-500 border border-emerald-500/30">
                   GPT-4o
                 </span>
               ) : generatedSource === 'template' ? (
-                <span className="rounded-md bg-slate-700/40 px-2 py-1 text-[9.5px] font-semibold text-slate-400 border border-[#1e2a3a]">
+                <span className="rounded-md bg-elev px-2 py-1 text-[11px] font-semibold text-ink-400 border border-ink-200">
                   Template
                 </span>
               ) : null}
               <button
                 onClick={handleCopy}
-                className="flex items-center gap-1 rounded-md bg-[#111827] px-2 py-1 text-[10px] font-medium text-slate-400 border border-[#1e2a3a] hover:bg-[#162032] transition-colors"
+                className="flex items-center gap-1 rounded-md bg-elev px-2 py-1 text-[11px] font-medium text-ink-400 border border-ink-200 hover:bg-hover hover:text-ink-700 transition-colors"
               >
-                {copied ? <><CheckCircle className="h-3 w-3 text-emerald-400" /> Copied!</> : <><Copy className="h-3 w-3" /> Copy</>}
+                {copied ? <><CheckCircle className="h-3 w-3 text-emerald-500" /> Copied!</> : <><Copy className="h-3 w-3" /> Copy</>}
               </button>
             </div>
           </div>

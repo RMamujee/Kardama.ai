@@ -79,6 +79,23 @@ export interface RescheduleSlot {
   windowEnd: string
 }
 
+// ─── Tour cost — used by both NN and 2-opt ────────────────────────────────────
+// Lower is better. Drive minutes plus a strong lateness penalty so we don't
+// re-order ourselves into a missed appointment.
+function tourCost(jobs: Job[], startLat: number, startLng: number): number {
+  let lat = startLat, lng = startLng, curMin = 8 * 60, cost = 0
+  for (const j of jobs) {
+    const { minutes } = trafficDrive(lat, lng, j.lat, j.lng)
+    const arrival = curMin + minutes
+    const scheduled = parseMin(j.scheduledTime)
+    const late = Math.max(0, arrival - scheduled - 10)
+    cost += minutes + late * 4
+    curMin = Math.max(arrival, scheduled) + j.estimatedDuration
+    lat = j.lat; lng = j.lng
+  }
+  return cost
+}
+
 // ─── Nearest-neighbour TSP with time windows ──────────────────────────────────
 function nnOptimize(jobs: Job[], startLat: number, startLng: number): Job[] {
   const remaining = [...jobs]
@@ -111,8 +128,56 @@ function nnOptimize(jobs: Job[], startLat: number, startLng: number): Job[] {
   return ordered
 }
 
+// ─── 2-opt local search ───────────────────────────────────────────────────────
+// Reverses sub-tours and keeps the change if it lowers cost. Removes obvious
+// crossings the greedy NN leaves behind. O(n²) per pass with at most ~n passes,
+// fine for the < 20 stops/team this app sees.
+function twoOpt(jobs: Job[], startLat: number, startLng: number): Job[] {
+  if (jobs.length < 4) return jobs
+  let best = jobs
+  let bestCost = tourCost(best, startLat, startLng)
+  let improved = true
+  let safety = 0
+
+  while (improved && safety < 25) {
+    improved = false
+    safety++
+    for (let i = 0; i < best.length - 1; i++) {
+      for (let k = i + 1; k < best.length; k++) {
+        const candidate = [
+          ...best.slice(0, i),
+          ...best.slice(i, k + 1).reverse(),
+          ...best.slice(k + 1),
+        ]
+        const cost = tourCost(candidate, startLat, startLng)
+        if (cost < bestCost - 0.5) {
+          best = candidate
+          bestCost = cost
+          improved = true
+        }
+      }
+    }
+  }
+  return best
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
-export function buildOptimizedRoutes(jobs: Job[], cleaners: Cleaner[]): TeamRoute[] {
+export interface RealLegMetrics {
+  durationMin: number
+  distanceKm: number
+}
+
+// Optional per-team real-world drive metrics (e.g. from OSRM). When supplied,
+// each route is rebuilt using the real per-leg duration/distance instead of
+// haversine estimates. The first entry in each team's array is the leg from
+// the start position to stop #1, and so on.
+export type RealLegOverrides = Record<string, RealLegMetrics[] | undefined>
+
+export function buildOptimizedRoutes(
+  jobs: Job[],
+  cleaners: Cleaner[],
+  realLegs: RealLegOverrides = {},
+): TeamRoute[] {
   // Group cleaners into teams
   const teamCleaner = new Map<string, Cleaner[]>()
   for (const c of cleaners) {
@@ -140,15 +205,26 @@ export function buildOptimizedRoutes(jobs: Job[], cleaners: Cleaner[]): TeamRout
     const startLng = members[0].currentLng
     const color = members[0].color
 
-    const ordered = nnOptimize(jobs, startLat, startLng)
+    let ordered = nnOptimize(jobs, startLat, startLng)
+    ordered = twoOpt(ordered, startLat, startLng)
 
     // Build stops
     const stops: RouteStop[] = []
     let lat = startLat, lng = startLng, curMin = 8 * 60
+    const overrides = realLegs[teamId]
+    const overridesUsable = overrides && overrides.length === ordered.length
 
     for (let i = 0; i < ordered.length; i++) {
       const job = ordered[i]
-      const drive = trafficDrive(lat, lng, job.lat, job.lng)
+      const haversine = trafficDrive(lat, lng, job.lat, job.lng)
+      const drive = overridesUsable
+        ? {
+            // Round real OSRM minutes up + 2 min buffer for parking/last-100ft.
+            minutes: Math.max(1, Math.round(overrides![i].durationMin) + 2),
+            km: Math.round(overrides![i].distanceKm * 10) / 10,
+            traffic: haversine.traffic,
+          }
+        : haversine
       const arrivalMin = curMin + drive.minutes
       const startMin   = Math.max(arrivalMin, parseMin(job.scheduledTime))
       const endMin     = startMin + job.estimatedDuration

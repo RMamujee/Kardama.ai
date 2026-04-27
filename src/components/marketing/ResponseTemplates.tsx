@@ -9,11 +9,11 @@ import { ResponseTemplate, TemplateCategory, LeadPlatform } from '@/types'
 import { cn } from '@/lib/utils'
 
 const CATEGORY_CONFIG: Record<TemplateCategory, { label: string; color: string; bg: string }> = {
-  intro: { label: 'Introduction', color: 'text-indigo-400', bg: 'bg-indigo-500/15' },
-  promo: { label: 'Promotion', color: 'text-violet-400', bg: 'bg-violet-500/15' },
-  'follow-up': { label: 'Follow-Up', color: 'text-amber-400', bg: 'bg-amber-500/15' },
-  'group-post': { label: 'Group Posts', color: 'text-blue-400', bg: 'bg-blue-500/15' },
-  instagram: { label: 'Instagram', color: 'text-pink-400', bg: 'bg-pink-500/15' },
+  intro:        { label: 'Introduction', color: 'text-violet-400', bg: 'bg-violet-500/15' },
+  promo:        { label: 'Promotion',    color: 'text-purple-500', bg: 'bg-purple-500/15' },
+  'follow-up':  { label: 'Follow-Up',    color: 'text-amber-500',  bg: 'bg-amber-500/15' },
+  'group-post': { label: 'Group Posts',  color: 'text-teal-500',   bg: 'bg-teal-500/15' },
+  instagram:    { label: 'Instagram',    color: 'text-pink-500',   bg: 'bg-pink-500/15' },
 }
 
 const PLATFORM_ICONS: Record<LeadPlatform, React.ElementType> = {
@@ -44,32 +44,32 @@ function TemplateCard({ template }: { template: ResponseTemplate }) {
   }
 
   return (
-    <div className="rounded-xl border border-[#1e2a3a] bg-[#0d1321] overflow-hidden transition-all hover:border-[#2d3f56]">
+    <div className="rounded-xl border border-ink-200 bg-card overflow-hidden transition-colors hover:border-ink-100">
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <span className={cn('rounded-full px-2 py-0.5 text-[10px] font-semibold', cat.bg, cat.color)}>
+              <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-semibold', cat.bg, cat.color)}>
                 {cat.label}
               </span>
               {template.platforms.map(p => {
                 const Icon = PLATFORM_ICONS[p]
                 return (
-                  <span key={p} className="flex items-center gap-1 rounded-full bg-[#1a2537] px-1.5 py-0.5 text-[10px] text-slate-500">
+                  <span key={p} className="flex items-center gap-1 rounded-full bg-elev px-1.5 py-0.5 text-[11px] text-ink-400">
                     <Icon className="h-2.5 w-2.5" />
                     {p === 'facebook-group' ? 'FB Group' : p === 'facebook-page' ? 'FB Page' : p === 'instagram' ? 'IG' : 'Nextdoor'}
                   </span>
                 )
               })}
             </div>
-            <h4 className="text-sm font-semibold text-slate-200">{template.title}</h4>
+            <h4 className="text-[13px] font-semibold text-ink-900">{template.title}</h4>
           </div>
           <button
             onClick={handleCopy}
-            className="flex-shrink-0 flex items-center gap-1.5 rounded-lg border border-[#1e2a3a] px-2.5 py-1.5 text-[10px] font-medium text-slate-400 hover:bg-[#162032] hover:text-slate-200 transition-all"
+            className="flex-shrink-0 flex items-center gap-1.5 rounded-lg border border-ink-200 px-2.5 py-1.5 text-[11px] font-medium text-ink-400 hover:bg-hover hover:text-ink-900 transition-colors"
           >
             {copied ? (
-              <><CheckCircle className="h-3.5 w-3.5 text-emerald-400" /> Copied!</>
+              <><CheckCircle className="h-3.5 w-3.5 text-emerald-500" /> Copied!</>
             ) : (
               <><Copy className="h-3.5 w-3.5" /> Copy</>
             )}
@@ -80,7 +80,7 @@ function TemplateCard({ template }: { template: ResponseTemplate }) {
         {template.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
             {template.tags.map(tag => (
-              <span key={tag} className="flex items-center gap-0.5 text-[10px] text-slate-600">
+              <span key={tag} className="flex items-center gap-0.5 text-[11px] text-ink-400">
                 <Tag className="h-2.5 w-2.5" />{tag}
               </span>
             ))}
@@ -92,10 +92,10 @@ function TemplateCard({ template }: { template: ResponseTemplate }) {
           onClick={() => setExpanded(e => !e)}
           className="w-full text-left"
         >
-          <p className={cn('text-xs text-slate-500 leading-relaxed whitespace-pre-line transition-all', !expanded && 'line-clamp-2')}>
+          <p className={cn('text-[12px] text-ink-500 leading-relaxed whitespace-pre-line transition-all', !expanded && 'line-clamp-2')}>
             {template.content}
           </p>
-          <span className="mt-1 text-[10px] text-indigo-400 hover:text-indigo-300 transition-colors">
+          <span className="mt-1 text-[11px] text-violet-400 hover:text-violet-500 transition-colors">
             {expanded ? 'Show less' : 'Show full template'}
           </span>
         </button>
@@ -131,9 +131,9 @@ export function ResponseTemplates() {
         {CATEGORIES.filter(c => c.value !== 'all').map(cat => {
           const cfg = CATEGORY_CONFIG[cat.value as TemplateCategory]
           return (
-            <div key={cat.value} className="kpi-card rounded-xl p-3">
-              <p className="text-[11px] text-slate-500 uppercase tracking-wide">{cat.label}</p>
-              <p className={cn('mt-0.5 text-xl font-bold', cfg.color)}>{countsByCategory[cat.value]}</p>
+            <div key={cat.value} className="rounded-[14px] border border-ink-200 bg-card p-3">
+              <p className="text-[11px] text-ink-500 uppercase tracking-wide">{cat.label}</p>
+              <p className={cn('mt-0.5 text-[20px] font-bold tnum', cfg.color)}>{countsByCategory[cat.value]}</p>
             </div>
           )
         })}
@@ -143,7 +143,7 @@ export function ResponseTemplates() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/20">
-              <Copy className="h-3.5 w-3.5 text-emerald-400" />
+              <Copy className="h-3.5 w-3.5 text-emerald-500" />
             </div>
             <CardTitle>Response Templates</CardTitle>
           </div>
@@ -151,12 +151,12 @@ export function ResponseTemplates() {
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500 pointer-events-none" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-ink-500 pointer-events-none" />
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search templates..."
-                className="w-full rounded-lg border border-[#1e2a3a] bg-[#070b14] pl-8 pr-3 py-2 text-xs text-slate-300 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 transition-colors"
+                className="w-full rounded-lg border border-ink-200 bg-page pl-8 pr-3 py-2 text-[12px] text-ink-700 placeholder:text-ink-400 focus:outline-none focus:border-violet-500/50 transition-colors"
               />
             </div>
             <div className="flex flex-wrap gap-1">
@@ -165,15 +165,15 @@ export function ResponseTemplates() {
                   key={cat.value}
                   onClick={() => setCategoryFilter(cat.value)}
                   className={cn(
-                    'rounded-lg border px-2.5 py-1 text-xs font-medium transition-all',
+                    'rounded-lg border px-2.5 py-1 text-[12px] font-medium transition-colors',
                     categoryFilter === cat.value
-                      ? 'border-indigo-500/60 bg-indigo-500/15 text-indigo-300'
-                      : 'border-[#1e2a3a] text-slate-500 hover:border-[#2d3f56] hover:text-slate-400'
+                      ? 'border-violet-500/60 bg-violet-500/15 text-violet-400'
+                      : 'border-ink-200 text-ink-500 hover:border-ink-100 hover:text-ink-700'
                   )}
                 >
                   {cat.label}
                   {countsByCategory[cat.value] > 0 && (
-                    <span className="ml-1 text-slate-600">{countsByCategory[cat.value]}</span>
+                    <span className="ml-1 text-ink-400">{countsByCategory[cat.value]}</span>
                   )}
                 </button>
               ))}
@@ -188,8 +188,8 @@ export function ResponseTemplates() {
 
           {filtered.length === 0 && (
             <div className="py-10 text-center">
-              <Search className="h-8 w-8 text-slate-600 mx-auto mb-3" />
-              <p className="text-sm text-slate-500">No templates match your search</p>
+              <Search className="h-8 w-8 text-ink-400 mx-auto mb-3" />
+              <p className="text-[13px] text-ink-500">No templates match your search</p>
             </div>
           )}
         </CardContent>

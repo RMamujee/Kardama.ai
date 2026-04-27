@@ -1,69 +1,113 @@
 @import "tailwindcss";
 
-/* ─── Design tokens (dark mode) ─────────────────────────── */
+/* ─────────────────────────────────────────────────────────────
+   Design system — dark theme
+   Exposed as Tailwind v4 utilities via @theme.
+   Use: bg-page, bg-card, text-ink-900, border-ink-200,
+        text-violet-400, bg-violet-500/20, etc.
+   ───────────────────────────────────────────────────────────── */
+@theme {
+  --color-page:   #0A0E1A;
+  --color-rail:   #0D1322;
+  --color-card:   #111726;
+  --color-soft:   #161D2E;
+  --color-hover:  #1A2236;
+  --color-elev:   #1B2336;
+
+  --color-ink-50:  #1A2034;
+  --color-ink-100: #232B40;
+  --color-ink-200: #3A4258;
+  --color-ink-300: #535B70;
+  --color-ink-400: #6E778C;
+  --color-ink-500: #9099AE;
+  --color-ink-700: #D7DCE8;
+  --color-ink-900: #F2F5FA;
+
+  --color-violet-50:  #1D1B3A;
+  --color-violet-100: #2B2A5C;
+  --color-violet-200: #3F3D8A;
+  --color-violet-400: #7A75E0;
+  --color-violet-500: #8B85F2;
+  --color-violet-600: #6F69E5;
+  --color-violet-700: #524CCB;
+
+  --color-emerald-500: #34D399;
+  --color-amber-500:   #FBBF24;
+  --color-rose-500:    #F87171;
+  --color-purple-500:  #A78BFA;
+  --color-teal-500:    #2DD4BF;
+  --color-pink-500:    #F472B6;
+
+  --radius-card: 14px;
+  --radius-tile: 12px;
+
+  --shadow-tile:    0 1px 0 rgba(255,255,255,0.02) inset, 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-pop:     0 1px 0 rgba(255,255,255,0.04) inset, 0 12px 32px rgba(0,0,0,0.55);
+  --shadow-overlay: 0 24px 64px rgba(0,0,0,0.7);
+
+  --font-sans: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ─── Legacy aliases ─────────────────────────────────────────
+   Older components still reference var(--bg-*), var(--ink-*),
+   var(--blue-*), var(--green-500), etc. Keep these mapped while
+   the codebase migrates to the new tokens. */
 :root {
-  /* Surfaces */
-  --bg-page:   #0A0E1A;
-  --bg-card:   #111726;
-  --bg-rail:   #0D1322;
-  --bg-soft:   #161D2E;
-  --bg-hover:  #1A2236;
-  --bg-elev:   #1B2336;
+  --bg-page:  var(--color-page);
+  --bg-rail:  var(--color-rail);
+  --bg-card:  var(--color-card);
+  --bg-soft:  var(--color-soft);
+  --bg-hover: var(--color-hover);
+  --bg-elev:  var(--color-elev);
 
-  /* Ink (light text on dark) */
-  --ink-900: #F2F5FA;
-  --ink-700: #D7DCE8;
-  --ink-500: #9099AE;
-  --ink-400: #6E778C;
-  --ink-300: #535B70;
-  --ink-200: #3A4258;
-  --ink-100: #232B40;
-  --ink-50:  #1A2034;
+  --ink-50:  var(--color-ink-50);
+  --ink-100: var(--color-ink-100);
+  --ink-200: var(--color-ink-200);
+  --ink-300: var(--color-ink-300);
+  --ink-400: var(--color-ink-400);
+  --ink-500: var(--color-ink-500);
+  --ink-700: var(--color-ink-700);
+  --ink-900: var(--color-ink-900);
 
-  /* Brand violet */
-  --blue-50:  #1D1B3A;
-  --blue-100: #2B2A5C;
-  --blue-200: #3F3D8A;
-  --blue-400: #7A75E0;
-  --blue-500: #8B85F2;
-  --blue-600: #6F69E5;
-  --blue-700: #524CCB;
+  --blue-50:  var(--color-violet-50);
+  --blue-100: var(--color-violet-100);
+  --blue-200: var(--color-violet-200);
+  --blue-400: var(--color-violet-400);
+  --blue-500: var(--color-violet-500);
+  --blue-600: var(--color-violet-600);
+  --blue-700: var(--color-violet-700);
 
-  /* Status */
-  --green-500:  #34D399;
+  --green-500:  var(--color-emerald-500);
   --green-50:   #0F2B22;
-  --amber-500:  #FBBF24;
+  --amber-500:  var(--color-amber-500);
   --amber-50:   #2B2210;
-  --red-500:    #F87171;
+  --red-500:    var(--color-rose-500);
   --red-50:     #2A1518;
-  --violet-500: #A78BFA;
+  --violet-500: var(--color-purple-500);
   --violet-50:  #1F1A38;
-  --teal-500:   #2DD4BF;
+  --teal-500:   var(--color-teal-500);
   --teal-50:    #0E2A28;
-  --pink-500:   #F472B6;
+  --pink-500:   var(--color-pink-500);
   --pink-50:    #2A1422;
 
-  /* Radii */
   --r-sm: 8px;
   --r-md: 12px;
   --r-lg: 16px;
   --r-xl: 20px;
 
-  /* Shadows (dark surfaces) */
-  --shadow-sm:  0 1px 0 rgba(255,255,255,0.02) inset, 0 1px 2px rgba(0,0,0,0.4);
-  --shadow-md:  0 1px 0 rgba(255,255,255,0.03) inset, 0 4px 12px rgba(0,0,0,0.45);
-  --shadow-lg:  0 1px 0 rgba(255,255,255,0.04) inset, 0 12px 32px rgba(0,0,0,0.55);
-  --shadow-pop: 0 24px 64px rgba(0,0,0,0.7);
+  --shadow-sm: var(--shadow-tile);
+  --shadow-md: var(--shadow-pop);
+  --shadow-lg: var(--shadow-pop);
 }
 
+/* ─── Reset & base ──────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 html { color-scheme: dark; }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: var(--bg-page);
-  color: var(--ink-900);
+  font-family: var(--font-sans);
+  background: var(--color-page);
+  color: var(--color-ink-900);
   font-size: 14px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
@@ -71,84 +115,53 @@ body {
   font-feature-settings: 'cv11', 'ss01';
 }
 
-/* Tabular numbers */
+/* Tabular numerals for stats / data */
 .tnum { font-variant-numeric: tabular-nums; }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+/* ─── Scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--ink-100); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--ink-200); }
+::-webkit-scrollbar-thumb { background: var(--color-ink-100); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-ink-200); }
 
-/* Leaflet overrides */
-.leaflet-container { background: var(--bg-rail) !important; font-family: inherit !important; }
+/* ─── Leaflet overrides ────────────────────────────────────── */
+.leaflet-container { background: var(--color-rail) !important; font-family: inherit !important; }
 .leaflet-popup-content-wrapper {
-  background: var(--bg-card) !important;
-  color: var(--ink-900) !important;
-  border: 1px solid var(--ink-100) !important;
-  border-radius: var(--r-md) !important;
-  box-shadow: var(--shadow-lg) !important;
+  background: var(--color-card) !important;
+  color: var(--color-ink-900) !important;
+  border: 1px solid var(--color-ink-100) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--shadow-pop) !important;
 }
-.leaflet-popup-tip { background: var(--bg-card) !important; }
+.leaflet-popup-tip { background: var(--color-card) !important; }
 .leaflet-control-zoom a {
-  background: var(--bg-card) !important;
-  color: var(--ink-500) !important;
-  border-color: var(--ink-100) !important;
+  background: var(--color-card) !important;
+  color: var(--color-ink-500) !important;
+  border-color: var(--color-ink-100) !important;
 }
-.leaflet-control-zoom a:hover { background: var(--bg-hover) !important; color: var(--ink-900) !important; }
-.leaflet-control-attribution { background: rgba(10,14,26,0.8) !important; color: var(--ink-400) !important; }
+.leaflet-control-zoom a:hover { background: var(--color-hover) !important; color: var(--color-ink-900) !important; }
+.leaflet-control-attribution { background: rgba(10,14,26,0.8) !important; color: var(--color-ink-400) !important; }
 
-/* Card hover lift */
-.glow-card {
-  background: var(--bg-card);
-  border: 1px solid var(--ink-200);
-  box-shadow: var(--shadow-sm);
-  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
-}
-.glow-card:hover {
-  border-color: var(--blue-200);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.kpi-card {
-  background: var(--bg-card);
-  border: 1px solid var(--ink-200);
-  position: relative;
-  overflow: hidden;
-  transition: border-color 0.15s ease, transform 0.15s ease;
-}
-.kpi-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(139,133,242,0.5), transparent);
-}
-.kpi-card:hover {
-  border-color: var(--blue-200);
-  transform: translateY(-1px);
-}
-
+/* ─── Gradient text ─────────────────────────────────────────── */
 .gradient-text {
-  background: linear-gradient(135deg, var(--blue-500), var(--violet-500));
+  background: linear-gradient(135deg, var(--color-violet-500), var(--color-purple-500));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Shimmer animation for loading states */
+/* ─── Loading shimmer ──────────────────────────────────────── */
 @keyframes shimmer {
   0% { background-position: -200% center; }
   100% { background-position: 200% center; }
 }
 .shimmer {
-  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-soft) 50%, var(--bg-card) 75%);
+  background: linear-gradient(90deg, var(--color-card) 25%, var(--color-soft) 50%, var(--color-card) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
 
-/* GPS tracking dot */
+/* ─── GPS / live indicators ─────────────────────────────────── */
 @keyframes gps-ring {
   0%   { box-shadow: 0 0 0 0 rgba(139,133,242,0.7); }
   70%  { box-shadow: 0 0 0 14px rgba(139,133,242,0); }
@@ -156,45 +169,80 @@ body {
 }
 .gps-dot { animation: gps-ring 1.8s infinite; }
 
-/* Pulse glow for active status */
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(52,211,153,0.5); }
+  50%      { box-shadow: 0 0 0 6px rgba(52,211,153,0); }
+}
+.pulse-dot { animation: pulse-dot 2s infinite; }
+
 @keyframes pulse-glow {
   0%, 100% { box-shadow: 0 0 0 0 rgba(139,133,242,0.4); }
-  50% { box-shadow: 0 0 0 6px rgba(139,133,242,0); }
+  50%      { box-shadow: 0 0 0 6px rgba(139,133,242,0); }
 }
 .pulse-glow { animation: pulse-glow 2s infinite; }
 
-/* Pulse dot (live indicators) */
-@keyframes pulseDot {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(52,211,153,0.5); }
-  50% { box-shadow: 0 0 0 6px rgba(52,211,153,0); }
-}
-.pulse-dot { animation: pulseDot 2s infinite; }
-
-/* Slide-up entrance */
-@keyframes slideUp {
+/* ─── Page transitions ─────────────────────────────────────── */
+@keyframes slide-up {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.anim-slide-up { animation: slideUp 320ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.anim-slide-up { animation: slide-up 320ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 
-/* Fade-in page transition */
-@keyframes fadeIn {
+@keyframes fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
-.anim-fade-in { animation: fadeIn 240ms ease-out both; }
+.anim-fade-in { animation: fade-in 240ms ease-out both; }
 
-/* AI pill */
+/* ─── AI status pill ────────────────────────────────────────── */
 .ai-pill {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 4px 10px; border-radius: 99px;
+  padding: 4px 10px; border-radius: 999px;
   background: linear-gradient(135deg, rgba(139,133,242,0.14), rgba(45,212,191,0.10));
   border: 1px solid rgba(139,133,242,0.30);
-  color: var(--blue-400);
+  color: var(--color-violet-400);
   font-size: 11px; font-weight: 600;
+  letter-spacing: 0.02em;
 }
 .ai-pill .pulse {
-  width: 6px; height: 6px; border-radius: 99px;
-  background: var(--blue-500);
-  box-shadow: 0 0 8px var(--blue-500);
+  width: 6px; height: 6px; border-radius: 999px;
+  background: var(--color-violet-500);
+  box-shadow: 0 0 8px var(--color-violet-500);
+}
+
+/* ─── Card variants (used as @apply via class names) ─────────
+   These are written so existing className uses keep working
+   while we migrate. */
+.card-tile {
+  background: var(--color-card);
+  border: 1px solid var(--color-ink-200);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-tile);
+  transition: border-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+}
+.card-tile-hover:hover {
+  border-color: var(--color-violet-200);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-pop);
+}
+
+/* Top-edge violet accent for KPI tiles */
+.stat-tile {
+  background: var(--color-card);
+  border: 1px solid var(--color-ink-200);
+  border-radius: var(--radius-card);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 150ms ease, transform 150ms ease;
+}
+.stat-tile::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(139,133,242,0.5), transparent);
+}
+.stat-tile:hover {
+  border-color: var(--color-violet-200);
+  transform: translateY(-1px);
 }

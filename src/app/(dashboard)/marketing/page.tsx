@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { StatTile } from '@/components/ui/stat-tile'
 import { useMarketingStore } from '@/store/useMarketingStore'
 import { useSocialStore } from '@/store/useSocialStore'
 import { AiPostGenerator } from '@/components/marketing/AiPostGenerator'
@@ -21,16 +22,16 @@ import { formatDate, cn } from '@/lib/utils'
 import { getWeek } from 'date-fns'
 
 const THEME_COLORS: Record<string, string> = {
-  'social-proof': 'bg-indigo-500/20 text-indigo-300',
-  'promo-discount': 'bg-violet-500/20 text-violet-300',
-  'tips': 'bg-emerald-500/20 text-emerald-300',
-  'before-after': 'bg-amber-500/20 text-amber-300',
-  'seasonal-spring': 'bg-teal-500/20 text-teal-300',
-  'seasonal-summer': 'bg-yellow-500/20 text-yellow-300',
-  'seasonal-fall': 'bg-orange-500/20 text-orange-300',
-  'seasonal-winter': 'bg-sky-500/20 text-sky-300',
-  'promo-referral': 'bg-pink-500/20 text-pink-300',
-  'holiday': 'bg-red-500/20 text-red-300',
+  'social-proof':     'bg-violet-500/15 text-violet-400',
+  'promo-discount':   'bg-purple-500/15 text-purple-500',
+  'tips':             'bg-emerald-500/15 text-emerald-500',
+  'before-after':     'bg-amber-500/15 text-amber-500',
+  'seasonal-spring':  'bg-teal-500/15 text-teal-500',
+  'seasonal-summer':  'bg-amber-500/15 text-amber-500',
+  'seasonal-fall':    'bg-amber-500/15 text-amber-500',
+  'seasonal-winter':  'bg-violet-500/15 text-violet-400',
+  'promo-referral':   'bg-pink-500/15 text-pink-500',
+  'holiday':          'bg-rose-500/15 text-rose-500',
 }
 
 const STATUS_COLORS = { draft: 'neutral', scheduled: 'default', sent: 'success' } as const
@@ -49,23 +50,13 @@ function OverviewTab() {
       {/* Stats row */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
-          { label: 'Posts Sent', value: sentCount, icon: BarChart2, color: 'text-emerald-400', glow: 'shadow-[0_0_20px_rgba(16,185,129,0.12)]' },
-          { label: 'Scheduled', value: scheduledCount, icon: Calendar, color: 'text-indigo-400', glow: 'shadow-[0_0_20px_rgba(99,102,241,0.12)]' },
-          { label: 'Groups', value: selectedGroupIds.size, icon: Users, color: 'text-violet-400', glow: 'shadow-[0_0_20px_rgba(139,92,246,0.12)]' },
-          { label: 'Est. Reach', value: `${(totalReach/1000).toFixed(0)}k`, icon: Zap, color: 'text-amber-400', glow: 'shadow-[0_0_20px_rgba(245,158,11,0.12)]' },
+          { label: 'Posts Sent', value: sentCount, icon: BarChart2, tone: 'emerald' as const },
+          { label: 'Scheduled', value: scheduledCount, icon: Calendar, tone: 'violet' as const },
+          { label: 'Groups', value: selectedGroupIds.size, icon: Users, tone: 'purple' as const },
+          { label: 'Est. Reach', value: `${(totalReach/1000).toFixed(0)}k`, icon: Zap, tone: 'amber' as const },
         ].map((s, i) => (
           <motion.div key={s.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>
-            <div className={`kpi-card rounded-xl p-5 ${s.glow}`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.09em', color: 'var(--ink-400)', textTransform: 'uppercase' }}>{s.label}</p>
-                  <p className="mt-1 tnum text-white" style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em' }}>{s.value}</p>
-                </div>
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#1a2537]">
-                  <s.icon className={`h-4 w-4 ${s.color}`} />
-                </div>
-              </div>
-            </div>
+            <StatTile label={s.label} value={s.value} icon={s.icon} tone={s.tone} />
           </motion.div>
         ))}
       </div>
@@ -90,7 +81,7 @@ function OverviewTab() {
                   )}
                 </Button>
               </div>
-              {generatingAll && <Progress value={(generateAllProgress / 52) * 100} className="mt-2" color="bg-indigo-500" />}
+              {generatingAll && <Progress value={(generateAllProgress / 52) * 100} className="mt-2" color="bg-violet-500" />}
             </CardHeader>
             <CardContent className="p-0">
               <div className="max-h-[600px] overflow-y-auto">
@@ -100,20 +91,20 @@ function OverviewTab() {
                   return (
                     <div
                       key={post.id}
-                      className={cn('border-b border-[#1e2a3a] last:border-0 transition-colors', isCurrent && 'bg-indigo-500/[0.04]')}
+                      className={cn('border-b border-ink-200 last:border-0 transition-colors', isCurrent && 'bg-violet-500/[0.04]')}
                     >
                       <button
                         onClick={() => setExpandedWeek(isExpanded ? null : post.weekNumber)}
-                        className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-white/[0.02] transition-colors"
+                        className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-hover transition-colors"
                       >
-                        <span className={cn('w-8 font-mono font-bold tnum', isCurrent ? 'text-indigo-400' : 'text-slate-600')} style={{ fontSize: 12 }}>
+                        <span className={cn('w-8 font-mono font-bold tnum text-[12px]', isCurrent ? 'text-violet-400' : 'text-ink-300')}>
                           W{post.weekNumber}
                         </span>
-                        <span className="text-slate-500 w-24 flex-shrink-0" style={{ fontSize: 12 }}>{formatDate(post.scheduledDate)}</span>
-                        <span className={cn('rounded-full px-2 py-0.5 font-medium flex-shrink-0', THEME_COLORS[post.theme] || 'bg-[#1a2537] text-slate-400')} style={{ fontSize: 11 }}>
+                        <span className="text-ink-500 w-24 flex-shrink-0 text-[12px]">{formatDate(post.scheduledDate)}</span>
+                        <span className={cn('rounded-full px-2 py-0.5 font-medium flex-shrink-0 text-[11px]', THEME_COLORS[post.theme] || 'bg-elev text-ink-400')}>
                           {post.theme.replace(/-/g, ' ')}
                         </span>
-                        <span className="flex-1 text-slate-500 truncate" style={{ fontSize: 12.5 }}>{post.content.split('\n')[0]}</span>
+                        <span className="flex-1 text-ink-500 truncate text-[12px]">{post.content.split('\n')[0]}</span>
                         <Badge variant={STATUS_COLORS[post.status] || 'neutral'} className="flex-shrink-0 capitalize">
                           {post.status}
                         </Badge>
@@ -128,14 +119,14 @@ function OverviewTab() {
                             className="overflow-hidden"
                           >
                             <div className="px-4 pb-4 pl-16">
-                              <div className="rounded-xl bg-[#070b14] border border-[#1e2a3a] p-4">
-                                <p className="text-sm text-slate-300 whitespace-pre-line leading-relaxed">{post.content}</p>
+                              <div className="rounded-xl bg-page border border-ink-200 p-4">
+                                <p className="text-[13px] text-ink-700 whitespace-pre-line leading-relaxed">{post.content}</p>
                                 <div className="mt-3 flex flex-wrap gap-1.5">
                                   {post.hashtags.map(h => (
-                                    <span key={h} className="text-indigo-400" style={{ fontSize: 12 }}>{h}</span>
+                                    <span key={h} className="text-violet-400 text-[12px]">{h}</span>
                                   ))}
                                 </div>
-                                <div className="mt-3 flex items-center justify-between text-slate-600" style={{ fontSize: 12 }}>
+                                <div className="mt-3 flex items-center justify-between text-ink-400 text-[12px]">
                                   <span>Est. engagement: {post.engagementEstimate} interactions</span>
                                   <span>{post.targetGroupIds.length} groups</span>
                                 </div>
@@ -172,17 +163,17 @@ export default function MarketingPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-white">Social Media Marketing</h1>
-          <p className="text-sm text-slate-500 mt-1">Find leads, post to groups, and manage your social presence</p>
+          <h1 className="text-[20px] font-bold text-ink-900">Social Media Marketing</h1>
+          <p className="text-[13px] text-ink-500 mt-1">Find leads, post to groups, and manage your social presence</p>
         </div>
         {urgentLeads > 0 && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2.5"
+            className="flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2.5"
           >
-            <div className="h-2 w-2 rounded-full bg-red-400 animate-pulse" />
-            <span className="text-sm font-medium text-red-300">
+            <div className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
+            <span className="text-[13px] font-medium text-rose-500">
               {urgentLeads} urgent lead{urgentLeads > 1 ? 's' : ''} waiting
             </span>
           </motion.div>
@@ -195,7 +186,7 @@ export default function MarketingPage() {
             <Eye className="h-3.5 w-3.5 mr-1.5" />
             Lead Monitor
             {newLeads > 0 && (
-              <span className="ml-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 font-bold text-white" style={{ fontSize: 11 }}>
+              <span className="ml-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-rose-500 px-1 font-bold text-white text-[11px]">
                 {newLeads}
               </span>
             )}

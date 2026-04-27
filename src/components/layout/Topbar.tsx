@@ -19,113 +19,66 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
 export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
   const pathname = usePathname()
   const info = Object.entries(PAGE_META).find(([k]) => pathname.startsWith(k))?.[1]
-             ?? { title: 'Kardama', sub: '' }
+            ?? { title: 'Kardama', sub: '' }
 
   return (
-    <header
-      className="flex flex-shrink-0 items-center gap-3 md:gap-4"
-      style={{
-        height: 68,
-        background: 'var(--bg-page)',
-        borderBottom: '1px solid var(--ink-200)',
-        padding: '0 22px',
-      }}
-    >
-      {/* Mobile menu button */}
+    <header className="flex h-[64px] flex-shrink-0 items-center gap-3 border-b border-ink-200 bg-page px-4 sm:gap-4 sm:px-6">
+      {/* Mobile menu */}
       <button
+        type="button"
         onClick={onMenuToggle}
-        className="flex md:hidden h-8 w-8 items-center justify-center rounded-lg transition-colors"
-        style={{ color: 'var(--ink-400)', background: 'transparent', border: 'none', cursor: 'pointer' }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; (e.currentTarget as HTMLElement).style.color = 'var(--ink-900)' }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--ink-400)' }}
+        aria-label="Toggle menu"
+        className="flex h-9 w-9 items-center justify-center rounded-lg text-ink-400 transition-colors hover:bg-hover hover:text-ink-900 md:hidden"
       >
-        <Menu className="h-4 w-4" />
+        <Menu className="h-[18px] w-[18px]" />
       </button>
 
       <div className="min-w-0">
-        <h1 style={{ fontSize: 19, fontWeight: 700, color: 'var(--ink-900)', letterSpacing: '-0.015em', lineHeight: 1.2 }}>
+        <h1 className="truncate text-[18px] font-bold text-ink-900 tracking-[-0.015em] leading-tight">
           {info.title}
         </h1>
         {info.sub && (
-          <p className="hidden sm:block" style={{ fontSize: 12.5, color: 'var(--ink-400)', marginTop: 2 }}>{info.sub}</p>
+          <p className="hidden sm:block text-[12px] text-ink-400 mt-0.5 truncate">{info.sub}</p>
         )}
       </div>
 
       <div className="flex-1" />
 
-      {/* AI status pill */}
-      <div className="ai-pill hidden sm:inline-flex">
+      {/* AI status */}
+      <div className="ai-pill hidden md:inline-flex">
         <span className="pulse" />
         AI Active
       </div>
 
-      {/* Search */}
       <button
-        className="flex items-center justify-center transition-colors duration-150"
-        style={{
-          width: 36, height: 36, borderRadius: 99,
-          background: 'var(--bg-elev)',
-          border: '1px solid var(--ink-100)',
-          cursor: 'pointer',
-          color: 'var(--ink-400)',
-        }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ink-900)' }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ink-400)' }}
+        type="button"
+        aria-label="Search"
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-elev border border-ink-100 text-ink-400 transition-colors hover:text-ink-900 hover:border-ink-200"
       >
         <Search className="h-4 w-4" />
       </button>
 
-      {/* New button */}
       <button
-        className="hidden sm:flex items-center gap-2 transition-all duration-150"
-        style={{
-          height: 36, padding: '0 14px', borderRadius: 9,
-          background: 'linear-gradient(180deg, var(--blue-500), var(--blue-600))',
-          color: '#fff',
-          fontSize: 13.5, fontWeight: 600,
-          border: 'none', cursor: 'pointer',
-          boxShadow: '0 1px 0 rgba(255,255,255,0.18) inset, 0 4px 14px rgba(111,105,229,0.35)',
-        }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.filter = 'brightness(1.08)' }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.filter = 'none' }}
+        type="button"
+        className="hidden h-9 items-center gap-2 rounded-[10px] bg-gradient-to-b from-violet-500 to-violet-600 px-4 text-[13px] font-semibold text-white shadow-[0_1px_0_rgba(255,255,255,0.18)_inset,_0_4px_14px_rgba(111,105,229,0.35)] transition-[filter] hover:brightness-110 sm:inline-flex"
       >
         <Plus className="h-4 w-4" />
         New
       </button>
 
-      {/* Notifications */}
       <button
-        className="relative flex items-center justify-center transition-colors duration-150"
-        style={{
-          width: 36, height: 36, borderRadius: 99,
-          background: 'var(--bg-elev)',
-          border: '1px solid var(--ink-100)',
-          cursor: 'pointer',
-          color: 'var(--ink-400)',
-        }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ink-900)' }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--ink-400)' }}
+        type="button"
+        aria-label="Notifications"
+        className="relative flex h-9 w-9 items-center justify-center rounded-full bg-elev border border-ink-100 text-ink-400 transition-colors hover:text-ink-900 hover:border-ink-200"
       >
         <Bell className="h-4 w-4" />
-        <span
-          className="absolute"
-          style={{
-            top: 8, right: 9, width: 7, height: 7,
-            background: 'var(--blue-500)', borderRadius: 99,
-            boxShadow: '0 0 0 2px var(--bg-page)',
-          }}
-        />
+        <span className="absolute top-2 right-2 h-[7px] w-[7px] rounded-full bg-violet-500 ring-2 ring-page" />
       </button>
 
-      {/* Avatar */}
       <div
-        className="flex cursor-pointer items-center justify-center rounded-full font-bold"
-        style={{
-          width: 36, height: 36, fontSize: 12.5,
-          background: 'linear-gradient(135deg, #34D399, #10B981)',
-          color: 'var(--bg-page)',
-          flexShrink: 0,
-        }}
+        className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-500/70 text-[12px] font-bold text-page"
+        aria-label="Account"
+        role="button"
       >
         DC
       </div>

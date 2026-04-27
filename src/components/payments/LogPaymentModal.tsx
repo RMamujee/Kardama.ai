@@ -41,7 +41,7 @@ export function LogPaymentModal() {
     <Dialog open={logModalOpen} onClose={closeLogModal} title="Log Payment">
       <div className="space-y-4">
         <div>
-          <Label className="text-slate-300">Job</Label>
+          <Label className="text-ink-700">Job</Label>
           <Select value={form.jobId} onChange={e => setForm(f => ({ ...f, jobId: e.target.value }))} className="mt-1.5">
             {JOBS.map(j => {
               const c = CUSTOMERS.find(cu => cu.id === j.customerId)
@@ -55,7 +55,7 @@ export function LogPaymentModal() {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label className="text-slate-300">Amount</Label>
+            <Label className="text-ink-700">Amount</Label>
             <Input
               type="number"
               placeholder={selectedJob?.price.toString()}
@@ -65,7 +65,7 @@ export function LogPaymentModal() {
             />
           </div>
           <div>
-            <Label className="text-slate-300">Method</Label>
+            <Label className="text-ink-700">Method</Label>
             <Select value={form.method} onChange={e => setForm(f => ({ ...f, method: e.target.value as any }))} className="mt-1.5">
               <option value="zelle">Zelle</option>
               <option value="venmo">Venmo</option>
@@ -74,7 +74,7 @@ export function LogPaymentModal() {
           </div>
         </div>
         <div>
-          <Label className="text-slate-300">Confirmation Note</Label>
+          <Label className="text-ink-700">Confirmation Note</Label>
           <Input
             placeholder="e.g. Zelle from Sarah — Deep clean"
             value={form.note}

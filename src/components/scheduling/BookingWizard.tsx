@@ -78,23 +78,23 @@ export function BookingWizard() {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative w-full max-w-xl rounded-2xl bg-[#111827] border border-[#1e2a3a] shadow-[0_24px_80px_rgba(0,0,0,0.8)]"
+        className="relative w-full max-w-xl rounded-2xl bg-card border border-ink-200 shadow-[0_24px_80px_rgba(0,0,0,0.8)]"
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#1e2a3a] p-5">
+        <div className="flex items-center justify-between border-b border-ink-200 p-5">
           <div>
-            <h2 className="text-lg font-semibold text-slate-100">New Job</h2>
-            <p className="text-sm text-slate-500">Step {bookingStep + 1} of 4: {STEPS[bookingStep]}</p>
+            <h2 className="text-[18px] font-semibold text-ink-900">New Job</h2>
+            <p className="text-[13px] text-ink-500">Step {bookingStep + 1} of 4: {STEPS[bookingStep]}</p>
           </div>
-          <button onClick={closeBooking} className="rounded-lg p-2 hover:bg-white/[0.05] transition-colors">
-            <X className="h-5 w-5 text-slate-400" />
+          <button onClick={closeBooking} className="rounded-lg p-2 hover:bg-hover transition-colors">
+            <X className="h-5 w-5 text-ink-400" />
           </button>
         </div>
 
         {/* Progress */}
-        <div className="h-1 bg-[#1e2a3a]">
+        <div className="h-1 bg-ink-100">
           <div
-            className="h-1 bg-indigo-500 transition-all duration-300"
+            className="h-1 bg-violet-500 transition-all duration-300"
             style={{ width: `${(bookingStep + 1) * 25}%` }}
           />
         </div>
@@ -108,7 +108,7 @@ export function BookingWizard() {
               {bookingStep === 0 && (
                 <div className="space-y-4">
                   <div>
-                    <Label className="text-slate-300">Select Customer</Label>
+                    <Label className="text-ink-700">Select Customer</Label>
                     <Select value={formData.customerId} onChange={e => setFormData(d => ({ ...d, customerId: e.target.value }))} className="mt-1.5">
                       {CUSTOMERS.map(c => (
                         <option key={c.id} value={c.id}>{c.name} — {c.city}</option>
@@ -116,12 +116,12 @@ export function BookingWizard() {
                     </Select>
                   </div>
                   {customer && (
-                    <div className="rounded-xl bg-[#0d1321] border border-[#1e2a3a] p-4 space-y-2">
-                      <div className="flex items-center gap-2 text-sm">
-                        <MapPin className="h-4 w-4 text-slate-500" />
-                        <span className="text-slate-400">{customer.address}</span>
+                    <div className="rounded-xl bg-soft border border-ink-200 p-4 space-y-2">
+                      <div className="flex items-center gap-2 text-[13px]">
+                        <MapPin className="h-4 w-4 text-ink-400" />
+                        <span className="text-ink-500">{customer.address}</span>
                       </div>
-                      <p className="text-xs text-slate-600">Source: {customer.source} · {customer.jobHistory.length} prior jobs · ${customer.totalSpent} spent</p>
+                      <p className="text-[12px] text-ink-400">Source: {customer.source} · {customer.jobHistory.length} prior jobs · ${customer.totalSpent} spent</p>
                     </div>
                   )}
                 </div>
@@ -132,7 +132,7 @@ export function BookingWizard() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-slate-300">Service Type</Label>
+                      <Label className="text-ink-700">Service Type</Label>
                       <Select value={formData.serviceType} onChange={e => setFormData(d => ({ ...d, serviceType: e.target.value }))} className="mt-1.5">
                         <option value="standard">Standard Clean — $165</option>
                         <option value="deep">Deep Clean — $245</option>
@@ -142,11 +142,11 @@ export function BookingWizard() {
                       </Select>
                     </div>
                     <div>
-                      <Label className="text-slate-300">Date</Label>
+                      <Label className="text-ink-700">Date</Label>
                       <Input type="date" value={formData.date} onChange={e => setFormData(d => ({ ...d, date: e.target.value }))} className="mt-1.5" />
                     </div>
                     <div>
-                      <Label className="text-slate-300">Start Time</Label>
+                      <Label className="text-ink-700">Start Time</Label>
                       <Select value={formData.time} onChange={e => setFormData(d => ({ ...d, time: e.target.value }))} className="mt-1.5">
                         {['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00'].map(t => (
                           <option key={t} value={t}>{t}</option>
@@ -154,18 +154,18 @@ export function BookingWizard() {
                       </Select>
                     </div>
                     <div>
-                      <Label className="text-slate-300">Price</Label>
-                      <div className="mt-1.5 flex h-9 items-center rounded-lg border border-[#1e2a3a] bg-[#0d1321] px-3 text-sm font-semibold text-emerald-400">
+                      <Label className="text-ink-700">Price</Label>
+                      <div className="mt-1.5 flex h-9 items-center rounded-lg border border-ink-200 bg-soft px-3 text-[13px] font-semibold text-emerald-500">
                         {formatCurrency(price)}
                       </div>
                     </div>
                   </div>
                   <div>
-                    <Label className="text-slate-300">Notes (optional)</Label>
+                    <Label className="text-ink-700">Notes (optional)</Label>
                     <textarea
                       value={formData.notes}
                       onChange={e => setFormData(d => ({ ...d, notes: e.target.value }))}
-                      className="mt-1.5 w-full rounded-lg border border-[#1e2a3a] bg-[#0d1321] px-3 py-2 text-sm text-slate-300 placeholder:text-slate-600 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+                      className="mt-1.5 w-full rounded-lg border border-ink-100 bg-soft px-3 py-2 text-[13px] text-ink-900 placeholder:text-ink-400 resize-none focus:outline-none focus:border-violet-500 focus:ring-[3px] focus:ring-violet-500/20"
                       rows={2}
                       placeholder="Special instructions..."
                     />
@@ -176,9 +176,9 @@ export function BookingWizard() {
               {/* Step 2: AI Assignment */}
               {bookingStep === 2 && (
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 p-3">
-                    <Sparkles className="h-4 w-4 text-indigo-400" />
-                    <p className="text-sm text-indigo-300 font-medium">AI analyzed all 4 teams — here are the best matches:</p>
+                  <div className="flex items-center gap-2 rounded-lg bg-violet-500/10 border border-violet-500/20 p-3">
+                    <Sparkles className="h-4 w-4 text-violet-400" />
+                    <p className="text-[13px] text-violet-400 font-medium">AI analyzed all 4 teams — here are the best matches:</p>
                   </div>
                   {recommendations.map((rec, i) => {
                     const cleaners = rec.cleanerIds.map(id => CLEANERS.find(c => c.id === id)!).filter(Boolean)
@@ -190,8 +190,8 @@ export function BookingWizard() {
                         className={cn(
                           'w-full rounded-xl border-2 p-4 text-left transition-all',
                           isSelected
-                            ? 'border-indigo-500/60 bg-indigo-500/10 shadow-[0_0_0_1px_rgba(99,102,241,0.4)]'
-                            : 'border-[#1e2a3a] hover:border-[#2d3f56] hover:bg-white/[0.02]'
+                            ? 'border-violet-500/60 bg-violet-500/10 shadow-[0_0_0_1px_rgba(139,133,242,0.4)]'
+                            : 'border-ink-200 hover:border-ink-300 hover:bg-hover'
                         )}
                       >
                         <div className="flex items-start justify-between">
@@ -200,22 +200,22 @@ export function BookingWizard() {
                               {cleaners.map(c => <Avatar key={c.id} initials={c.initials} color={c.color} size="sm" />)}
                             </div>
                             <div>
-                              <p className="font-semibold text-slate-100 text-sm">{cleaners.map(c=>c.name).join(' + ')}</p>
-                              <p className="text-xs text-slate-500">{cleaners[0]?.homeAreaName} team</p>
+                              <p className="font-semibold text-ink-900 text-[13px]">{cleaners.map(c=>c.name).join(' + ')}</p>
+                              <p className="text-[12px] text-ink-500">{cleaners[0]?.homeAreaName} team</p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className={cn('text-2xl font-bold', rec.score >= 80 ? 'text-emerald-400' : rec.score >= 60 ? 'text-amber-400' : 'text-red-400')}>{rec.score}</div>
-                            <div className="text-[10px] text-slate-500">AI score</div>
+                            <div className={cn('text-[24px] font-bold', rec.score >= 80 ? 'text-emerald-500' : rec.score >= 60 ? 'text-amber-500' : 'text-rose-500')}>{rec.score}</div>
+                            <div className="text-[11px] text-ink-500">AI score</div>
                           </div>
                         </div>
                         <div className="mt-3 flex flex-wrap gap-1.5">
-                          <Badge variant="neutral" className="text-[10px]">
+                          <Badge variant="neutral" className="text-[11px]">
                             <Clock className="mr-1 h-2.5 w-2.5" />
                             {rec.driveTimeMinutes} min drive
                           </Badge>
-                          {rec.matchReasons.map((r, j) => <Badge key={j} variant="success" className="text-[10px]">{r}</Badge>)}
-                          {rec.warnings.map((w, j) => <Badge key={j} variant="warning" className="text-[10px]">{w}</Badge>)}
+                          {rec.matchReasons.map((r, j) => <Badge key={j} variant="success" className="text-[11px]">{r}</Badge>)}
+                          {rec.warnings.map((w, j) => <Badge key={j} variant="warning" className="text-[11px]">{w}</Badge>)}
                         </div>
                       </button>
                     )
@@ -227,29 +227,29 @@ export function BookingWizard() {
               {bookingStep === 3 && selectedTeam && customer && (
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-4">
-                    <CheckCircle className="h-5 w-5 text-emerald-400" />
-                    <p className="text-sm font-medium text-emerald-300">Ready to schedule!</p>
+                    <CheckCircle className="h-5 w-5 text-emerald-500" />
+                    <p className="text-[13px] font-medium text-emerald-500">Ready to schedule!</p>
                   </div>
-                  <div className="rounded-xl bg-[#0d1321] border border-[#1e2a3a] p-4 space-y-3 text-sm">
+                  <div className="rounded-xl bg-soft border border-ink-200 p-4 space-y-3 text-[13px]">
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Customer</span>
-                      <span className="font-medium text-slate-200">{customer.name}</span>
+                      <span className="text-ink-500">Customer</span>
+                      <span className="font-medium text-ink-900">{customer.name}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Service</span>
-                      <span className="font-medium text-slate-200 capitalize">{formData.serviceType} clean</span>
+                      <span className="text-ink-500">Service</span>
+                      <span className="font-medium text-ink-900 capitalize">{formData.serviceType} clean</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Date & Time</span>
-                      <span className="font-medium text-slate-200">{formData.date} at {formData.time}</span>
+                      <span className="text-ink-500">Date & Time</span>
+                      <span className="font-medium text-ink-900">{formData.date} at {formData.time}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Team</span>
-                      <span className="font-medium text-slate-200">{selectedTeam.map(id => CLEANERS.find(c=>c.id===id)?.name.split(' ')[0]).join(' + ')}</span>
+                      <span className="text-ink-500">Team</span>
+                      <span className="font-medium text-ink-900">{selectedTeam.map(id => CLEANERS.find(c=>c.id===id)?.name.split(' ')[0]).join(' + ')}</span>
                     </div>
-                    <div className="flex justify-between border-t border-[#1e2a3a] pt-3 font-semibold">
-                      <span className="text-slate-300">Total Price</span>
-                      <span className="text-emerald-400">{formatCurrency(price)}</span>
+                    <div className="flex justify-between border-t border-ink-200 pt-3 font-semibold">
+                      <span className="text-ink-700">Total Price</span>
+                      <span className="text-emerald-500">{formatCurrency(price)}</span>
                     </div>
                   </div>
                 </div>
@@ -259,7 +259,7 @@ export function BookingWizard() {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-[#1e2a3a] p-5">
+        <div className="flex items-center justify-between border-t border-ink-200 p-5">
           <Button variant="outline" onClick={bookingStep === 0 ? closeBooking : prevStep}>
             {bookingStep === 0 ? <><X className="h-4 w-4" /> Cancel</> : <><ChevronLeft className="h-4 w-4" /> Back</>}
           </Button>

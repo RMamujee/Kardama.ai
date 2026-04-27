@@ -98,3 +98,6 @@ export async function POST(request: Request) {
   // Graceful fallback — works without an OPENAI_API_KEY so the demo still functions.
   return NextResponse.json({ content: generateAiPost(theme, tone), source: 'template' })
 }
+
+// Pro-tier function timeout — covers slower OpenAI models or future streaming
+export const maxDuration = 60

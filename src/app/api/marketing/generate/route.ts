@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { generateAiPost } from '@/lib/marketing-engine'
+import { flag } from '@/lib/flags'
 import type { MarketingTheme } from '@/types'
 import type { PostTone } from '@/lib/marketing-engine'
 
@@ -90,7 +91,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid tone' }, { status: 400 })
   }
 
-  const aiContent = await generateWithOpenAI(theme, tone)
+  // Edge Config kill switch — flip aiPostGenEnabled=false to force template
+  // fallback in seconds without a redeploy (e.g. if OpenAI costs spike).
+  const aiEnabled = await flag('aiPostGenEnabled')
+  const aiContent = aiEnabled ? await generateWithOpenAI(theme, tone) : null
   if (aiContent) {
     return NextResponse.json({ content: aiContent, source: 'openai' })
   }

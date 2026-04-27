@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   }
 
   // Prevent duplicate bookings from the same link (HIGH-4)
-  if (isTokenUsed(token)) {
+  if (await isTokenUsed(token)) {
     return NextResponse.json({ error: 'Booking already made with this link' }, { status: 409 })
   }
 
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
   }
 
   // Re-derive available slots server-side and verify the submitted slot is in them (MED-1)
-  const confirmedJobs = getBookedJobsForDate(slot.date)
+  const confirmedJobs = await getBookedJobsForDate(slot.date)
   const validSlots = getAvailableSlots(decoded.customerId, confirmedJobs as never[])
   const match = validSlots.find(
     s => s.date === slot.date && s.time === slot.time &&
@@ -72,8 +72,8 @@ export async function POST(request: Request) {
     notes,
   }
 
-  markTokenUsed(token)
-  saveBooking(booking)
+  await markTokenUsed(token)
+  await saveBooking(booking)
 
   return NextResponse.json({
     bookingId: booking.id,
@@ -91,6 +91,6 @@ export async function GET(request: Request) {
   if (!adminKey || auth !== `Bearer ${adminKey}`) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
-  const bookings = listBookings()
+  const bookings = await listBookings()
   return NextResponse.json({ bookings, total: bookings.length })
 }

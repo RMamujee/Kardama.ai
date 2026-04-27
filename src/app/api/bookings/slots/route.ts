@@ -23,11 +23,15 @@ export async function GET(request: Request) {
   if (!customer) return NextResponse.json({ error: 'Customer not found' }, { status: 404 })
 
   // Include confirmed bookings so route scores and conflict-checks are accurate
-  const confirmedJobs = Array.from({ length: 8 }, (_, i) => {
-    const d = new Date()
-    d.setDate(d.getDate() + i + 1)
-    return getBookedJobsForDate(d.toISOString().split('T')[0])
-  }).flat()
+  const confirmedJobs = (
+    await Promise.all(
+      Array.from({ length: 8 }, (_, i) => {
+        const d = new Date()
+        d.setDate(d.getDate() + i + 1)
+        return getBookedJobsForDate(d.toISOString().split('T')[0])
+      })
+    )
+  ).flat()
 
   const slots = getAvailableSlots(decoded.customerId, confirmedJobs as never[])
 

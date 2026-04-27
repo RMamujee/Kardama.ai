@@ -3,6 +3,7 @@ import { detectNurturingCandidates } from '@/lib/campaign-engine'
 import { signToken } from '@/lib/booking-tokens'
 import { sendSms } from '@/lib/twilio'
 import { CUSTOMERS } from '@/lib/mock-data'
+import { flag } from '@/lib/flags'
 
 // Vercel Cron sends `Authorization: Bearer <CRON_SECRET>` automatically
 // when the CRON_SECRET env var is set on the project. Reject anything else.
@@ -24,6 +25,11 @@ function sleep(ms: number): Promise<void> {
 export async function GET(request: Request) {
   if (!isAuthorizedCron(request)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  // Edge Config kill switch — pause the cron entirely without a redeploy.
+  if (!(await flag('cronCampaignScanEnabled'))) {
+    return NextResponse.json({ scanned: 0, sent: 0, skipped: true, reason: 'disabled-by-flag' })
   }
 
   // Pre-flight: don't try to send if Twilio isn't configured.

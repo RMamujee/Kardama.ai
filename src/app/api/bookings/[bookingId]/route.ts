@@ -6,7 +6,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ book
   const { bookingId } = await params
   const token = new URL(request.url).searchParams.get('token')
 
-  const booking = getBooking(bookingId)
+  const booking = await getBooking(bookingId)
   if (!booking) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   if (!token || booking.token !== token) {

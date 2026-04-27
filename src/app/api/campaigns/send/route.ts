@@ -2,8 +2,13 @@ import { NextResponse } from 'next/server'
 import { signToken } from '@/lib/booking-tokens'
 import { sendSms } from '@/lib/twilio'
 import { CUSTOMERS } from '@/lib/mock-data'
+import { flag } from '@/lib/flags'
 
 export async function POST(request: Request) {
+  if (!(await flag('smsSendingEnabled'))) {
+    return NextResponse.json({ error: 'SMS sending temporarily disabled' }, { status: 503 })
+  }
+
   const { customerId, message } = await request.json() as { customerId?: string; message?: string }
 
   if (!customerId || !message) {

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { signToken } from '@/lib/booking-tokens'
-import { CUSTOMERS } from '@/lib/mock-data'
+import { getCustomers } from '@/lib/data'
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({})) as { customerId?: string }
@@ -8,7 +8,8 @@ export async function POST(request: Request) {
 
   if (!customerId) return NextResponse.json({ error: 'Missing customerId' }, { status: 400 })
 
-  const customer = CUSTOMERS.find(c => c.id === customerId)
+  const customers = await getCustomers()
+  const customer = customers.find(c => c.id === customerId)
   if (!customer) return NextResponse.json({ error: 'Customer not found' }, { status: 404 })
 
   try {

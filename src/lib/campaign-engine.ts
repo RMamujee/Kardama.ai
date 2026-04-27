@@ -1,6 +1,6 @@
 import { CUSTOMERS, JOBS, CLEANERS } from './mock-data'
 import { computeInsertionCost } from './route-optimizer'
-import { NurturingCampaign, BookingSlot, BookingLink, CampaignStatus, Job } from '@/types'
+import { NurturingCampaign, BookingSlot, BookingLink, CampaignStatus, Job, Customer, Cleaner } from '@/types'
 import { differenceInDays, addDays, format, parseISO } from 'date-fns'
 
 function getToday(): Date { return new Date() }
@@ -18,8 +18,8 @@ function parseMinutes(time: string): number {
   return h * 60 + m
 }
 
-function customerLastJob(customerId: string) {
-  return JOBS
+function customerLastJob(customerId: string, jobs: Job[]) {
+  return jobs
     .filter(j => j.customerId === customerId && j.status === 'completed')
     .sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate))[0] ?? null
 }
@@ -34,11 +34,19 @@ function buildMessage(customerName: string, daysSince: number, serviceType: stri
 
 // ─── Nurturing detection ──────────────────────────────────────────────────────
 
-export function detectNurturingCandidates(): NurturingCampaign[] {
+/**
+ * Find customers due for re-engagement.
+ * Pass live data from the Supabase data layer; falls back to mock when called
+ * with no arguments so existing demo paths keep working.
+ */
+export function detectNurturingCandidates(
+  customers: Customer[] = CUSTOMERS,
+  jobs: Job[] = JOBS,
+): NurturingCampaign[] {
   const campaigns: NurturingCampaign[] = []
 
-  for (const customer of CUSTOMERS) {
-    const lastJob = customerLastJob(customer.id)
+  for (const customer of customers) {
+    const lastJob = customerLastJob(customer.id, jobs)
     if (!lastJob) continue
 
     const daysSince = differenceInDays(getToday(), parseISO(lastJob.scheduledDate))
@@ -95,12 +103,21 @@ function hasConflict(cleanerId: string, date: string, time: string, allJobs: Job
 /**
  * @param customerId   Customer requesting the booking
  * @param extraJobs    Additional confirmed bookings to account for (from booking store)
+ * @param customers    Customer list (defaults to mock for dev/demo)
+ * @param cleaners     Cleaner list (defaults to mock for dev/demo)
+ * @param jobs         Job list (defaults to mock for dev/demo)
  */
-export function getAvailableSlots(customerId: string, extraJobs: Job[] = []): BookingSlot[] {
-  const customer = CUSTOMERS.find(c => c.id === customerId)
+export function getAvailableSlots(
+  customerId: string,
+  extraJobs: Job[] = [],
+  customers: Customer[] = CUSTOMERS,
+  cleaners: Cleaner[] = CLEANERS,
+  jobs: Job[] = JOBS,
+): BookingSlot[] {
+  const customer = customers.find(c => c.id === customerId)
   if (!customer) return []
 
-  const allJobs: Job[] = [...JOBS, ...extraJobs as Job[]]
+  const allJobs: Job[] = [...jobs, ...extraJobs as Job[]]
   const slots: BookingSlot[] = []
 
   for (let dayOffset = 1; dayOffset <= 8; dayOffset++) {
@@ -108,12 +125,12 @@ export function getAvailableSlots(customerId: string, extraJobs: Job[] = []): Bo
     const dayName = getDayName(addDays(getToday(), dayOffset))
 
     for (const [teamId, cleanerIds] of Object.entries(TEAMS)) {
-      const cleaners = cleanerIds.map(id => CLEANERS.find(c => c.id === id)!).filter(Boolean)
-      if (cleaners.length < 2) continue
+      const teamCleaners = cleanerIds.map(id => cleaners.find(c => c.id === id)!).filter(Boolean)
+      if (teamCleaners.length < 2) continue
 
       for (const time of SLOT_TIMES) {
         // Check both cleaners are available that day and time
-        const allAvailable = cleaners.every(c => {
+        const allAvailable = teamCleaners.every(c => {
           const hours = c.availableHours[dayName as keyof typeof c.availableHours]
           if (!hours) return false
           const slotStart  = parseMinutes(time)
@@ -124,15 +141,15 @@ export function getAvailableSlots(customerId: string, extraJobs: Job[] = []): Bo
         if (!allAvailable) continue
 
         // No scheduling conflicts (including confirmed bookings)
-        const noConflict = cleaners.every(c => !hasConflict(c.id, date, time, allJobs))
+        const noConflict = teamCleaners.every(c => !hasConflict(c.id, date, time, allJobs))
         if (!noConflict) continue
 
         // Filter teams that are too far from the customer
-        const avgDriveMins = cleaners.reduce((sum, c) => {
+        const avgDriveMins = teamCleaners.reduce((sum, c) => {
           const dx = (c.homeAreaLat - customer.lat) * 111
           const dy = (c.homeAreaLng - customer.lng) * 85
           return sum + Math.round(Math.sqrt(dx * dx + dy * dy) * 2)
-        }, 0) / cleaners.length
+        }, 0) / teamCleaners.length
         if (avgDriveMins > 55) continue
 
         // Compute real cheapest-insertion score using existing team route
@@ -142,7 +159,7 @@ export function getAvailableSlots(customerId: string, extraJobs: Job[] = []): Bo
           j.cleanerIds.some(id => cleanerIds.includes(id))
         )
 
-        const lead = cleaners[0]
+        const lead = teamCleaners[0]
         const result = computeInsertionCost(
           teamDayJobs,
           time,

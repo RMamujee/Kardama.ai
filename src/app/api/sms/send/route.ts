@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { sendSms, toE164 } from '@/lib/twilio'
-import { CUSTOMERS } from '@/lib/mock-data'
+import { getCustomers } from '@/lib/data'
 import { flag } from '@/lib/flags'
 
 export async function POST(request: Request) {
@@ -20,7 +20,8 @@ export async function POST(request: Request) {
 
   // Restrict recipients to known customers — prevents use as an open SMS relay (CRIT-1)
   const e164 = toE164(to)
-  if (!e164 || !CUSTOMERS.some(c => toE164(c.phone) === e164)) {
+  const customers = await getCustomers()
+  if (!e164 || !customers.some(c => toE164(c.phone) === e164)) {
     return NextResponse.json({ error: 'Recipient not permitted' }, { status: 403 })
   }
 

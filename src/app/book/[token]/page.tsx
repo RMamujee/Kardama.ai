@@ -5,9 +5,12 @@ import {
   CheckCircle2, Sparkles, Clock, MapPin, Calendar, Users,
   ChevronRight, Phone, Zap, Route, AlertCircle
 } from 'lucide-react'
-import { CLEANERS } from '@/lib/mock-data'
 import { BookingSlot } from '@/types'
 import { cn } from '@/lib/utils'
+
+// Server-enriched slot — /api/bookings/slots adds cleanerNames so the public
+// page doesn't need access to the cleaner roster.
+type SlotWithCleaners = BookingSlot & { cleanerNames: string[] }
 
 interface CustomerInfo {
   id: string
@@ -19,7 +22,7 @@ interface CustomerInfo {
 
 interface SlotsResponse {
   customer: CustomerInfo
-  slots: BookingSlot[]
+  slots: SlotWithCleaners[]
   expires: string
 }
 
@@ -184,7 +187,7 @@ export default function PublicBookingPage({ params }: { params: Promise<{ token:
                 </div>
               ) : (
                 data?.slots.map((slot, i) => {
-                  const cleaners = CLEANERS.filter(c => slot.cleanerIds.includes(c.id))
+                  const cleanerFirstNames = slot.cleanerNames.map(n => n.split(' ')[0])
                   const isSelected = selected?.date === slot.date && selected?.time === slot.time
                   const isOnRoute = slot.routeScore >= 70
                   const isGood = slot.routeScore >= 40
@@ -207,7 +210,7 @@ export default function PublicBookingPage({ params }: { params: Promise<{ token:
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-white">{slot.label}</p>
                           <p className="text-xs text-slate-500 mt-0.5">
-                            {cleaners.map(c => c.name.split(' ')[0]).join(' & ')}
+                            {cleanerFirstNames.join(' & ')}
                           </p>
                           {slot.insertionLabel && (
                             <div className="flex items-center gap-1 mt-1">

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/booking-tokens'
 import { getAvailableSlots } from '@/lib/campaign-engine'
 import { getBookedJobsForDate } from '@/lib/booking-store'
-import { CUSTOMERS } from '@/lib/mock-data'
+import { getCustomers, getCleaners, getJobs } from '@/lib/data'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -19,7 +19,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Link expired' }, { status: 410 })
   }
 
-  const customer = CUSTOMERS.find(c => c.id === decoded.customerId)
+  const [customers, cleaners, jobs] = await Promise.all([getCustomers(), getCleaners(), getJobs()])
+  const customer = customers.find(c => c.id === decoded.customerId)
   if (!customer) return NextResponse.json({ error: 'Customer not found' }, { status: 404 })
 
   // Include confirmed bookings so route scores and conflict-checks are accurate
@@ -33,7 +34,15 @@ export async function GET(request: Request) {
     )
   ).flat()
 
-  const slots = getAvailableSlots(decoded.customerId, confirmedJobs as never[])
+  const slots = getAvailableSlots(decoded.customerId, confirmedJobs as never[], customers, cleaners, jobs)
+
+  // Enrich each slot with cleaner first names so the public booking page
+  // doesn't need to import the cleaner roster from mock-data.
+  const cleanerName = new Map(cleaners.map(c => [c.id, c.name]))
+  const slotsWithNames = slots.map(s => ({
+    ...s,
+    cleanerNames: s.cleanerIds.map(id => cleanerName.get(id) ?? id),
+  }))
 
   // phone intentionally omitted — client never displays it (HIGH-3)
   return NextResponse.json({
@@ -43,7 +52,7 @@ export async function GET(request: Request) {
       firstName: customer.name.split(' ')[0],
       city: customer.city,
     },
-    slots,
+    slots: slotsWithNames,
     expires: decoded.expires,
   })
 }

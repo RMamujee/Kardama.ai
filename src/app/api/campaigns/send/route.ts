@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { signToken } from '@/lib/booking-tokens'
 import { sendSms } from '@/lib/twilio'
-import { CUSTOMERS } from '@/lib/mock-data'
+import { getCustomers } from '@/lib/data'
 import { flag } from '@/lib/flags'
 
 export async function POST(request: Request) {
@@ -20,7 +20,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Message too long' }, { status: 400 })
   }
 
-  const customer = CUSTOMERS.find(c => c.id === customerId)
+  const customers = await getCustomers()
+  const customer = customers.find(c => c.id === customerId)
   if (!customer) return NextResponse.json({ error: 'Customer not found' }, { status: 404 })
 
   // Operator-precedence fix: NEXT_PUBLIC_BASE_URL takes priority, then VERCEL_URL, then fallback (HIGH-2)

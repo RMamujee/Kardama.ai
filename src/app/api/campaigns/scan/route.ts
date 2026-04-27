@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { detectNurturingCandidates } from '@/lib/campaign-engine'
 import { signToken } from '@/lib/booking-tokens'
 import { sendSms } from '@/lib/twilio'
-import { CUSTOMERS } from '@/lib/mock-data'
+import { getCustomers, getJobs } from '@/lib/data'
 import { flag } from '@/lib/flags'
 
 // Vercel Cron sends `Authorization: Bearer <CRON_SECRET>` automatically
@@ -40,14 +40,15 @@ export async function GET(request: Request) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
     ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://kardama.ai')
 
-  const candidates = detectNurturingCandidates()
+  const [customers, jobs] = await Promise.all([getCustomers(), getJobs()])
+  const candidates = detectNurturingCandidates(customers, jobs)
     .filter(c => c.status === 'pending')
     .slice(0, MAX_PER_RUN)
 
   const results: Array<{ customerId: string; success: boolean; sid?: string; error?: string }> = []
 
   for (const candidate of candidates) {
-    const customer = CUSTOMERS.find(c => c.id === candidate.customerId)
+    const customer = customers.find(c => c.id === candidate.customerId)
     if (!customer) {
       results.push({ customerId: candidate.customerId, success: false, error: 'Customer not found' })
       continue

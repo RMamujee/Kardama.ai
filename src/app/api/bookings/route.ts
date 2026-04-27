@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/booking-tokens'
 import { getAvailableSlots } from '@/lib/campaign-engine'
 import { saveBooking, listBookings, newBookingId, getBookedJobsForDate, isTokenUsed, markTokenUsed } from '@/lib/booking-store'
-import { CUSTOMERS, CLEANERS } from '@/lib/mock-data'
+import { getCustomers, getCleaners, getJobs } from '@/lib/data'
 import { BookingSlot } from '@/types'
 
 const VALID_TIMES = new Set(['08:00', '09:00', '10:00', '11:00', '13:00', '14:00'])
@@ -29,7 +29,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Booking already made with this link' }, { status: 409 })
   }
 
-  const customer = CUSTOMERS.find(c => c.id === decoded.customerId)
+  const [allCustomers, allCleaners, allJobs] = await Promise.all([getCustomers(), getCleaners(), getJobs()])
+  const customer = allCustomers.find(c => c.id === decoded.customerId)
   if (!customer) return NextResponse.json({ error: 'Customer not found' }, { status: 404 })
 
   // Lightweight slot validation — reject obviously forged slot payloads (MED-1)
@@ -38,14 +39,14 @@ export async function POST(request: Request) {
     !VALID_TIMES.has(slot.time) ||
     slot.date <= today ||
     slot.cleanerIds.length === 0 ||
-    !slot.cleanerIds.every(id => CLEANERS.some(c => c.id === id))
+    !slot.cleanerIds.every(id => allCleaners.some(c => c.id === id))
   ) {
     return NextResponse.json({ error: 'Invalid slot' }, { status: 400 })
   }
 
   // Re-derive available slots server-side and verify the submitted slot is in them (MED-1)
   const confirmedJobs = await getBookedJobsForDate(slot.date)
-  const validSlots = getAvailableSlots(decoded.customerId, confirmedJobs as never[])
+  const validSlots = getAvailableSlots(decoded.customerId, confirmedJobs as never[], allCustomers, allCleaners, allJobs)
   const match = validSlots.find(
     s => s.date === slot.date && s.time === slot.time &&
          s.cleanerIds.slice().sort().join() === slot.cleanerIds.slice().sort().join()
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
   // Cap notes to prevent store flooding (MED-2)
   const notes = typeof body.notes === 'string' ? body.notes.slice(0, 500) : undefined
 
-  const cleaners = CLEANERS.filter(c => match.cleanerIds.includes(c.id))
+  const cleaners = allCleaners.filter(c => match.cleanerIds.includes(c.id))
 
   const booking = {
     id: newBookingId(),

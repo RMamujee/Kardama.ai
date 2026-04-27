@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og'
 import { verifyToken } from '@/lib/booking-tokens'
-import { CUSTOMERS } from '@/lib/mock-data'
+import { getCustomers } from '@/lib/data'
 
 // Node runtime (not edge) so we can use the same node:crypto-based verifyToken
 // that the booking flow uses. ImageResponse works on Node too.
@@ -19,7 +19,8 @@ export default async function OgImage({ params }: { params: Promise<{ token: str
   try {
     const decoded = verifyToken(token)
     if (decoded) {
-      const customer = CUSTOMERS.find(c => c.id === decoded.customerId)
+      const customers = await getCustomers()
+      const customer = customers.find(c => c.id === decoded.customerId)
       if (customer) {
         firstName = customer.name.split(' ')[0]
         city = customer.city

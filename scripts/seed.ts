@@ -14,7 +14,10 @@ config({ path: resolve(process.cwd(), '.env.local') })
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 if (!url || !serviceKey) {
-  console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env.local')
+  console.error('✗ Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
+  console.error('  Set both in .env.local, then re-run: npm run db:seed')
+  console.error('  (NEXT_PUBLIC_SUPABASE_URL = your project URL,')
+  console.error('   SUPABASE_SERVICE_ROLE_KEY = the secret one — Project Settings → API)')
   process.exit(1)
 }
 
@@ -23,6 +26,7 @@ const admin = createClient(url, serviceKey, {
 })
 
 async function seed() {
+  console.log(`▶ Seeding ${url}`)
   console.log('Seeding cleaners…')
   const { error: cleanersErr } = await admin.from('cleaners').upsert(
     CLEANERS.map(c => ({
@@ -114,6 +118,13 @@ async function seed() {
   if (paymentsErr) throw paymentsErr
 
   console.log(`✓ Seeded ${CLEANERS.length} cleaners, ${CUSTOMERS.length} customers, ${JOBS.length} jobs, ${PAYMENTS.length} payments`)
+  console.log()
+  console.log('Next step — create your owner profile so the dashboard will load:')
+  console.log('  1. Sign up at /login (or via the Supabase Auth dashboard)')
+  console.log('  2. In the Supabase SQL editor, run:')
+  console.log('       insert into public.profiles (user_id, role)')
+  console.log('       values (\'<your-auth-user-uuid>\', \'owner_operator\');')
+  console.log('  Without that row, every protected page redirects you back to /login.')
 }
 
 seed().catch(err => {

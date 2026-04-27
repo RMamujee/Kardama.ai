@@ -22,6 +22,7 @@ export function proxy(req: NextRequest) {
   const guarded =
     pathname.startsWith('/api/sms') ||
     pathname.startsWith('/api/campaigns') ||
+    pathname.startsWith('/api/marketing') ||
     pathname === '/api/bookings/token' ||
     pathname.startsWith('/api/bookings/token/')
 
@@ -35,5 +36,5 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/api/sms/:path*', '/api/campaigns/:path*', '/api/bookings/token'],
+  matcher: ['/api/sms/:path*', '/api/campaigns/:path*', '/api/marketing/:path*', '/api/bookings/token'],
 }

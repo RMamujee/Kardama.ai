@@ -5,19 +5,22 @@ import { generateAllPosts, generateAiPost, generatePost, PostTone } from '@/lib/
 import { MarketingTheme } from '@/types'
 import { getWeek } from 'date-fns'
 
+type GeneratedSource = 'openai' | 'template' | null
+
 interface MarketingStore {
   posts: MarketingPost[]
   groups: FacebookGroup[]
   selectedGroupIds: Set<string>
   generatingPost: boolean
   generatedContent: string
+  generatedSource: GeneratedSource
   selectedWeek: number
   selectedTheme: MarketingTheme
   selectedTone: PostTone
   generatingAll: boolean
   generateAllProgress: number
 
-  generateAiPost: () => void
+  generateAiPost: () => Promise<void>
   generateAllPosts: () => Promise<void>
   selectGroup: (id: string) => void
   selectAllGroups: () => void
@@ -35,19 +38,41 @@ export const useMarketingStore = create<MarketingStore>((set, get) => ({
   selectedGroupIds: new Set(FACEBOOK_GROUPS.slice(0, 20).map(g => g.id)),
   generatingPost: false,
   generatedContent: '',
+  generatedSource: null,
   selectedWeek: getWeek(new Date()),
   selectedTheme: 'social-proof',
   selectedTone: 'friendly',
   generatingAll: false,
   generateAllProgress: 0,
 
-  generateAiPost: () => {
+  generateAiPost: async () => {
     const { selectedTheme, selectedTone } = get()
-    set({ generatingPost: true, generatedContent: '' })
-    setTimeout(() => {
-      const content = generateAiPost(selectedTheme, selectedTone)
-      set({ generatingPost: false, generatedContent: content })
-    }, 1200)
+    set({ generatingPost: true, generatedContent: '', generatedSource: null })
+    try {
+      const res = await fetch('/api/marketing/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ theme: selectedTheme, tone: selectedTone }),
+      })
+      if (res.ok) {
+        const data = await res.json() as { content?: string; source?: GeneratedSource }
+        if (data.content) {
+          set({ generatingPost: false, generatedContent: data.content, generatedSource: data.source ?? 'template' })
+          return
+        }
+      }
+      set({
+        generatingPost: false,
+        generatedContent: generateAiPost(selectedTheme, selectedTone),
+        generatedSource: 'template',
+      })
+    } catch {
+      set({
+        generatingPost: false,
+        generatedContent: generateAiPost(selectedTheme, selectedTone),
+        generatedSource: 'template',
+      })
+    }
   },
 
   generateAllPosts: async () => {

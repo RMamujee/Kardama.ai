@@ -30,7 +30,7 @@ const TONES: { value: PostTone; label: string }[] = [
 ]
 
 export function AiPostGenerator() {
-  const { selectedTheme, selectedTone, generatingPost, generatedContent, generateAiPost, setTheme, setTone, setGeneratedContent } = useMarketingStore()
+  const { selectedTheme, selectedTone, generatingPost, generatedContent, generatedSource, generateAiPost, setTheme, setTone, setGeneratedContent } = useMarketingStore()
   const [copied, setCopied] = useState(false)
 
   function handleCopy() {
@@ -87,12 +87,23 @@ export function AiPostGenerator() {
         {generatedContent && (
           <div className="relative rounded-xl bg-[#070b14] border border-[#1e2a3a] p-3">
             <p className="text-xs text-slate-300 whitespace-pre-line leading-relaxed">{generatedContent}</p>
-            <button
-              onClick={handleCopy}
-              className="absolute right-2 top-2 flex items-center gap-1 rounded-md bg-[#111827] px-2 py-1 text-[10px] font-medium text-slate-400 border border-[#1e2a3a] hover:bg-[#162032] transition-colors"
-            >
-              {copied ? <><CheckCircle className="h-3 w-3 text-emerald-400" /> Copied!</> : <><Copy className="h-3 w-3" /> Copy</>}
-            </button>
+            <div className="absolute right-2 top-2 flex items-center gap-1.5">
+              {generatedSource === 'openai' ? (
+                <span className="rounded-md bg-emerald-500/15 px-2 py-1 text-[9.5px] font-semibold text-emerald-400 border border-emerald-500/30">
+                  GPT-4o
+                </span>
+              ) : generatedSource === 'template' ? (
+                <span className="rounded-md bg-slate-700/40 px-2 py-1 text-[9.5px] font-semibold text-slate-400 border border-[#1e2a3a]">
+                  Template
+                </span>
+              ) : null}
+              <button
+                onClick={handleCopy}
+                className="flex items-center gap-1 rounded-md bg-[#111827] px-2 py-1 text-[10px] font-medium text-slate-400 border border-[#1e2a3a] hover:bg-[#162032] transition-colors"
+              >
+                {copied ? <><CheckCircle className="h-3 w-3 text-emerald-400" /> Copied!</> : <><Copy className="h-3 w-3" /> Copy</>}
+              </button>
+            </div>
           </div>
         )}
       </CardContent>

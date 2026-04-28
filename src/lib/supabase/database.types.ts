@@ -107,10 +107,17 @@ type BookingRequestRow = {
   customer_phone: string
   customer_email: string
   address: string
+  unit: string | null
   city: string | null
   service_type: 'standard' | 'deep' | 'move-out' | 'post-construction' | 'airbnb'
   preferred_date: string | null
   preferred_time: string | null
+  preferred_days: string[]
+  preferred_arrival_times: string[]
+  preferred_exit_times: string[]
+  home_size: string | null
+  cleaning_frequency: string | null
+  has_pets_allergies: string | null
   notes: string
   status: 'pending' | 'accepted' | 'declined' | 'converted'
   source: string | null
@@ -121,7 +128,13 @@ type BookingRequestRow = {
 type BookingRequestInsert = Omit<
   BookingRequestRow,
   'id' | 'created_at' | 'status' | 'converted_customer_id' | 'converted_job_id'
-> & { status?: BookingRequestRow['status'] }
+    | 'preferred_days' | 'preferred_arrival_times' | 'preferred_exit_times'
+> & {
+  status?: BookingRequestRow['status']
+  preferred_days?: string[]
+  preferred_arrival_times?: string[]
+  preferred_exit_times?: string[]
+}
 type BookingRequestUpdate = Partial<BookingRequestRow>
 
 export type Database = {

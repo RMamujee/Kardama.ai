@@ -172,6 +172,25 @@ type SocialLeadRow = {
 type SocialLeadInsert = Omit<SocialLeadRow, 'id' | 'created_at' | 'updated_at'>
 type SocialLeadUpdate = Partial<SocialLeadInsert>
 
+type MessageRow = {
+  id: string
+  cleaner_id: string
+  sender_role: 'owner' | 'cleaner'
+  content: string
+  created_at: string
+}
+type MessageInsert = Omit<MessageRow, 'id' | 'created_at'>
+type MessageUpdate = Partial<MessageInsert>
+
+type PushSubscriptionRow = {
+  id: string
+  cleaner_id: string
+  subscription: object
+  created_at: string
+}
+type PushSubscriptionInsert = Omit<PushSubscriptionRow, 'id' | 'created_at'>
+type PushSubscriptionUpdate = Partial<PushSubscriptionInsert>
+
 export type Database = {
   public: {
     Tables: {
@@ -182,6 +201,8 @@ export type Database = {
       payments: { Row: PaymentRow; Insert: PaymentRow; Update: PaymentUpdate; Relationships: [] }
       booking_requests: { Row: BookingRequestRow; Insert: BookingRequestInsert; Update: BookingRequestUpdate; Relationships: [] }
       social_leads: { Row: SocialLeadRow; Insert: SocialLeadInsert; Update: SocialLeadUpdate; Relationships: [] }
+      messages: { Row: MessageRow; Insert: MessageInsert; Update: MessageUpdate; Relationships: [] }
+      push_subscriptions: { Row: PushSubscriptionRow; Insert: PushSubscriptionInsert; Update: PushSubscriptionUpdate; Relationships: [] }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

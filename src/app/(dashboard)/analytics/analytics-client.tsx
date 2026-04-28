@@ -78,7 +78,9 @@ export function AnalyticsClient({ jobs, customers, cleaners }: AnalyticsData) {
     || periodJobs.reduce((s, j) => s + j.price, 0) // fall back if no completed
   const completedCount = completedInPeriod.length
   const avgJobValue = periodJobs.length > 0 ? Math.round(periodJobs.reduce((s, j) => s + j.price, 0) / periodJobs.length) : 0
-  const completionRate = periodJobs.length > 0 ? Math.round((completedCount / periodJobs.length) * 100) : 0
+  // Completion rate: only count finalized jobs (not ones still in progress today)
+  const finalizedJobs = periodJobs.filter((j) => j.status === 'completed' || j.status === 'cancelled')
+  const completionRate = finalizedJobs.length > 0 ? Math.round((completedCount / finalizedJobs.length) * 100) : 100
 
   // ── Comparison: previous equivalent window
   const previousJobs = useMemo(() => {

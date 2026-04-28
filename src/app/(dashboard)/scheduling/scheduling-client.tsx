@@ -43,6 +43,7 @@ const STATUS_OPTIONS = [
 ]
 
 const HOURS = Array.from({ length: 11 }, (_, i) => i + 7) // 7am to 5pm
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 function getWeekDates(offset: number): Date[] {
   const now = new Date()
@@ -54,6 +55,25 @@ function getWeekDates(offset: number): Date[] {
     d.setDate(sunday.getDate() + i)
     return d
   })
+}
+
+function getMonthCalendarDates(offset: number): Date[] {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = now.getMonth() + offset
+  const firstOfMonth = new Date(year, month, 1)
+  const lastOfMonth = new Date(year, month + 1, 0)
+  const startPad = firstOfMonth.getDay()
+  const endPad = 6 - lastOfMonth.getDay()
+  const start = new Date(year, month, 1 - startPad)
+  const end = new Date(year, month + 1, endPad)
+  const dates: Date[] = []
+  const cur = new Date(start)
+  while (cur <= end) {
+    dates.push(new Date(cur))
+    cur.setDate(cur.getDate() + 1)
+  }
+  return dates
 }
 
 function fmtDate(d: Date): string {
@@ -93,6 +113,9 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
   const [isPending, startTransition] = useTransition()
   const [actionTarget, setActionTarget] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [view, setView] = useState<'week' | 'month'>('week')
+  const [monthOffset, setMonthOffset] = useState(0)
+  const [acceptError, setAcceptError] = useState<string | null>(null)
 
   const jobsByDay = useMemo(() => {
     const map: Record<string, Job[]> = {}
@@ -103,22 +126,45 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
     return map
   }, [jobs, weekDates])
 
-  const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const currentMonthDate = useMemo(() => {
+    const now = new Date()
+    return new Date(now.getFullYear(), now.getMonth() + monthOffset, 1)
+  }, [monthOffset])
+
+  const monthDates = useMemo(() => getMonthCalendarDates(monthOffset), [monthOffset])
+  const monthJobsByDay = useMemo(() => {
+    const map: Record<string, Job[]> = {}
+    monthDates.forEach(d => { map[fmtDate(d)] = [] })
+    jobs.forEach(j => { if (map[j.scheduledDate] !== undefined) map[j.scheduledDate].push(j) })
+    return map
+  }, [jobs, monthDates])
+
   const today = fmtDate(new Date())
 
   function handleAccept(id: string) {
     setActionTarget(id)
+    setAcceptError(null)
     startTransition(async () => {
-      await acceptBookingRequest(id)
-      setActionTarget(null)
+      try {
+        await acceptBookingRequest(id)
+      } catch (e) {
+        setAcceptError(e instanceof Error ? e.message : 'Failed to schedule booking')
+      } finally {
+        setActionTarget(null)
+      }
     })
   }
 
   function handleDecline(id: string) {
     setActionTarget(id)
     startTransition(async () => {
-      await declineBookingRequest(id)
-      setActionTarget(null)
+      try {
+        await declineBookingRequest(id)
+      } catch {
+        // silent — decline failure is non-critical
+      } finally {
+        setActionTarget(null)
+      }
     })
   }
 
@@ -164,29 +210,79 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
     })
   }
 
+  function selectJob(job: Job) {
+    setSelectedJob(job)
+    setEditMode(false)
+    setDraft(null)
+  }
+
+  const monthLabel = currentMonthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="icon" onClick={() => setWeekOffset(weekOffset - 1)}>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2.5">
+          {/* View toggle */}
+          <div className="flex items-center rounded-[8px] border border-line overflow-hidden">
+            <button
+              onClick={() => setView('week')}
+              className={cn(
+                'px-3 py-1.5 text-[12px] font-medium transition-colors',
+                view === 'week' ? 'bg-mint-500 text-black' : 'text-ink-500 hover:text-ink-700',
+              )}
+            >
+              Week
+            </button>
+            <button
+              onClick={() => setView('month')}
+              className={cn(
+                'px-3 py-1.5 text-[12px] font-medium border-l border-line transition-colors',
+                view === 'month' ? 'bg-mint-500 text-black' : 'text-ink-500 hover:text-ink-700',
+              )}
+            >
+              Month
+            </button>
+          </div>
+
+          {/* Navigation */}
+          <Button
+            variant="outline" size="icon"
+            onClick={() => view === 'week' ? setWeekOffset(weekOffset - 1) : setMonthOffset(monthOffset - 1)}
+          >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-[13px] font-medium text-ink-700">
-            {weekDates[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} –{' '}
-            {weekDates[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          <span className="text-[13px] font-medium text-ink-700 min-w-[160px] text-center">
+            {view === 'week'
+              ? `${weekDates[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${weekDates[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+              : monthLabel
+            }
           </span>
-          <Button variant="outline" size="icon" onClick={() => setWeekOffset(weekOffset + 1)}>
+          <Button
+            variant="outline" size="icon"
+            onClick={() => view === 'week' ? setWeekOffset(weekOffset + 1) : setMonthOffset(monthOffset + 1)}
+          >
             <ChevronRight className="h-4 w-4" />
           </Button>
-          {weekOffset !== 0 && (
-            <Button variant="ghost" size="sm" onClick={() => setWeekOffset(0)}>Today</Button>
+          {(view === 'week' ? weekOffset !== 0 : monthOffset !== 0) && (
+            <Button variant="ghost" size="sm" onClick={() => view === 'week' ? setWeekOffset(0) : setMonthOffset(0)}>
+              Today
+            </Button>
           )}
         </div>
         <Button onClick={openBooking}>
           <Plus className="h-[15px] w-[15px]" strokeWidth={2.5} /> New Job
         </Button>
       </div>
+
+      {/* Accept error banner */}
+      {acceptError && (
+        <div className="flex items-center gap-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-[13px] text-rose-500">
+          <XCircle className="h-4 w-4 flex-shrink-0" />
+          {acceptError}
+          <button onClick={() => setAcceptError(null)} className="ml-auto text-[11px] opacity-60 hover:opacity-100">Dismiss</button>
+        </div>
+      )}
 
       {/* Pending Booking Requests */}
       {bookingRequests.length > 0 && (
@@ -249,96 +345,163 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
         </div>
       )}
 
-      {/* Week Calendar */}
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <div className="min-w-[560px]">
-            {/* Day headers */}
-            <div className="grid grid-cols-8 border-b border-line">
-              <div className="p-3 border-r border-line" />
-              {weekDates.map((d, i) => {
-                const dateStr = fmtDate(d)
+      {/* Month Calendar */}
+      {view === 'month' && (
+        <div className="card overflow-hidden">
+          {/* Day labels */}
+          <div className="grid grid-cols-7 border-b border-line">
+            {DAY_LABELS.map(d => (
+              <div key={d} className="p-2.5 text-center text-[11px] font-medium uppercase tracking-[0.06em] text-ink-400 border-r border-line last:border-0">
+                {d}
+              </div>
+            ))}
+          </div>
+          {/* Weeks */}
+          {Array.from({ length: monthDates.length / 7 }, (_, weekIdx) => (
+            <div key={weekIdx} className="grid grid-cols-7 border-b border-line last:border-0">
+              {monthDates.slice(weekIdx * 7, weekIdx * 7 + 7).map((date, dayIdx) => {
+                const dateStr = fmtDate(date)
+                const dayJobs = monthJobsByDay[dateStr] ?? []
+                const isCurrentMonth = date.getMonth() === currentMonthDate.getMonth()
                 const isToday = dateStr === today
                 return (
                   <div
-                    key={i}
+                    key={dayIdx}
                     className={cn(
-                      'p-3 text-center',
-                      i < 6 && 'border-r border-line',
-                      isToday && 'bg-mint-500/8',
+                      'min-h-[96px] p-2 border-r border-line last:border-0 flex flex-col gap-1',
+                      !isCurrentMonth && 'opacity-35',
+                      isToday && 'bg-mint-500/[0.04]',
                     )}
                   >
-                    <p className={cn(
-                      'text-[11px] font-medium uppercase tracking-[0.06em]',
-                      isToday ? 'text-mint-500' : 'text-ink-400',
-                    )}>{DAY_LABELS[i]}</p>
-                    <p className={cn(
-                      'num text-[18px] font-semibold mt-1 tracking-[-0.02em]',
-                      isToday ? 'text-mint-500' : 'text-ink-900',
-                    )}>{d.getDate()}</p>
-                    {jobsByDay[dateStr]?.length > 0 && (
-                      <div className="mt-1 flex justify-center">
-                        <span className="h-1 w-1 rounded-full bg-mint-500" />
-                      </div>
-                    )}
+                    <div className="flex-shrink-0">
+                      <span className={cn(
+                        'num inline-flex h-[22px] w-[22px] items-center justify-center rounded-full text-[12px] font-semibold',
+                        isToday ? 'bg-mint-500 text-black' : 'text-ink-700',
+                      )}>
+                        {date.getDate()}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      {dayJobs.slice(0, 3).map(job => {
+                        const tone = SERVICE_COLORS[job.serviceType] ?? SERVICE_COLORS.standard
+                        return (
+                          <button
+                            key={job.id}
+                            onClick={() => selectJob(job)}
+                            className={cn(
+                              'w-full text-left rounded-[4px] border px-1.5 py-[2px] text-[10.5px] font-medium truncate leading-[1.4]',
+                              tone,
+                              selectedJob?.id === job.id && 'ring-1 ring-mint-500',
+                            )}
+                          >
+                            {formatTime(job.scheduledTime)} · {job.address.split(',')[0]}
+                          </button>
+                        )
+                      })}
+                      {dayJobs.length > 3 && (
+                        <p className="text-[10px] text-ink-400 pl-1">+{dayJobs.length - 3} more</p>
+                      )}
+                    </div>
                   </div>
                 )
               })}
             </div>
+          ))}
+        </div>
+      )}
 
-            {/* Time rows */}
-            <div className="max-h-[500px] overflow-y-auto">
-              {HOURS.map(hour => (
-                <div key={hour} className="grid grid-cols-8 border-b border-line min-h-[64px] last:border-0">
-                  <div className="px-3 py-2.5 num border-r border-line text-[11.5px] text-ink-400">
-                    {hour > 12 ? `${hour-12}PM` : hour === 12 ? '12PM' : `${hour}AM`}
+      {/* Week Calendar */}
+      {view === 'week' && (
+        <div className="card overflow-hidden">
+          <div className="overflow-x-auto">
+            <div className="min-w-[560px]">
+              {/* Day headers */}
+              <div className="grid grid-cols-8 border-b border-line">
+                <div className="p-3 border-r border-line" />
+                {weekDates.map((d, i) => {
+                  const dateStr = fmtDate(d)
+                  const isToday = dateStr === today
+                  return (
+                    <div
+                      key={i}
+                      className={cn(
+                        'p-3 text-center',
+                        i < 6 && 'border-r border-line',
+                        isToday && 'bg-mint-500/8',
+                      )}
+                    >
+                      <p className={cn(
+                        'text-[11px] font-medium uppercase tracking-[0.06em]',
+                        isToday ? 'text-mint-500' : 'text-ink-400',
+                      )}>{DAY_LABELS[i]}</p>
+                      <p className={cn(
+                        'num text-[18px] font-semibold mt-1 tracking-[-0.02em]',
+                        isToday ? 'text-mint-500' : 'text-ink-900',
+                      )}>{d.getDate()}</p>
+                      {jobsByDay[dateStr]?.length > 0 && (
+                        <div className="mt-1 flex justify-center">
+                          <span className="h-1 w-1 rounded-full bg-mint-500" />
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Time rows */}
+              <div className="max-h-[500px] overflow-y-auto">
+                {HOURS.map(hour => (
+                  <div key={hour} className="grid grid-cols-8 border-b border-line min-h-[64px] last:border-0">
+                    <div className="px-3 py-2.5 num border-r border-line text-[11.5px] text-ink-400">
+                      {hour > 12 ? `${hour-12}PM` : hour === 12 ? '12PM' : `${hour}AM`}
+                    </div>
+                    {weekDates.map((d, di) => {
+                      const dateStr = fmtDate(d)
+                      const dayJobs = (jobsByDay[dateStr] || []).filter(j => {
+                        const [h] = j.scheduledTime.split(':').map(Number)
+                        return h === hour
+                      })
+                      const isToday = dateStr === today
+                      return (
+                        <div
+                          key={di}
+                          className={cn(
+                            'p-1 space-y-1',
+                            di < 6 && 'border-r border-line',
+                            isToday && 'bg-mint-500/[0.03]',
+                          )}
+                        >
+                          {dayJobs.map(job => {
+                            const jobCleaners = cleaners.filter(c => job.cleanerIds.includes(c.id))
+                            const tone = SERVICE_COLORS[job.serviceType] ?? SERVICE_COLORS.standard
+                            return (
+                              <button
+                                key={job.id}
+                                onClick={() => selectJob(job)}
+                                className={cn(
+                                  'w-full rounded-[8px] border p-2 text-left text-[12px]',
+                                  tone,
+                                  selectedJob?.id === job.id && 'ring-2 ring-offset-1 ring-mint-500/50',
+                                )}
+                              >
+                                <p className="font-medium truncate">{job.address.split(',')[0]}</p>
+                                <p className="opacity-75 mt-0.5 text-[11px]">
+                                  {formatTime(job.scheduledTime)}
+                                  {jobCleaners.length > 0 && ` · ${jobCleaners.map(c => c.initials).join('+')}`}
+                                </p>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )
+                    })}
                   </div>
-                  {weekDates.map((d, di) => {
-                    const dateStr = fmtDate(d)
-                    const dayJobs = (jobsByDay[dateStr] || []).filter(j => {
-                      const [h] = j.scheduledTime.split(':').map(Number)
-                      return h === hour
-                    })
-                    const isToday = dateStr === today
-                    return (
-                      <div
-                        key={di}
-                        className={cn(
-                          'p-1 space-y-1',
-                          di < 6 && 'border-r border-line',
-                          isToday && 'bg-mint-500/[0.03]',
-                        )}
-                      >
-                        {dayJobs.map(job => {
-                          const jobCleaners = cleaners.filter(c => job.cleanerIds.includes(c.id))
-                          const tone = SERVICE_COLORS[job.serviceType] ?? SERVICE_COLORS.standard
-                          return (
-                            <button
-                              key={job.id}
-                              onClick={() => { setSelectedJob(job); setEditMode(false); setDraft(null) }}
-                              className={cn(
-                                'w-full rounded-[8px] border p-2 text-left text-[12px]',
-                                tone,
-                                selectedJob?.id === job.id && 'ring-2 ring-offset-1 ring-mint-500/50',
-                              )}
-                            >
-                              <p className="font-medium truncate">{job.address.split(',')[0]}</p>
-                              <p className="opacity-75 mt-0.5 text-[11px]">
-                                {formatTime(job.scheduledTime)}
-                                {jobCleaners.length > 0 && ` · ${jobCleaners.map(c => c.initials).join('+')}`}
-                              </p>
-                            </button>
-                          )
-                        })}
-                      </div>
-                    )
-                  })}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Job Detail Panel */}
       {selectedJob && (
@@ -441,7 +604,6 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
             {editMode && draft && (
               <div className="p-5">
                 <div className="grid grid-cols-2 gap-x-5 gap-y-4">
-                  {/* Date */}
                   <div>
                     <label className="block text-[12px] font-medium text-ink-500 mb-1.5">Date</label>
                     <input
@@ -451,7 +613,6 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
                       className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-[13px] font-medium text-ink-900 focus:border-mint-500 focus:outline-none focus:ring-1 focus:ring-mint-500/30 transition-colors"
                     />
                   </div>
-                  {/* Time */}
                   <div>
                     <label className="block text-[12px] font-medium text-ink-500 mb-1.5">Time</label>
                     <input
@@ -461,7 +622,6 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
                       className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-[13px] font-medium text-ink-900 focus:border-mint-500 focus:outline-none focus:ring-1 focus:ring-mint-500/30 transition-colors"
                     />
                   </div>
-                  {/* Service Type */}
                   <div>
                     <label className="block text-[12px] font-medium text-ink-500 mb-1.5">Service Type</label>
                     <select
@@ -474,7 +634,6 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
                       ))}
                     </select>
                   </div>
-                  {/* Status */}
                   <div>
                     <label className="block text-[12px] font-medium text-ink-500 mb-1.5">Status</label>
                     <select
@@ -487,7 +646,6 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
                       ))}
                     </select>
                   </div>
-                  {/* Price */}
                   <div>
                     <label className="block text-[12px] font-medium text-ink-500 mb-1.5">Price ($)</label>
                     <input
@@ -499,7 +657,6 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
                       className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-[13px] font-medium text-ink-900 focus:border-mint-500 focus:outline-none focus:ring-1 focus:ring-mint-500/30 transition-colors"
                     />
                   </div>
-                  {/* Duration */}
                   <div>
                     <label className="block text-[12px] font-medium text-ink-500 mb-1.5">Duration (min)</label>
                     <input
@@ -511,7 +668,6 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
                       className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-[13px] font-medium text-ink-900 focus:border-mint-500 focus:outline-none focus:ring-1 focus:ring-mint-500/30 transition-colors"
                     />
                   </div>
-                  {/* Team */}
                   <div className="col-span-2">
                     <label className="block text-[12px] font-medium text-ink-500 mb-2">Team Assignment</label>
                     <div className="flex flex-wrap gap-2">
@@ -537,7 +693,6 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
                       })}
                     </div>
                   </div>
-                  {/* Notes */}
                   <div className="col-span-2">
                     <label className="block text-[12px] font-medium text-ink-500 mb-1.5">Notes</label>
                     <textarea

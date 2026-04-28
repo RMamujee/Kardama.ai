@@ -68,9 +68,12 @@ export async function acceptBookingRequest(requestId: string): Promise<void> {
     .eq('id', requestId)
     .single()
   if (reqErr || !req) throw new Error('Booking request not found')
-  if (!req.preferred_date || !req.preferred_time) {
-    throw new Error('Request is missing a preferred date or time')
-  }
+
+  // Fall back to tomorrow + 9 AM if the intake form didn't capture a specific slot
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const scheduledDate = req.preferred_date ?? tomorrow.toISOString().split('T')[0]
+  const scheduledTime = req.preferred_time ?? '09:00'
 
   // Find or create the customer
   let customerId: string
@@ -108,8 +111,8 @@ export async function acceptBookingRequest(requestId: string): Promise<void> {
     id: jobId,
     customer_id: customerId,
     cleaner_ids: [],
-    scheduled_date: req.preferred_date,
-    scheduled_time: req.preferred_time,
+    scheduled_date: scheduledDate,
+    scheduled_time: scheduledTime,
     estimated_duration: SERVICE_DURATIONS[req.service_type] ?? 180,
     actual_duration: null,
     status: 'scheduled' as const,

@@ -125,17 +125,52 @@ type BookingRequestRow = {
   converted_job_id: string | null
   created_at: string
 }
-type BookingRequestInsert = Omit<
-  BookingRequestRow,
-  'id' | 'created_at' | 'status' | 'converted_customer_id' | 'converted_job_id'
-    | 'preferred_days' | 'preferred_arrival_times' | 'preferred_exit_times'
-> & {
-  status?: BookingRequestRow['status']
+type BookingRequestInsert = {
+  customer_name: string
+  customer_phone: string
+  customer_email: string
+  address: string
+  unit?: string | null
+  city?: string | null
+  service_type: BookingRequestRow['service_type']
+  preferred_date?: string | null
+  preferred_time?: string | null
   preferred_days?: string[]
   preferred_arrival_times?: string[]
   preferred_exit_times?: string[]
+  home_size?: string | null
+  cleaning_frequency?: string | null
+  has_pets_allergies?: string | null
+  notes?: string
+  status?: BookingRequestRow['status']
+  source?: string | null
 }
 type BookingRequestUpdate = Partial<BookingRequestRow>
+
+type SocialLeadRow = {
+  id: string
+  platform: 'facebook-group' | 'facebook-page' | 'instagram' | 'nextdoor' | 'messenger'
+  author: string
+  author_initials: string
+  group_or_page: string
+  content: string
+  posted_at: string
+  status: 'new' | 'responded' | 'captured' | 'dismissed'
+  location: string
+  urgency: 'high' | 'medium' | 'low'
+  responded_at: string | null
+  response_used: string | null
+  captured_at: string | null
+  likes: number
+  comments_count: number
+  external_id: string | null
+  messenger_psid: string | null
+  raw_data: object | null
+  created_at: string
+  updated_at: string
+}
+type SocialLeadInsert = Omit<SocialLeadRow, 'id' | 'created_at' | 'updated_at'>
+type SocialLeadUpdate = Partial<SocialLeadInsert>
 
 export type Database = {
   public: {
@@ -146,6 +181,7 @@ export type Database = {
       jobs: { Row: JobRow; Insert: JobInsert; Update: JobUpdate; Relationships: [] }
       payments: { Row: PaymentRow; Insert: PaymentRow; Update: PaymentUpdate; Relationships: [] }
       booking_requests: { Row: BookingRequestRow; Insert: BookingRequestInsert; Update: BookingRequestUpdate; Relationships: [] }
+      social_leads: { Row: SocialLeadRow; Insert: SocialLeadInsert; Update: SocialLeadUpdate; Relationships: [] }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

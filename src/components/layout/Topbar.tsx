@@ -28,7 +28,6 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
 
   const [paletteOpen, setPaletteOpen] = useState(false)
 
-  // Cmd+K / Ctrl+K opens the palette anywhere
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
@@ -42,38 +41,38 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-[60px] flex-shrink-0 items-center gap-3 border-b border-line bg-page/95 backdrop-blur-md px-4 md:gap-4 md:px-6">
+      <header className="sticky top-0 z-30 flex h-[60px] flex-shrink-0 items-center gap-3 border-b border-line bg-rail/95 backdrop-blur-md px-4 md:gap-4 md:px-6">
         {/* Mobile menu */}
         <button
           type="button"
           onClick={onMenuToggle}
           aria-label="Toggle menu"
-          className="flex h-9 w-9 items-center justify-center rounded-[8px] text-ink-400 transition-colors hover:bg-soft hover:text-ink-900 md:hidden"
+          className="flex h-9 w-9 items-center justify-center rounded-[8px] text-ink-400 transition-colors hover:bg-soft hover:text-ink-700 md:hidden"
         >
           <Menu className="h-[17px] w-[17px]" />
         </button>
 
         {/* Page title */}
         <div className="min-w-0 flex-shrink-0">
-          <h1 className="truncate text-[15px] font-semibold text-ink-900 tracking-[-0.005em] leading-tight">
+          <h1 className="truncate text-[15px] font-semibold text-ink-900 tracking-[-0.01em] leading-tight">
             {info.title}
           </h1>
           {info.sub && (
-            <p className="hidden md:block truncate text-[11.5px] text-ink-400 mt-0.5 leading-tight">{info.sub}</p>
+            <p className="hidden md:block truncate text-[11px] text-ink-400 mt-0.5 leading-tight">{info.sub}</p>
           )}
         </div>
 
-        {/* Search bar — opens palette */}
-        <div className="hidden lg:flex flex-1 max-w-[440px] mx-2">
+        {/* Search bar */}
+        <div className="hidden lg:flex flex-1 max-w-[400px] mx-2">
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
-            className="group flex h-10 w-full items-center gap-2.5 rounded-full bg-card px-4 text-left text-[13px] text-ink-500 transition-colors hover:bg-soft"
+            className="group flex h-9 w-full items-center gap-2.5 rounded-[8px] bg-soft border border-line px-3.5 text-left text-[13px] text-ink-400 transition-colors hover:bg-hover hover:border-line-strong"
           >
-            <Search className="h-[15px] w-[15px] flex-shrink-0" />
-            <span className="flex-1 truncate font-medium">Search customers, jobs…</span>
-            <span className="kbd flex items-center gap-0.5">
-              <Command className="h-[10px] w-[10px]" />K
+            <Search className="h-[14px] w-[14px] flex-shrink-0" />
+            <span className="flex-1 truncate font-medium">Search…</span>
+            <span className="kbd flex items-center gap-0.5 text-[10px]">
+              <Command className="h-[9px] w-[9px]" />K
             </span>
           </button>
         </div>
@@ -94,19 +93,19 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
             type="button"
             aria-label="Search"
             onClick={() => setPaletteOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-elev text-ink-500 transition-colors hover:bg-hover hover:text-ink-900 lg:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-[8px] bg-soft text-ink-500 transition-colors hover:bg-hover hover:text-ink-700 lg:hidden"
           >
             <Search className="h-[15px] w-[15px]" />
           </button>
 
-          {/* + New popover — Spotify-style pill */}
+          {/* + New popover */}
           <Popover.Root>
             <Popover.Trigger asChild>
               <button
                 type="button"
-                className="hidden sm:inline-flex h-9 items-center gap-1.5 rounded-full bg-mint-400 px-4 text-[13px] font-bold text-black transition-[transform,filter] hover:scale-[1.04] hover:bg-mint-500 active:scale-[0.98] shadow-[0_2px_12px_-2px_rgba(29,185,84,0.45)]"
+                className="hidden sm:inline-flex h-9 items-center gap-1.5 rounded-[8px] bg-mint-500 px-3.5 text-[13px] font-semibold text-white transition-colors hover:bg-mint-600 active:scale-[0.98] shadow-[0_1px_3px_rgba(5,150,105,0.3)]"
               >
-                <Plus className="h-[15px] w-[15px]" strokeWidth={2.75} />
+                <Plus className="h-[14px] w-[14px]" strokeWidth={2.5} />
                 New
               </button>
             </Popover.Trigger>
@@ -114,7 +113,7 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
               <Popover.Content
                 align="end"
                 sideOffset={8}
-                className="z-50 w-[260px] rounded-[12px] border border-line-strong bg-card p-1.5 shadow-[var(--shadow-pop)] anim-fade-in"
+                className="z-50 w-[240px] rounded-[10px] border border-line-strong bg-card p-1.5 shadow-[var(--shadow-pop)] anim-fade-in"
               >
                 <NewMenuItem
                   icon={UserPlus}
@@ -143,10 +142,10 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
             <button
               type="button"
               aria-label="Notifications"
-              className="relative flex h-9 w-9 items-center justify-center rounded-full bg-elev text-ink-500 transition-colors hover:bg-hover hover:text-ink-900"
+              className="relative flex h-9 w-9 items-center justify-center rounded-[8px] bg-soft text-ink-500 transition-colors hover:bg-hover hover:text-ink-700"
             >
-              <Bell className="h-[15px] w-[15px]" strokeWidth={2} />
-              <span className="absolute top-1.5 right-1.5 h-[7px] w-[7px] rounded-full bg-mint-400 ring-2 ring-page" />
+              <Bell className="h-[15px] w-[15px]" strokeWidth={1.75} />
+              <span className="absolute top-2 right-2 h-[6px] w-[6px] rounded-full bg-rose-500 ring-2 ring-rail" />
             </button>
           </NotificationsPopover>
         </div>
@@ -170,10 +169,10 @@ function NewMenuItem({
       <button
         type="button"
         onClick={onSelect}
-        className="group flex w-full items-start gap-3 rounded-[8px] px-2.5 py-2.5 text-left transition-colors hover:bg-soft"
+        className="group flex w-full items-start gap-3 rounded-[7px] px-2.5 py-2.5 text-left transition-colors hover:bg-soft"
       >
-        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[8px] bg-mint-500/10 text-mint-500">
-          <Icon className="h-[15px] w-[15px]" strokeWidth={1.75} />
+        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[7px] bg-mint-500/10 text-mint-500">
+          <Icon className="h-[14px] w-[14px]" strokeWidth={1.75} />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-[13px] font-medium text-ink-900 leading-tight">{title}</p>

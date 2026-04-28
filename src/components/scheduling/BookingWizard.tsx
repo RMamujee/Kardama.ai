@@ -1,47 +1,59 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ChevronRight, ChevronLeft, Sparkles, MapPin, Clock, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
-import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar } from '@/components/ui/avatar'
 import { Progress } from '@/components/ui/progress'
 import { useSchedulingStore } from '@/store/useSchedulingStore'
-import { CLEANERS, CUSTOMERS } from '@/lib/mock-data'
+import { createJob } from '@/app/actions/scheduling'
 import { formatCurrency, cn } from '@/lib/utils'
-import { SchedulingRequest } from '@/types'
+import type { Cleaner, Customer, SchedulingRequest } from '@/types'
 
 const STEPS = ['Customer', 'Service Details', 'AI Assignment', 'Confirm']
 const SERVICE_PRICES: Record<string, number> = {
-  standard: 165, deep: 245, 'move-out': 380, 'post-construction': 450, airbnb: 195
+  standard: 165, deep: 245, 'move-out': 380, 'post-construction': 450, airbnb: 195,
+}
+const SERVICE_DURATIONS: Record<string, number> = {
+  standard: 180, deep: 240, 'move-out': 300, 'post-construction': 360, airbnb: 120,
 }
 
-export function BookingWizard() {
-  const { bookingStep, nextStep, prevStep, closeBooking, computeRecommendations, recommendations, selectedTeam, selectTeam, addJob } = useSchedulingStore()
+interface Props {
+  cleaners: Cleaner[]
+  customers: Customer[]
+}
+
+export function BookingWizard({ cleaners, customers }: Props) {
+  const router = useRouter()
+  const {
+    bookingStep, nextStep, prevStep, closeBooking,
+    computeRecommendations, recommendations, selectedTeam, selectTeam,
+  } = useSchedulingStore()
+  const [isPending, startTransition] = useTransition()
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
-    customerId: 'cust1',
+    customerId: customers[0]?.id ?? '',
     serviceType: 'standard',
     date: new Date().toISOString().split('T')[0],
     time: '09:00',
     notes: '',
   })
 
-  const customer = CUSTOMERS.find(c => c.id === formData.customerId)
-  const price = SERVICE_PRICES[formData.serviceType] || 165
-
-  const durations: Record<string, number> = { standard: 180, deep: 240, 'move-out': 300, 'post-construction': 360, airbnb: 120 }
+  const customer = customers.find(c => c.id === formData.customerId)
+  const price = SERVICE_PRICES[formData.serviceType] ?? 165
 
   function handleComputeRecommendations() {
     if (!customer) return
     const req: SchedulingRequest = {
       jobDate: formData.date,
       jobTime: formData.time,
-      jobDuration: durations[formData.serviceType] || 180,
+      jobDuration: SERVICE_DURATIONS[formData.serviceType] ?? 180,
       jobLat: customer.lat,
       jobLng: customer.lng,
       serviceType: formData.serviceType,
@@ -54,31 +66,37 @@ export function BookingWizard() {
 
   function handleConfirm() {
     if (!customer || !selectedTeam) return
-    addJob({
-      customerId: formData.customerId,
-      cleanerIds: selectedTeam,
-      scheduledDate: formData.date,
-      scheduledTime: formData.time,
-      estimatedDuration: durations[formData.serviceType] || 180,
-      status: 'scheduled',
-      serviceType: formData.serviceType as any,
-      price,
-      paid: false,
-      address: customer.address,
-      lat: customer.lat,
-      lng: customer.lng,
-      notes: formData.notes,
-      driveTimeMinutes: recommendations[0]?.driveTimeMinutes || 15,
+    setSaveError(null)
+    startTransition(async () => {
+      try {
+        await createJob({
+          customerId: formData.customerId,
+          cleanerIds: selectedTeam,
+          scheduledDate: formData.date,
+          scheduledTime: formData.time,
+          estimatedDuration: SERVICE_DURATIONS[formData.serviceType] ?? 180,
+          serviceType: formData.serviceType as Parameters<typeof createJob>[0]['serviceType'],
+          price,
+          address: customer.address,
+          lat: customer.lat,
+          lng: customer.lng,
+          notes: formData.notes,
+          driveTimeMinutes: recommendations[0]?.driveTimeMinutes ?? 15,
+        })
+        closeBooking()
+        router.refresh()
+      } catch (e: unknown) {
+        setSaveError(e instanceof Error ? e.message : 'Failed to save job')
+      }
     })
-    closeBooking()
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/25 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative w-full max-w-xl rounded-2xl bg-card border border-ink-200 shadow-[0_24px_80px_rgba(0,0,0,0.8)]"
+        className="relative w-full max-w-xl rounded-2xl bg-card border border-line-strong shadow-[0_20px_60px_-8px_rgba(0,0,0,0.14),0_8px_24px_-4px_rgba(0,0,0,0.08)]"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-ink-200 p-5">
@@ -110,7 +128,7 @@ export function BookingWizard() {
                   <div>
                     <Label className="text-ink-700">Select Customer</Label>
                     <Select value={formData.customerId} onChange={e => setFormData(d => ({ ...d, customerId: e.target.value }))} className="mt-1.5">
-                      {CUSTOMERS.map(c => (
+                      {customers.map(c => (
                         <option key={c.id} value={c.id}>{c.name} — {c.city}</option>
                       ))}
                     </Select>
@@ -178,10 +196,10 @@ export function BookingWizard() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 rounded-lg bg-violet-500/10 border border-violet-500/20 p-3">
                     <Sparkles className="h-4 w-4 text-violet-400" />
-                    <p className="text-[13px] text-violet-400 font-medium">AI analyzed all 4 teams — here are the best matches:</p>
+                    <p className="text-[13px] text-violet-400 font-medium">AI analyzed all teams — here are the best matches:</p>
                   </div>
                   {recommendations.map((rec, i) => {
-                    const cleaners = rec.cleanerIds.map(id => CLEANERS.find(c => c.id === id)!).filter(Boolean)
+                    const teamCleaners = rec.cleanerIds.map(id => cleaners.find(c => c.id === id)).filter(Boolean) as Cleaner[]
                     const isSelected = selectedTeam?.[0] === rec.cleanerIds[0]
                     return (
                       <button
@@ -197,11 +215,11 @@ export function BookingWizard() {
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-3">
                             <div className="flex -space-x-1">
-                              {cleaners.map(c => <Avatar key={c.id} initials={c.initials} color={c.color} size="sm" />)}
+                              {teamCleaners.map(c => <Avatar key={c.id} initials={c.initials} color={c.color} size="sm" />)}
                             </div>
                             <div>
-                              <p className="font-semibold text-ink-900 text-[13px]">{cleaners.map(c=>c.name).join(' + ')}</p>
-                              <p className="text-[12px] text-ink-500">{cleaners[0]?.homeAreaName} team</p>
+                              <p className="font-semibold text-ink-900 text-[13px]">{teamCleaners.map(c => c.name).join(' + ')}</p>
+                              <p className="text-[12px] text-ink-500">{teamCleaners[0]?.homeAreaName} team</p>
                             </div>
                           </div>
                           <div className="text-right">
@@ -245,13 +263,18 @@ export function BookingWizard() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-ink-500">Team</span>
-                      <span className="font-medium text-ink-900">{selectedTeam.map(id => CLEANERS.find(c=>c.id===id)?.name.split(' ')[0]).join(' + ')}</span>
+                      <span className="font-medium text-ink-900">
+                        {selectedTeam.map(id => cleaners.find(c => c.id === id)?.name.split(' ')[0] ?? id).join(' + ')}
+                      </span>
                     </div>
                     <div className="flex justify-between border-t border-ink-200 pt-3 font-semibold">
                       <span className="text-ink-700">Total Price</span>
                       <span className="text-emerald-500">{formatCurrency(price)}</span>
                     </div>
                   </div>
+                  {saveError && (
+                    <p className="rounded-lg bg-rose-500/10 border border-rose-500/25 px-3 py-2 text-[12.5px] text-rose-500">{saveError}</p>
+                  )}
                 </div>
               )}
             </motion.div>
@@ -260,7 +283,7 @@ export function BookingWizard() {
 
         {/* Footer */}
         <div className="flex items-center justify-between border-t border-ink-200 p-5">
-          <Button variant="outline" onClick={bookingStep === 0 ? closeBooking : prevStep}>
+          <Button variant="outline" onClick={bookingStep === 0 ? closeBooking : prevStep} disabled={isPending}>
             {bookingStep === 0 ? <><X className="h-4 w-4" /> Cancel</> : <><ChevronLeft className="h-4 w-4" /> Back</>}
           </Button>
           {bookingStep === 1 ? (
@@ -268,8 +291,8 @@ export function BookingWizard() {
               <Sparkles className="h-4 w-4" /> Get AI Recommendations
             </Button>
           ) : bookingStep === 3 ? (
-            <Button onClick={handleConfirm} disabled={!selectedTeam}>
-              <CheckCircle className="h-4 w-4" /> Schedule Job
+            <Button onClick={handleConfirm} disabled={!selectedTeam || isPending}>
+              <CheckCircle className="h-4 w-4" /> {isPending ? 'Saving…' : 'Schedule Job'}
             </Button>
           ) : (
             <Button onClick={nextStep} disabled={bookingStep === 2 && !selectedTeam}>

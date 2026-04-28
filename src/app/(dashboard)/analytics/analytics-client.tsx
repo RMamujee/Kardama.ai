@@ -35,20 +35,20 @@ const PERIOD_LABEL: Record<Period, string> = {
 
 const TOOLTIP_STYLE = {
   contentStyle: {
-    background: '#131316',
-    border: '1px solid #2E2E34',
-    borderRadius: 10,
-    color: '#F5F5F7',
+    background: '#FFFFFF',
+    border: '1px solid #D4D4DC',
+    borderRadius: 8,
+    color: '#1A1A20',
     fontFamily: 'var(--font-sans)',
     fontSize: 12,
     padding: '8px 10px',
-    boxShadow: '0 24px 64px -16px rgba(0,0,0,0.7)',
+    boxShadow: '0 4px 16px rgba(0,0,0,0.10)',
   },
-  labelStyle: { color: '#92929D', fontSize: 11 },
-  itemStyle: { color: '#F5F5F7' },
+  labelStyle: { color: '#6B6B78', fontSize: 11 },
+  itemStyle: { color: '#1A1A20' },
 }
 
-const SERVICE_COLORS = ['#5EEAD4', '#34D399', '#F5A524', '#60A5FA', '#F87171']
+const SERVICE_COLORS = ['#059669', '#0EA5E9', '#D97706', '#8B5CF6', '#E11D48']
 
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -303,20 +303,20 @@ export function AnalyticsClient({ jobs, customers, cleaners }: AnalyticsData) {
             <AreaChart data={timeSeries} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="mint-grad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%"   stopColor="#5EEAD4" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="#5EEAD4" stopOpacity={0} />
+                  <stop offset="0%"   stopColor="#059669" stopOpacity={0.15} />
+                  <stop offset="100%" stopColor="#059669" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="2 4" stroke="#232328" vertical={false} />
+              <CartesianGrid strokeDasharray="2 4" stroke="#E6E6EC" vertical={false} />
               <XAxis
                 dataKey="label"
-                tick={{ fill: '#92929D', fontSize: 11, fontFamily: 'var(--font-sans)' }}
+                tick={{ fill: '#8E8E9A', fontSize: 11, fontFamily: 'var(--font-sans)' }}
                 axisLine={false}
                 tickLine={false}
                 interval="preserveStartEnd"
               />
               <YAxis
-                tick={{ fill: '#92929D', fontSize: 11, fontFamily: 'var(--font-sans)' }}
+                tick={{ fill: '#8E8E9A', fontSize: 11, fontFamily: 'var(--font-sans)' }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v: number) => `$${(v / 1000).toFixed(1)}k`}
@@ -328,11 +328,11 @@ export function AnalyticsClient({ jobs, customers, cleaners }: AnalyticsData) {
               <Area
                 type="monotone"
                 dataKey="revenue"
-                stroke="#5EEAD4"
+                stroke="#059669"
                 fill="url(#mint-grad)"
                 strokeWidth={2}
                 dot={false}
-                activeDot={{ r: 4, fill: '#5EEAD4', stroke: '#131316', strokeWidth: 2 }}
+                activeDot={{ r: 4, fill: '#059669', stroke: '#fff', strokeWidth: 2 }}
               />
             </AreaChart>
           </ResponsiveContainer>

@@ -87,7 +87,7 @@ export function NotificationsPopover({ children }: { children: React.ReactNode }
               <Bell className="h-[15px] w-[15px] text-ink-500" strokeWidth={1.75} />
               <h3 className="text-[13.5px] font-semibold text-ink-900">Notifications</h3>
               {unreadCount > 0 && (
-                <span className="text-[11px] font-semibold text-mint-400">{unreadCount} new</span>
+                <span className="text-[11px] font-semibold text-mint-500">{unreadCount} new</span>
               )}
             </div>
             <button
@@ -109,7 +109,7 @@ export function NotificationsPopover({ children }: { children: React.ReactNode }
                   className="group relative flex w-full items-start gap-3 border-b border-line px-4 py-3 text-left transition-colors hover:bg-soft last:border-b-0"
                 >
                   {n.unread && (
-                    <span className="absolute left-1.5 top-4 h-1.5 w-1.5 rounded-full bg-mint-400" aria-hidden />
+                    <span className="absolute left-1.5 top-4 h-1.5 w-1.5 rounded-full bg-mint-500" aria-hidden />
                   )}
                   <div className={cn('flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[8px]', TONE_BG[n.tone])}>
                     <Icon className="h-[15px] w-[15px]" strokeWidth={1.75} />

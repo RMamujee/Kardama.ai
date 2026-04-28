@@ -57,7 +57,7 @@ export function TabsTrigger({
       className={cn(
         'rounded-[6px] px-3 py-1.5 text-[12.5px] font-medium transition-[background,color] duration-100',
         isActive
-          ? 'bg-card text-ink-900 shadow-[0_1px_2px_rgba(0,0,0,0.4)]'
+          ? 'bg-card text-ink-900 shadow-[0_1px_3px_rgba(0,0,0,0.10)]'
           : 'text-ink-400 hover:text-ink-700',
         className,
       )}

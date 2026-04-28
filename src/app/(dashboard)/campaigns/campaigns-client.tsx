@@ -109,7 +109,7 @@ function CampaignRow({ campaign, customers }: { campaign: NurturingCampaign; cus
                   <span className="flex-1 text-ink-500 truncate text-[12.5px]">{bookingUrl}</span>
                   <button
                     onClick={handleCopy}
-                    className="text-mint-500 hover:text-mint-400 flex-shrink-0 font-medium text-[12.5px]"
+                    className="text-mint-500 hover:text-mint-600 flex-shrink-0 font-medium text-[12.5px]"
                   >
                     {copied ? '✓ Copied' : 'Copy'}
                   </button>
@@ -449,7 +449,7 @@ export function CampaignsClient({ customers, cleaners }: CampaignsData) {
                       <Badge variant="neutral"><span className="num">{link.slots.length}</span>&nbsp;slots</Badge>
                       <button
                         onClick={() => { navigator.clipboard.writeText(url) }}
-                        className="text-mint-500 hover:text-mint-400"
+                        className="text-mint-500 hover:text-mint-600"
                       >
                         <Copy className="h-4 w-4" />
                       </button>

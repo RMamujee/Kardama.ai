@@ -154,7 +154,7 @@ export function CommandPalette({ open, onClose }: Props) {
                         active ? 'bg-soft' : 'hover:bg-soft/60',
                       )}
                     >
-                      <Icon className={cn('h-[15px] w-[15px] flex-shrink-0', active ? 'text-mint-400' : 'text-ink-400')} strokeWidth={1.75} />
+                      <Icon className={cn('h-[15px] w-[15px] flex-shrink-0', active ? 'text-mint-500' : 'text-ink-400')} strokeWidth={1.75} />
                       <div className="min-w-0 flex-1">
                         <p className="text-[13.5px] font-medium text-ink-900 leading-tight">{cmd.label}</p>
                         {cmd.hint && (

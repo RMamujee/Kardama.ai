@@ -42,7 +42,7 @@ export function Dialog({ open, onClose, children, title, description, className 
       <div
         className={cn(
           'relative z-10 w-full max-w-lg rounded-t-[12px] sm:rounded-[12px]',
-          'bg-card border border-line-strong shadow-[0_32px_80px_-16px_rgba(0,0,0,0.85)]',
+          'bg-card border border-line-strong shadow-[0_20px_60px_-8px_rgba(0,0,0,0.14),0_8px_24px_-4px_rgba(0,0,0,0.08)]',
           'animate-in fade-in slide-in-from-bottom-4 duration-200',
           className,
         )}

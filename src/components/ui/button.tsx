@@ -14,7 +14,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          'bg-mint-500 text-white shadow-[0_1px_3px_rgba(5,150,105,0.3)] hover:bg-mint-600 active:scale-[0.98]',
+          'bg-mint-400 text-black shadow-[0_2px_12px_-2px_rgba(29,185,84,0.35)] hover:bg-mint-500 hover:scale-[1.04] active:scale-[0.98]',
         secondary:
           'bg-soft text-ink-700 border border-line-strong hover:bg-hover hover:text-ink-900',
         outline:
@@ -26,7 +26,7 @@ const buttonVariants = cva(
         success:
           'bg-mint-500/10 text-mint-500 border border-mint-500/20 hover:bg-mint-500/18',
         glow:
-          'bg-mint-500 text-white shadow-[0_1px_3px_rgba(5,150,105,0.3)] hover:bg-mint-600 active:scale-[0.98]',
+          'bg-mint-400 text-black shadow-[0_2px_12px_-2px_rgba(29,185,84,0.35)] hover:bg-mint-500 hover:scale-[1.04] active:scale-[0.98]',
       },
       size: {
         sm:        'h-8 px-3.5 text-[12.5px] rounded-[7px]',

@@ -103,7 +103,7 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
             <Popover.Trigger asChild>
               <button
                 type="button"
-                className="hidden sm:inline-flex h-9 items-center gap-1.5 rounded-[8px] bg-mint-500 px-3.5 text-[13px] font-semibold text-white transition-colors hover:bg-mint-600 active:scale-[0.98] shadow-[0_1px_3px_rgba(5,150,105,0.3)]"
+                className="hidden sm:inline-flex h-9 items-center gap-1.5 rounded-[8px] bg-mint-400 px-3.5 text-[13px] font-semibold text-black transition-[transform,filter] hover:scale-[1.04] hover:bg-mint-500 active:scale-[0.98] shadow-[0_2px_12px_-2px_rgba(29,185,84,0.45)]"
               >
                 <Plus className="h-[14px] w-[14px]" strokeWidth={2.5} />
                 New
@@ -145,7 +145,7 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
               className="relative flex h-9 w-9 items-center justify-center rounded-[8px] bg-soft text-ink-500 transition-colors hover:bg-hover hover:text-ink-700"
             >
               <Bell className="h-[15px] w-[15px]" strokeWidth={1.75} />
-              <span className="absolute top-2 right-2 h-[6px] w-[6px] rounded-full bg-rose-500 ring-2 ring-rail" />
+              <span className="absolute top-1.5 right-1.5 h-[7px] w-[7px] rounded-full bg-mint-400 ring-2 ring-page" />
             </button>
           </NotificationsPopover>
         </div>

@@ -26,10 +26,10 @@ type Period = '1D' | '1W' | '1M' | '3M' | '1Y'
 const fadeUp = { hidden: { opacity: 0, y: 6 }, visible: { opacity: 1, y: 0, transition: { duration: 0.28 } } }
 
 const CLEANER_STATUS_DOT: Record<string, string> = {
-  available:  'bg-mint-500',
+  available:  'bg-mint-400',
   'en-route': 'bg-amber-500',
-  cleaning:   'bg-mint-500',
-  'off-duty': 'bg-ink-300',
+  cleaning:   'bg-mint-400',
+  'off-duty': 'bg-ink-400',
 }
 
 const STATUS_VARIANT: Record<Job['status'], 'default' | 'success' | 'warning' | 'neutral' | 'danger'> = {
@@ -58,18 +58,18 @@ function generateSeries(period: Period): { x: number; y: number }[] {
 
 const TOOLTIP_STYLE = {
   contentStyle: {
-    background: '#FFFFFF',
-    border: '1px solid #D4D4DC',
+    background: '#1C1C1E',
+    border: 'none',
     borderRadius: 8,
-    color: '#1A1A20',
+    color: '#fff',
     fontFamily: 'var(--font-sans)',
     fontSize: 12,
     fontWeight: 600,
     padding: '6px 10px',
-    boxShadow: '0 4px 16px rgba(0,0,0,0.10)',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
   },
   labelStyle: { display: 'none' },
-  itemStyle: { color: '#1A1A20', padding: 0 },
+  itemStyle: { color: '#fff', padding: 0 },
 }
 
 export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingRevenue }: DashboardData) {
@@ -130,23 +130,23 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
               <AreaChart data={series} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="hero-area" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%"   stopColor={isUp ? '#059669' : '#E11D48'} stopOpacity={0.18} />
-                    <stop offset="100%" stopColor={isUp ? '#059669' : '#E11D48'} stopOpacity={0} />
+                    <stop offset="0%"   stopColor={isUp ? '#1DB954' : '#FF6260'} stopOpacity={0.32} />
+                    <stop offset="100%" stopColor={isUp ? '#1DB954' : '#FF6260'} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <Tooltip
                   {...TOOLTIP_STYLE}
                   formatter={(v) => [formatCurrency(Number(v)), '']}
-                  cursor={{ stroke: '#D4D4DC', strokeWidth: 1, strokeDasharray: '3 3' }}
+                  cursor={{ stroke: '#3A3A3D', strokeWidth: 1, strokeDasharray: '3 3' }}
                 />
                 <Area
                   type="monotone"
                   dataKey="y"
-                  stroke={isUp ? '#059669' : '#E11D48'}
+                  stroke={isUp ? '#1DB954' : '#FF6260'}
                   strokeWidth={2}
                   fill="url(#hero-area)"
                   dot={false}
-                  activeDot={{ r: 4, fill: isUp ? '#059669' : '#E11D48', stroke: '#fff', strokeWidth: 2 }}
+                  activeDot={{ r: 4, fill: isUp ? '#1DB954' : '#FF6260', stroke: '#000', strokeWidth: 2 }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -195,7 +195,7 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
           <button
             type="button"
             onClick={() => router.push('/scheduling')}
-            className="text-[13px] font-semibold text-mint-500 hover:text-mint-600 transition-colors"
+            className="text-[13px] font-semibold text-mint-400 hover:text-mint-500 transition-colors"
           >
             Schedule →
           </button>
@@ -264,7 +264,7 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
           <button
             type="button"
             onClick={() => router.push('/team')}
-            className="text-[13px] font-semibold text-mint-500 hover:text-mint-600 transition-colors"
+            className="text-[13px] font-semibold text-mint-400 hover:text-mint-500 transition-colors"
           >
             All →
           </button>

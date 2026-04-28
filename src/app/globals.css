@@ -1,54 +1,49 @@
 @import "tailwindcss";
 
 /* ═════════════════════════════════════════════════════════════════════════
-   KARDAMA — Silicon Valley light aesthetic
-   Clean white surfaces, tight typography, purposeful color.
-   Stripe / Robinhood / Airbnb / Uber influenced.
+   KARDAMA — Dark theme
+   Near-black canvas, visible card borders, Spotify-green accent.
    ═════════════════════════════════════════════════════════════════════════ */
 
 @theme {
-  /* ── Surfaces ─────────────────────────────────────────────────────────
-     Light, airy backgrounds. Page is off-white; cards float on it. */
-  --color-page:    #F5F5F8;   /* off-white canvas */
-  --color-rail:    #FFFFFF;   /* sidebar: pure white */
-  --color-card:    #FFFFFF;   /* card surfaces */
-  --color-soft:    #F0F0F5;   /* nested surfaces, hover fills */
-  --color-hover:   #E8E8EF;   /* interactive hover */
-  --color-elev:    #EAEAF0;   /* elevated elements */
-  --color-line:    #E6E6EC;   /* subtle dividers */
-  --color-line-strong: #D4D4DC; /* card borders */
+  /* ── Surfaces ───────────────────────────────────────────────────────── */
+  --color-page:    #000000;
+  --color-rail:    #0A0A0A;
+  --color-card:    #181818;
+  --color-soft:    #1F1F22;
+  --color-hover:   #2A2A2D;
+  --color-elev:    #2A2A2D;
+  --color-line:    #2E2E32;
+  --color-line-strong: #3A3A3F;
 
-  /* ── Ink (text) ──────────────────────────────────────────────────────
-     Dark text on light background. ink-900 = primary, ink-400 = muted. */
-  --color-ink-50:  #F5F5F8;
-  --color-ink-100: #EAEAEF;
-  --color-ink-200: #D4D4DC;
-  --color-ink-300: #AEAEB8;
-  --color-ink-400: #8E8E9A;   /* muted / disabled */
-  --color-ink-500: #6B6B78;   /* secondary labels */
-  --color-ink-600: #48484F;
-  --color-ink-700: #2C2C32;   /* body text */
-  --color-ink-900: #1A1A20;   /* primary headings / values */
+  /* ── Ink (text) ─────────────────────────────────────────────────────── */
+  --color-ink-50:  #1A1A1D;
+  --color-ink-100: #2A2A2D;
+  --color-ink-200: #3A3A3D;
+  --color-ink-300: #525258;
+  --color-ink-400: #797980;
+  --color-ink-500: #A0A0A8;
+  --color-ink-600: #C4C4CC;
+  --color-ink-700: #E8E8EC;
+  --color-ink-900: #FFFFFF;
 
-  /* ── Emerald green (brand accent) ────────────────────────────────────
-     Premium emerald: deeper and more sophisticated than Spotify green.
-     Works perfectly on white — strong contrast, clean tints. */
-  --color-mint-50:  #ECFDF5;
-  --color-mint-100: #D1FAE5;
-  --color-mint-200: #A7F3D0;
-  --color-mint-300: #6EE7B7;
-  --color-mint-400: #34D399;
-  --color-mint-500: #059669;  /* primary action / brand */
-  --color-mint-600: #047857;
-  --color-mint-700: #065F46;
+  /* ── Spotify green (brand accent) ───────────────────────────────────── */
+  --color-mint-50:  #052914;
+  --color-mint-100: #0A3A1E;
+  --color-mint-200: #0F4F2C;
+  --color-mint-300: #169C46;
+  --color-mint-400: #1DB954;
+  --color-mint-500: #1ED760;
+  --color-mint-600: #1DB954;
+  --color-mint-700: #169C46;
 
-  /* ── Status palette (light-mode tuned) ──────────────────────────────── */
-  --color-emerald-500: #059669;
-  --color-amber-500:   #D97706;
-  --color-rose-500:    #E11D48;
-  --color-down:        #E11D48;
-  --color-up:          #059669;
-  --color-blue-glow:   #2563EB;
+  /* ── Status ─────────────────────────────────────────────────────────── */
+  --color-emerald-500: #1ED760;
+  --color-amber-500:   #FFB020;
+  --color-rose-500:    #FF6260;
+  --color-down:        #FF6260;
+  --color-up:          #1DB954;
+  --color-blue-glow:   #4FA8E5;
 
   /* ── Legacy compat ──────────────────────────────────────────────────── */
   --color-violet-50:  var(--color-mint-50);
@@ -72,10 +67,10 @@
 
   /* ── Shadows ─────────────────────────────────────────────────────────
      Light surfaces need shadow for depth — no longer rely on background color alone. */
-  --shadow-card:    0 1px 3px 0 rgba(0,0,0,0.06), 0 1px 2px -1px rgba(0,0,0,0.05);
-  --shadow-elev:    0 4px 8px -2px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.05);
-  --shadow-pop:     0 20px 60px -8px rgba(0,0,0,0.16), 0 8px 24px -4px rgba(0,0,0,0.08);
-  --shadow-mint:    0 0 0 3px rgba(5,150,105,0.18);
+  --shadow-card:    none;
+  --shadow-elev:    0 1px 0 0 rgba(255,255,255,0.04) inset;
+  --shadow-pop:     0 32px 80px -8px rgba(0,0,0,0.85);
+  --shadow-mint:    0 0 0 3px rgba(29,185,84,0.32);
 
   /* ── Type ────────────────────────────────────────────────────────────── */
   --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', 'SF Pro Text', sans-serif;
@@ -113,17 +108,17 @@
   --blue-700: var(--color-mint-700);
 
   --green-500: var(--color-emerald-500);
-  --green-50:  #ECFDF5;
+  --green-50:  #042312;
   --amber-500: var(--color-amber-500);
-  --amber-50:  #FFFBEB;
+  --amber-50:  #2A1B05;
   --red-500:   var(--color-rose-500);
-  --red-50:    #FFF1F2;
+  --red-50:    #2A0E0E;
   --violet-500: var(--color-mint-500);
   --violet-50:  var(--color-mint-50);
   --teal-500:  var(--color-mint-500);
   --teal-50:   var(--color-mint-50);
   --pink-500:  var(--color-amber-500);
-  --pink-50:   #FFFBEB;
+  --pink-50:   #2A1B05;
 
   --r-sm: 6px;
   --r-md: 8px;
@@ -139,7 +134,7 @@
    Base
    ═════════════════════════════════════════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { color-scheme: light; }
+html { color-scheme: dark; }
 
 body {
   font-family: var(--font-sans);
@@ -206,7 +201,7 @@ body {
 
 /* ── Selection ─────────────────────────────────────────────────────────── */
 ::selection {
-  background: rgba(5,150,105,0.15);
+  background: rgba(29,185,84,0.35);
   color: var(--color-ink-900);
 }
 
@@ -233,7 +228,7 @@ body {
 }
 .leaflet-control-zoom a:hover { background: var(--color-soft) !important; color: var(--color-ink-900) !important; }
 .leaflet-control-attribution {
-  background: rgba(255,255,255,0.85) !important;
+  background: rgba(10,10,12,0.85) !important;
   color: var(--color-ink-400) !important;
   font-size: 10px !important;
 }
@@ -250,7 +245,7 @@ body {
   transition: border-color 200ms ease, box-shadow 200ms ease;
 }
 .card:hover {
-  border-color: #C2C2CC;
+  border-color: #4A4A4F;
   box-shadow: var(--shadow-elev);
 }
 
@@ -269,7 +264,7 @@ body {
   transition: border-color 200ms ease, box-shadow 200ms ease;
 }
 .stat-tile:hover {
-  border-color: #C2C2CC;
+  border-color: #4A4A4F;
   box-shadow: var(--shadow-elev);
 }
 
@@ -317,7 +312,7 @@ body {
   transition: border-color 200ms ease, box-shadow 200ms ease;
 }
 .card-tile:hover {
-  border-color: #C2C2CC;
+  border-color: #4A4A4F;
   box-shadow: var(--shadow-elev);
 }
 
@@ -326,21 +321,21 @@ body {
    ═════════════════════════════════════════════════════════════════════════ */
 
 @keyframes pulse-mint {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(5,150,105,0.45); }
-  50%      { box-shadow: 0 0 0 6px rgba(5,150,105,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(29,185,84,0.55); }
+  50%      { box-shadow: 0 0 0 6px rgba(29,185,84,0); }
 }
 .pulse-dot { animation: pulse-mint 2s infinite; }
 
 @keyframes gps-ring {
-  0%   { box-shadow: 0 0 0 0 rgba(5,150,105,0.5); }
-  70%  { box-shadow: 0 0 0 14px rgba(5,150,105,0); }
-  100% { box-shadow: 0 0 0 0 rgba(5,150,105,0); }
+  0%   { box-shadow: 0 0 0 0 rgba(29,185,84,0.6); }
+  70%  { box-shadow: 0 0 0 14px rgba(29,185,84,0); }
+  100% { box-shadow: 0 0 0 0 rgba(29,185,84,0); }
 }
 .gps-dot { animation: gps-ring 1.8s infinite; }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(5,150,105,0.25); }
-  50%      { box-shadow: 0 0 0 6px rgba(5,150,105,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(29,185,84,0.35); }
+  50%      { box-shadow: 0 0 0 6px rgba(29,185,84,0); }
 }
 .pulse-glow { animation: pulse-glow 2s infinite; }
 
@@ -349,7 +344,7 @@ body {
   100% { background-position: 200% center; }
 }
 .shimmer {
-  background: linear-gradient(90deg, var(--color-soft) 25%, var(--color-hover) 50%, var(--color-soft) 75%);
+  background: linear-gradient(90deg, var(--color-card) 25%, var(--color-soft) 50%, var(--color-card) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
@@ -375,8 +370,8 @@ body {
   gap: 7px;
   padding: 5px 11px 5px 9px;
   border-radius: var(--radius-pill);
-  background: rgba(5,150,105,0.08);
-  border: 1px solid rgba(5,150,105,0.2);
+  background: rgba(29,185,84,0.12);
+  border: 1px solid rgba(29,185,84,0.25);
   color: var(--color-mint-500);
   font-size: 11.5px;
   font-weight: 600;
@@ -384,7 +379,7 @@ body {
 }
 .ai-pill .pulse {
   width: 6px; height: 6px; border-radius: var(--radius-pill);
-  background: var(--color-mint-500);
-  box-shadow: 0 0 6px rgba(5,150,105,0.6);
+  background: var(--color-mint-400);
+  box-shadow: 0 0 8px rgba(29,185,84,0.8);
   animation: pulse-mint 2s infinite;
 }

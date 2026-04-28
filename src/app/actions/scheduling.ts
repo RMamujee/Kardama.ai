@@ -2,6 +2,7 @@
 import { revalidatePath } from 'next/cache'
 import { requireOwner } from '@/lib/supabase/dal'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { sendSms } from '@/lib/twilio'
 
 const SERVICE_PRICES: Record<string, number> = {
   standard: 165, deep: 245, 'move-out': 380, 'post-construction': 450, airbnb: 195,
@@ -135,7 +136,22 @@ export async function acceptBookingRequest(requestId: string): Promise<void> {
     converted_job_id: jobId,
   }).eq('id', requestId)
 
+  // Confirmation SMS to the customer — non-fatal, never blocks scheduling
+  if (req.customer_phone) {
+    const businessName = process.env.NEXT_PUBLIC_BUSINESS_NAME || 'Your cleaner'
+    const when = formatWhen(req.preferred_date, req.preferred_time)
+    const body = `${businessName}: You're confirmed for ${when} at ${req.address}. Reply to this text with any questions.`
+    sendSms(req.customer_phone, body).catch(e => console.error('Confirmation SMS failed:', e))
+  }
+
   revalidatePath('/scheduling')
+}
+
+function formatWhen(date: string, time: string): string {
+  const [y, m, d] = date.split('-').map(Number)
+  const dt = new Date(y, m - 1, d)
+  const dateStr = dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  return `${dateStr} at ${time}`
 }
 
 export async function declineBookingRequest(requestId: string): Promise<void> {

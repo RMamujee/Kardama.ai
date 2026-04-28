@@ -44,7 +44,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname()
 
   return (
-    <div className="flex h-screen w-[244px] flex-col bg-rail border-r border-line">
+    <div className="flex h-screen w-[244px] flex-col bg-rail">
       {/* Brand */}
       <div className="flex items-center gap-3 px-5 pt-5 pb-4">
         <BrandMark />
@@ -81,7 +81,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
                       <Icon
                         className={cn(
                           'h-[18px] w-[18px] flex-shrink-0',
-                          active ? 'text-mint-500' : 'text-ink-500 group-hover:text-ink-900',
+                          active ? 'text-mint-400' : 'text-ink-500 group-hover:text-ink-900',
                         )}
                         strokeWidth={active ? 2.5 : 2}
                       />
@@ -92,8 +92,8 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
                             'inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full px-1.5',
                             'text-[10.5px] font-semibold leading-none',
                             active
-                              ? 'bg-mint-500 text-black'
-                              : 'bg-elev text-ink-500 border border-line-strong',
+                              ? 'bg-mint-400 text-black'
+                              : 'bg-elev text-ink-500',
                           )}
                         >
                           {badge}
@@ -109,14 +109,14 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
       </nav>
 
       {/* User block — sign-out form */}
-      <div className="border-t border-line p-2">
+      <div className="p-2">
         <form action="/auth/signout" method="post" className="contents">
           <button
             type="submit"
             aria-label="Sign out"
             className="group flex w-full items-center gap-3 rounded-full px-2 py-2 text-left transition-colors hover:bg-hover"
           >
-            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-mint-500 text-[12.5px] font-bold text-black">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-mint-400 text-[12.5px] font-bold text-black">
               DC
             </div>
             <div className="min-w-0 flex-1">
@@ -133,7 +133,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
 
 function BrandMark() {
   return (
-    <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-mint-500 shadow-[0_2px_12px_-2px_rgba(30,215,96,0.45)]">
+    <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-mint-400 shadow-[0_2px_12px_-2px_rgba(0,200,5,0.45)]">
       <svg viewBox="0 0 24 24" className="h-[16px] w-[16px]" fill="none">
         <path
           d="M7 4 L7 20 M7 12 L17 4 M10 12 L17 20"

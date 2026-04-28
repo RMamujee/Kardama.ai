@@ -79,15 +79,15 @@ export function NotificationsPopover({ children }: { children: React.ReactNode }
         <Popover.Content
           align="end"
           sideOffset={8}
-          className="z-[55] w-[380px] rounded-[12px] border border-line-strong bg-card shadow-[var(--shadow-pop)] anim-fade-in overflow-hidden"
+          className="z-[55] w-[380px] rounded-[16px] bg-card shadow-[var(--shadow-pop)] anim-fade-in overflow-hidden"
         >
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-line px-4 py-3">
+          <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-2.5">
               <Bell className="h-[15px] w-[15px] text-ink-500" strokeWidth={1.75} />
               <h3 className="text-[13.5px] font-semibold text-ink-900">Notifications</h3>
               {unreadCount > 0 && (
-                <span className="text-[11px] font-medium text-mint-500">{unreadCount} new</span>
+                <span className="text-[11px] font-semibold text-mint-400">{unreadCount} new</span>
               )}
             </div>
             <button
@@ -106,10 +106,10 @@ export function NotificationsPopover({ children }: { children: React.ReactNode }
                 <button
                   key={n.id}
                   type="button"
-                  className="group relative flex w-full items-start gap-3 border-b border-line px-4 py-3 text-left transition-colors hover:bg-soft last:border-b-0"
+                  className="group relative flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-soft"
                 >
                   {n.unread && (
-                    <span className="absolute left-1.5 top-4 h-1.5 w-1.5 rounded-full bg-mint-500" aria-hidden />
+                    <span className="absolute left-1.5 top-4 h-1.5 w-1.5 rounded-full bg-mint-400" aria-hidden />
                   )}
                   <div className={cn('flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[8px]', TONE_BG[n.tone])}>
                     <Icon className="h-[15px] w-[15px]" strokeWidth={1.75} />
@@ -132,7 +132,7 @@ export function NotificationsPopover({ children }: { children: React.ReactNode }
           </div>
 
           {/* Footer */}
-          <div className="border-t border-line px-4 py-2.5">
+          <div className="bg-soft/40 px-4 py-2.5">
             <button
               type="button"
               className="w-full text-center text-[12px] font-medium text-ink-500 hover:text-ink-900 transition-colors"

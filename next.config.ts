@@ -13,6 +13,9 @@ const TILE_HOSTS = [
 const API_HOSTS = [
   'https://router.project-osrm.org',
   'https://nominatim.openstreetmap.org',
+  // Supabase — required for browser client (real-time subscriptions, auth token refresh)
+  process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+  'https://*.supabase.co',
 ]
 
 const CSP = [

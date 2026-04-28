@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build && node scripts/fix-middleware-nft.cjs",
+    "build": "next build",
     "start": "next start",
     "db:migrate": "tsx scripts/apply-migration.ts",
     "db:seed": "tsx scripts/seed.ts",
@@ -41,7 +41,7 @@
     "framer-motion": "^12.38.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.11.0",
-    "next": "16.2.4",
+    "next": "15.2.4",
     "pg": "^8.20.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",

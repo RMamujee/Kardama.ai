@@ -43,8 +43,8 @@ function googleMapsRouteUrl(route: TeamRoute): string {
   const active = route.stops.filter(s => s.status !== 'cancelled')
   if (active.length === 0) return ''
   const origin = `${route.startLat},${route.startLng}`
-  const destination = `${active[active.length - 1].job.lat},${active[active.length - 1].job.lng}`
-  const waypoints = active.slice(0, -1).map(s => `${s.job.lat},${s.job.lng}`).join('|')
+  const destination = jobDestination(active[active.length - 1].job)
+  const waypoints = active.slice(0, -1).map(s => jobDestination(s.job)).join('|')
   const params = new URLSearchParams({
     api: '1',
     origin,
@@ -55,10 +55,14 @@ function googleMapsRouteUrl(route: TeamRoute): string {
   return `https://www.google.com/maps/dir/?${params.toString()}`
 }
 
+function jobDestination(job: { lat: number; lng: number; address: string }): string {
+  return job.lat !== 0 && job.lng !== 0 ? `${job.lat},${job.lng}` : job.address
+}
+
 function googleMapsStopUrl(stop: RouteStop): string {
   const params = new URLSearchParams({
     api: '1',
-    destination: `${stop.job.lat},${stop.job.lng}`,
+    destination: jobDestination(stop.job),
     travelmode: 'driving',
   })
   return `https://www.google.com/maps/dir/?${params.toString()}`

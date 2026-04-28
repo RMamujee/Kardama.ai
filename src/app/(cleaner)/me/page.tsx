@@ -1,4 +1,4 @@
-import { Phone, MapPin, Clock } from 'lucide-react'
+import { Phone, MapPin, Clock, Navigation } from 'lucide-react'
 import { requireCleaner } from '@/lib/supabase/dal'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { updateMyStatus, updateJobStatus } from './actions'
@@ -124,11 +124,35 @@ export default async function CleanerHomePage() {
                 <div className="mt-3 flex flex-col gap-1.5 text-sm" style={{ color: 'var(--ink-500)' }}>
                   <div className="flex items-center gap-2">
                     <Clock className="h-3.5 w-3.5" />
-                    <span>{job.scheduled_time}</span>
+                    <span>{fmtTime(job.scheduled_time)}</span>
                   </div>
-                  <div className="flex items-start gap-2">
-                    <MapPin className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
-                    <span className="break-words">{job.address}</span>
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-start gap-2">
+                      <MapPin className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="break-words">{job.address}</span>
+                    </div>
+                    <div className="flex gap-2 pl-[22px]">
+                      <a
+                        href={`https://maps.apple.com/?daddr=${encodeURIComponent(job.address)}&dirflg=d`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-semibold"
+                        style={{ background: 'var(--bg-soft)', color: 'var(--ink-700)' }}
+                      >
+                        <Navigation className="h-3 w-3" />
+                        Apple Maps
+                      </a>
+                      <a
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(job.address)}&travelmode=driving`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-semibold"
+                        style={{ background: 'var(--bg-soft)', color: 'var(--ink-700)' }}
+                      >
+                        <Navigation className="h-3 w-3" />
+                        Google Maps
+                      </a>
+                    </div>
                   </div>
                   {customer?.phone ? (
                     <a
@@ -167,6 +191,13 @@ export default async function CleanerHomePage() {
       </section>
     </div>
   )
+}
+
+function fmtTime(t: string): string {
+  const [h, m] = t.split(':').map(Number)
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  const hour = h > 12 ? h - 12 : h === 0 ? 12 : h
+  return `${hour}:${String(m).padStart(2, '0')} ${ampm}`
 }
 
 function nextStatus(status: string): { value: string; label: string } | null {

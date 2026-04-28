@@ -128,6 +128,70 @@ export const getPayments = cache(async (): Promise<Payment[]> => {
   return (data as PaymentRow[]).map(mapPayment)
 })
 
+// ─────────── booking requests ───────────
+
+export type BookingRequest = {
+  id: string
+  customerName: string
+  customerPhone: string
+  customerEmail: string
+  address: string
+  city: string | null
+  serviceType: 'standard' | 'deep' | 'move-out' | 'post-construction' | 'airbnb'
+  preferredDate: string | null
+  preferredTime: string | null
+  notes: string
+  status: 'pending' | 'accepted' | 'declined' | 'converted'
+  source: string | null
+  createdAt: string
+}
+
+type BookingRequestRow = {
+  id: string
+  customer_name: string
+  customer_phone: string
+  customer_email: string
+  address: string
+  city: string | null
+  service_type: BookingRequest['serviceType']
+  preferred_date: string | null
+  preferred_time: string | null
+  notes: string
+  status: BookingRequest['status']
+  source: string | null
+  created_at: string
+}
+
+function mapBookingRequest(r: BookingRequestRow): BookingRequest {
+  return {
+    id: r.id,
+    customerName: r.customer_name,
+    customerPhone: r.customer_phone,
+    customerEmail: r.customer_email,
+    address: r.address,
+    city: r.city,
+    serviceType: r.service_type,
+    preferredDate: r.preferred_date,
+    preferredTime: r.preferred_time,
+    notes: r.notes,
+    status: r.status,
+    source: r.source,
+    createdAt: r.created_at?.slice(0, 10) ?? '',
+  }
+}
+
+export const getBookingRequests = cache(async (): Promise<BookingRequest[]> => {
+  if (!isSupabaseConfigured()) return []
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('booking_requests')
+    .select('*')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false })
+  if (error || !data) return []
+  return (data as BookingRequestRow[]).map(mapBookingRequest)
+})
+
 // ─────────── derived helpers (mirror mock-data.ts API) ───────────
 const fmt = (d: Date) => d.toISOString().split('T')[0]
 const today = () => fmt(new Date())

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { CLEANERS, JOBS } from '@/lib/mock-data'
+import type { Cleaner, Job } from '@/types'
 import {
   buildOptimizedRoutes, TeamRoute, RouteStop, RealLegOverrides,
 } from '@/lib/routing-engine'
@@ -109,7 +109,12 @@ function saveOverrides(overrides: Record<string, RouteStop['status']>) {
   }
 }
 
-export function LiveMapView() {
+interface LiveMapViewProps {
+  cleaners: Cleaner[]
+  todayJobs: Job[]
+}
+
+export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
   const [mounted, setMounted]           = useState(false)
   const [satellite, setSatellite]       = useState(false)
   const [showTraffic, setShowTraffic]   = useState(true)
@@ -135,17 +140,14 @@ export function LiveMapView() {
   // Today's jobs with cancellation overrides applied. Memoised so referential
   // equality only changes when overrides change.
   const todayJobs = useMemo(() => {
-    const t = todayStr()
-    return JOBS
-      .filter(j => j.scheduledDate === t)
-      .map(j => overrides[j.id] === 'cancelled' ? { ...j, status: 'cancelled' as const } : j)
-  }, [overrides])
+    return jobs.map(j => overrides[j.id] === 'cancelled' ? { ...j, status: 'cancelled' as const } : j)
+  }, [jobs, overrides])
 
   // First pass: build routes with haversine estimates so the UI shows
   // something immediately. Then we ask OSRM for real geometry below.
   const haversineRoutes = useMemo(
-    () => buildOptimizedRoutes(todayJobs, CLEANERS),
-    [todayJobs],
+    () => buildOptimizedRoutes(todayJobs, cleaners),
+    [todayJobs, cleaners],
   )
 
   // Re-build using OSRM real durations once they arrive.
@@ -160,7 +162,7 @@ export function LiveMapView() {
       }
     }
     return Object.keys(overridesByTeam).length > 0
-      ? buildOptimizedRoutes(todayJobs, CLEANERS, overridesByTeam)
+      ? buildOptimizedRoutes(todayJobs, cleaners, overridesByTeam)
       : haversineRoutes
   }, [haversineRoutes, todayJobs, realRoutes])
 
@@ -233,7 +235,7 @@ export function LiveMapView() {
     <div className="flex h-full">
       <RoutingPanel
         routes={routes}
-        cleaners={CLEANERS}
+        cleaners={cleaners}
         overrides={overrides}
         onSetStopStatus={setStopStatus}
         gpsTracking={gpsTracking}
@@ -323,7 +325,7 @@ export function LiveMapView() {
             <Marker position={[gpsPos.lat, gpsPos.lng]} icon={makeGpsIcon()}>
               <Popup>
                 <div style={{ padding: 4 }}>
-                  <b>{trackedAs ? `Tracking ${CLEANERS.find(c => c.id === trackedAs)?.name.split(' ')[0]}` : 'Your Location'}</b>
+                  <b>{trackedAs ? `Tracking ${cleaners.find(c => c.id === trackedAs)?.name.split(' ')[0]}` : 'Your Location'}</b>
                   <p style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>±{Math.round(gpsPos.accuracy)}m</p>
                 </div>
               </Popup>
@@ -404,7 +406,7 @@ export function LiveMapView() {
             <div className="flex items-center gap-3 rounded-xl px-4 py-2.5 bg-card border border-violet-200 shadow-[0_4px_16px_rgba(0,0,0,0.5)]">
               <span className="gps-dot inline-block h-2.5 w-2.5 rounded-full flex-shrink-0 bg-violet-500" />
               <span className="text-[12px] font-semibold text-violet-400">
-                {trackedAs ? `${CLEANERS.find(c => c.id === trackedAs)?.name.split(' ')[0]} — Live` : 'GPS Active'}
+                {trackedAs ? `${cleaners.find(c => c.id === trackedAs)?.name.split(' ')[0]} — Live` : 'GPS Active'}
               </span>
               <span className="text-[11px] text-ink-400">±{Math.round(gpsPos.accuracy)}m</span>
               <button

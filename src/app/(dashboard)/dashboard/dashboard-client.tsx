@@ -1,8 +1,9 @@
 'use client'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   DollarSign, TrendingUp, Users, AlertCircle, Clock, Sparkles,
-  ArrowUpRight, Route, MapPin, Receipt, Calendar,
+  ArrowUpRight, Route, Receipt, Calendar, ChevronRight,
 } from 'lucide-react'
 import { StatTile } from '@/components/ui/stat-tile'
 import { Badge } from '@/components/ui/badge'
@@ -17,8 +18,8 @@ type DashboardData = {
   pendingRevenue: number
 }
 
-const fadeUp = { hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.32 } } }
-const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.05 } } }
+const fadeUp = { hidden: { opacity: 0, y: 6 }, visible: { opacity: 1, y: 0, transition: { duration: 0.28 } } }
+const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.04 } } }
 
 const STATUS_VARIANT: Record<Job['status'], 'default' | 'success' | 'warning' | 'neutral' | 'danger'> = {
   scheduled:    'default',
@@ -35,27 +36,6 @@ const CLEANER_STATUS_RING: Record<string, string> = {
   'off-duty': 'bg-ink-300',
 }
 
-const AI_INSIGHTS = [
-  {
-    icon: Route,
-    title: 'Route optimization',
-    text: 'Team A (Maria + Carlos) is nearest to 3 Long Beach jobs this week — optimal routing saves ~45 min',
-    cta: 'Apply',
-  },
-  {
-    icon: Receipt,
-    title: 'Pending payment',
-    text: "William Foster's $380 payment has been pending 2 days — tap to send an automated reminder",
-    cta: 'Send reminder',
-  },
-  {
-    icon: Calendar,
-    title: 'Open capacity',
-    text: 'Next Friday has 0 jobs scheduled — historically your highest-demand day. Open a slot?',
-    cta: 'Add capacity',
-  },
-]
-
 const RECENT_ACTIVITY = [
   { msg: 'Maria + Carlos completed job at Ocean Blvd',          time: '2h ago', dot: 'bg-emerald-500' },
   { msg: 'Payment $380 received via Zelle from William Foster', time: '3h ago', dot: 'bg-mint-500' },
@@ -65,13 +45,38 @@ const RECENT_ACTIVITY = [
 ]
 
 export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingRevenue }: DashboardData) {
+  const router = useRouter()
   const activeCleaners = cleaners.filter((c) => c.status !== 'off-duty').length
   const todayRevenue = todayJobs.reduce((s, j) => s + j.price, 0)
   const totalCleaners = cleaners.length || 1
 
+  const aiInsights = [
+    {
+      icon: Route,
+      title: 'Route optimization',
+      text: 'Team A is nearest to 3 Long Beach jobs this week — optimal routing saves ~45 min',
+      cta: 'View map',
+      action: () => router.push('/map'),
+    },
+    {
+      icon: Receipt,
+      title: 'Pending payment',
+      text: "William Foster's $380 payment has been pending 2 days. Send a reminder?",
+      cta: 'Send reminder',
+      action: () => router.push('/payments'),
+    },
+    {
+      icon: Calendar,
+      title: 'Open capacity',
+      text: 'Next Friday has 0 jobs scheduled — historically your highest-demand day.',
+      cta: 'Open scheduling',
+      action: () => router.push('/scheduling'),
+    },
+  ]
+
   return (
     <div className="space-y-6">
-      {/* ─── KPI strip — 4-up on wide screens, 2-up on tablet, 1-up on phone */}
+      {/* ─── KPI strip */}
       <motion.div
         variants={stagger}
         initial="hidden"
@@ -80,7 +85,7 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
       >
         <motion.div variants={fadeUp}>
           <StatTile
-            label="Today's Revenue"
+            label="Today's revenue"
             value={formatCurrency(todayRevenue)}
             sub={`${todayJobs.length} jobs scheduled`}
             icon={DollarSign}
@@ -90,9 +95,9 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
         </motion.div>
         <motion.div variants={fadeUp}>
           <StatTile
-            label="Month Revenue"
+            label="Month revenue"
             value={formatCurrency(monthRevenue)}
-            sub="+12% vs last month"
+            sub="vs last month"
             icon={TrendingUp}
             tone="emerald"
             trend={<Badge variant="success" dot>+12%</Badge>}
@@ -100,18 +105,18 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
         </motion.div>
         <motion.div variants={fadeUp}>
           <StatTile
-            label="Active Cleaners"
+            label="Active cleaners"
             value={`${activeCleaners} / ${totalCleaners}`}
-            sub="4 teams deployed"
+            sub="across 4 teams"
             icon={Users}
             tone="mint"
           />
         </motion.div>
         <motion.div variants={fadeUp}>
           <StatTile
-            label="Pending Payments"
+            label="Pending payments"
             value={formatCurrency(pendingRevenue)}
-            sub="Awaiting confirmation"
+            sub="Needs confirmation"
             icon={AlertCircle}
             tone="amber"
             trend={pendingRevenue > 0 ? <Badge variant="warning" dot>flag</Badge> : null}
@@ -119,7 +124,7 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
         </motion.div>
       </motion.div>
 
-      {/* ─── Main split: jobs feed (3) + activity (1) */}
+      {/* ─── Main split */}
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-4">
         {/* Today's Jobs */}
         <motion.div
@@ -128,15 +133,18 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
           animate="visible"
           className="xl:col-span-3"
         >
-          <div className="card-tile flex h-full flex-col">
+          <div className="card flex h-full flex-col">
             <div className="flex items-center justify-between border-b border-line px-5 py-4 sm:px-6">
               <div className="flex items-center gap-3">
-                <h2 className="text-[14px] font-semibold text-ink-900 tracking-[-0.005em]">Today's Jobs</h2>
-                <span className="num text-[11.5px] text-ink-400">{todayJobs.length} scheduled</span>
+                <h2 className="text-[14.5px] font-semibold text-ink-900 tracking-[-0.01em]">Today's jobs</h2>
+                <span className="text-[12px] text-ink-400">
+                  <span className="num">{todayJobs.length}</span> scheduled
+                </span>
               </div>
               <button
                 type="button"
-                className="hidden sm:inline-flex items-center gap-1 text-[11.5px] font-medium text-mint-500 hover:text-mint-400"
+                onClick={() => router.push('/scheduling')}
+                className="inline-flex items-center gap-1 text-[12px] font-medium text-mint-500 hover:text-mint-400"
               >
                 Schedule
                 <ArrowUpRight className="h-3 w-3" />
@@ -144,7 +152,9 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
             </div>
 
             {todayJobs.length === 0 && (
-              <p className="px-6 py-12 text-center text-[13px] text-ink-400">No jobs scheduled today</p>
+              <p className="px-6 py-12 text-center text-[13px] text-ink-400">
+                No jobs scheduled today
+              </p>
             )}
 
             <div className="max-h-[460px] overflow-y-auto">
@@ -160,9 +170,9 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
                       !isLast && 'border-b border-line',
                     )}
                   >
-                    {/* Time block — tight mono */}
-                    <div className="flex w-14 flex-shrink-0 flex-col items-start">
-                      <span className="num text-[14px] font-semibold text-ink-900 leading-none">
+                    {/* Time block */}
+                    <div className="flex w-12 flex-shrink-0 flex-col items-start">
+                      <span className="num text-[15px] font-semibold text-ink-900 leading-none">
                         {formatTime(job.scheduledTime).split(' ')[0]}
                       </span>
                       <span className="num mt-1 text-[10px] font-medium uppercase text-ink-400 tracking-widest">
@@ -178,8 +188,8 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
                       <p className="truncate text-[13.5px] font-medium text-ink-900">
                         {job.address.split(',')[0]}
                       </p>
-                      <div className="mt-1 flex items-center gap-2 text-[11.5px] text-ink-400">
-                        <span className="grid-label !text-[10px]">{getServiceLabel(job.serviceType)}</span>
+                      <div className="mt-0.5 flex items-center gap-2 text-[12px] text-ink-400">
+                        <span>{getServiceLabel(job.serviceType)}</span>
                         <span className="text-line-strong">·</span>
                         <span className="truncate">
                           {jobCleaners.map((c) => c.name.split(' ')[0]).join(' + ')}
@@ -195,6 +205,7 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
                       <span className="num w-14 text-right text-[14px] font-semibold text-ink-900">
                         ${job.price}
                       </span>
+                      <ChevronRight className="h-3.5 w-3.5 text-ink-400 opacity-0 transition-opacity group-hover:opacity-100" />
                     </div>
                   </button>
                 )
@@ -205,10 +216,13 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
 
         {/* Activity */}
         <motion.div variants={fadeUp} initial="hidden" animate="visible">
-          <div className="card-tile flex h-full flex-col">
+          <div className="card flex h-full flex-col">
             <div className="flex items-center justify-between border-b border-line px-5 py-4 sm:px-6">
-              <h2 className="text-[14px] font-semibold text-ink-900 tracking-[-0.005em]">Activity</h2>
-              <span className="grid-label">Live</span>
+              <h2 className="text-[14.5px] font-semibold text-ink-900 tracking-[-0.01em]">Activity</h2>
+              <span className="flex items-center gap-1.5 text-[11px] text-ink-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 pulse-dot" />
+                Live
+              </span>
             </div>
             <ul className="flex-1 px-5 py-4 sm:px-6">
               {RECENT_ACTIVITY.map((a, i) => (
@@ -221,7 +235,7 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-[12.5px] leading-[1.5] text-ink-700">{a.msg}</p>
-                    <p className="mt-0.5 text-[10.5px] font-mono uppercase tracking-wider text-ink-400">{a.time}</p>
+                    <p className="mt-0.5 text-[11px] text-ink-400">{a.time}</p>
                   </div>
                 </li>
               ))}
@@ -232,12 +246,13 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
 
       {/* ─── Team status — full-bleed grid */}
       <motion.div variants={fadeUp} initial="hidden" animate="visible">
-        <div className="card-tile">
+        <div className="card overflow-hidden">
           <div className="flex items-center justify-between border-b border-line px-5 py-4 sm:px-6">
-            <h2 className="text-[14px] font-semibold text-ink-900 tracking-[-0.005em]">Team Status</h2>
-            <div className="flex items-center gap-3">
-              <span className="grid-label">{activeCleaners} of {totalCleaners} active</span>
-            </div>
+            <h2 className="text-[14.5px] font-semibold text-ink-900 tracking-[-0.01em]">Team status</h2>
+            <span className="text-[12px] text-ink-400">
+              <span className="num font-medium text-ink-700">{activeCleaners}</span>
+              <span className="num"> / {totalCleaners}</span> active
+            </span>
           </div>
           <div className="grid grid-cols-2 gap-px bg-line sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {cleaners.map((c) => (
@@ -247,7 +262,7 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
               >
                 <div className="relative flex-shrink-0">
                   <div
-                    className="flex h-10 w-10 items-center justify-center rounded-[6px] font-mono text-[11.5px] font-semibold text-page"
+                    className="flex h-10 w-10 items-center justify-center rounded-[8px] text-[12px] font-semibold text-page"
                     style={{ backgroundColor: c.color }}
                   >
                     {c.initials}
@@ -262,7 +277,7 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[13px] font-medium text-ink-900">{c.name.split(' ')[0]}</p>
-                  <p className="mt-0.5 truncate font-mono text-[10.5px] uppercase tracking-wider text-ink-400">
+                  <p className="mt-0.5 truncate text-[11.5px] text-ink-400">
                     {c.homeAreaName}
                   </p>
                 </div>
@@ -272,20 +287,20 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
         </div>
       </motion.div>
 
-      {/* ─── AI Copilot — operations panel, not a friendly card */}
+      {/* ─── AI Copilot */}
       <motion.div variants={fadeUp} initial="hidden" animate="visible">
-        <div className="card-tile">
+        <div className="card overflow-hidden">
           <div className="flex items-center justify-between border-b border-line px-5 py-4 sm:px-6">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-7 w-7 items-center justify-center rounded-[6px] bg-mint-500/10">
-                <Sparkles className="h-[14px] w-[14px] text-mint-500" strokeWidth={2.25} />
+              <div className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-mint-500/12">
+                <Sparkles className="h-[14px] w-[14px] text-mint-500" strokeWidth={2} />
               </div>
-              <h2 className="text-[14px] font-semibold text-ink-900 tracking-[-0.005em]">AI Copilot</h2>
+              <h2 className="text-[14.5px] font-semibold text-ink-900 tracking-[-0.01em]">AI Copilot</h2>
               <Badge variant="default">3 new</Badge>
             </div>
             <button
               type="button"
-              className="hidden sm:inline-flex items-center gap-1 text-[11.5px] font-medium text-mint-500 hover:text-mint-400"
+              className="hidden sm:inline-flex items-center gap-1 text-[12px] font-medium text-mint-500 hover:text-mint-400"
             >
               View all
               <ArrowUpRight className="h-3 w-3" />
@@ -293,22 +308,23 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
           </div>
 
           <ul className="grid grid-cols-1 gap-px bg-line md:grid-cols-3">
-            {AI_INSIGHTS.map((insight, i) => {
+            {aiInsights.map((insight, i) => {
               const Icon = insight.icon
               return (
                 <li key={i} className="bg-card">
                   <button
                     type="button"
+                    onClick={insight.action}
                     className="group flex h-full w-full flex-col items-start gap-3 px-5 py-4 text-left transition-colors hover:bg-soft sm:px-6 sm:py-5"
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className="flex h-6 w-6 items-center justify-center rounded-[5px] bg-mint-500/10">
-                        <Icon className="h-3.5 w-3.5 text-mint-500" strokeWidth={2} />
+                      <div className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-mint-500/12">
+                        <Icon className="h-[14px] w-[14px] text-mint-500" strokeWidth={2} />
                       </div>
-                      <span className="grid-label !text-mint-500/80">{insight.title}</span>
+                      <span className="text-[12.5px] font-semibold text-ink-900">{insight.title}</span>
                     </div>
-                    <p className="text-[13px] leading-[1.55] text-ink-700">{insight.text}</p>
-                    <span className="mt-auto inline-flex items-center gap-1 text-[11.5px] font-semibold text-mint-500 group-hover:text-mint-400">
+                    <p className="text-[13px] leading-[1.55] text-ink-500">{insight.text}</p>
+                    <span className="mt-auto inline-flex items-center gap-1 text-[12px] font-medium text-mint-500 group-hover:text-mint-400">
                       {insight.cta}
                       <ArrowUpRight className="h-3 w-3" />
                     </span>

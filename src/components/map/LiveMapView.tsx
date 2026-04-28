@@ -14,6 +14,8 @@ import { cn } from '@/lib/utils'
 
 // Free tile layers — no API key required
 const TILE_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+const TOMTOM_KEY = process.env.NEXT_PUBLIC_TOMTOM_API_KEY ?? ''
+const TILE_TRAFFIC = `https://api.tomtom.com/traffic/map/4/tile/flow/relative/{z}/{x}/{y}.png?key=${TOMTOM_KEY}`
 const TILE_SAT  = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
 const ATTR_CARTO = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>'
 const ATTR_SAT   = '© Esri — Source: Esri, Maxar, GeoEye, Earthstar Geographics'
@@ -112,6 +114,7 @@ function saveOverrides(overrides: Record<string, RouteStop['status']>) {
 export function LiveMapView() {
   const [mounted, setMounted]           = useState(false)
   const [satellite, setSatellite]       = useState(false)
+  const [showTraffic, setShowTraffic]   = useState(true)
   const [overrides, setOverrides]       = useState<Record<string, RouteStop['status']>>({})
   const [realRoutes, setRealRoutes]     = useState<Record<string, RealRoute | null>>({})
   const [loadingRoutes, setLoadingRoutes] = useState(false)
@@ -246,6 +249,14 @@ export function LiveMapView() {
           style={{ height: '100%', width: '100%' }} zoomControl={false}>
 
           <TileLayer key={satellite ? 'sat' : 'dark'} url={tileUrl} attribution={tileAttr} maxZoom={19} />
+          {showTraffic && TOMTOM_KEY && (
+            <TileLayer
+              url={TILE_TRAFFIC}
+              attribution='© TomTom'
+              maxZoom={19}
+              opacity={0.65}
+            />
+          )}
 
           {flyTarget && <FlyTo lat={flyTarget.lat} lng={flyTarget.lng} />}
 
@@ -340,6 +351,15 @@ export function LiveMapView() {
               )
             })}
           </div>
+
+          {/* Traffic toggle */}
+          <button
+            onClick={() => setShowTraffic(v => !v)}
+            className={cn(
+              'px-[14px] py-[7px] text-[12px] font-semibold cursor-pointer rounded-xl border border-ink-200 shadow-[0_4px_12px_rgba(0,0,0,0.4)] transition-colors',
+              showTraffic ? 'bg-orange-500 text-white' : 'bg-card text-ink-400 hover:text-ink-700'
+            )}
+          >Traffic</button>
 
           {/* Centre on GPS */}
           <button

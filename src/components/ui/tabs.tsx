@@ -3,9 +3,8 @@ import * as React from 'react'
 import { cn } from '@/lib/utils'
 
 /**
- * Tabs — supports both controlled (`value`) and uncontrolled (`defaultValue`)
- * modes. Operations-console treatment: monospace labels, mint active fill,
- * 6px corners, no glow.
+ * Tabs — controlled (`value`) or uncontrolled (`defaultValue`). Refined
+ * SaaS treatment: sentence-case sans labels, soft surface for active state.
  */
 interface TabsContextValue { active: string; setActive: (v: string) => void }
 const TabsContext = React.createContext<TabsContextValue>({ active: '', setActive: () => {} })
@@ -40,7 +39,7 @@ export function Tabs({ value, defaultValue, onValueChange, children, className }
 
 export function TabsList({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn('inline-flex gap-1 rounded-[6px] border border-line bg-soft p-1', className)}>
+    <div className={cn('inline-flex gap-1 rounded-[8px] border border-line bg-soft/40 p-1', className)}>
       {children}
     </div>
   )
@@ -56,10 +55,10 @@ export function TabsTrigger({
       type="button"
       onClick={() => setActive(value)}
       className={cn(
-        'rounded-[4px] px-3 py-1 font-mono text-[11.5px] font-medium uppercase tracking-[0.06em] transition-colors',
+        'rounded-[6px] px-3 py-1.5 text-[12.5px] font-medium transition-[background,color] duration-100',
         isActive
-          ? 'bg-mint-500 text-page'
-          : 'text-ink-500 hover:bg-hover hover:text-ink-900',
+          ? 'bg-card text-ink-900 shadow-[0_1px_2px_rgba(0,0,0,0.4)]'
+          : 'text-ink-400 hover:text-ink-700',
         className,
       )}
     >

@@ -119,10 +119,10 @@ function buildJobSchedule(jobs: Job[], customers: Customer[], cleaners: Cleaner[
 type TemplateKey = 'on-way' | 'running-late' | 'arrived' | 'complete'
 
 const TEMPLATES: Record<TemplateKey, { label: string; icon: React.FC<{ className?: string }>; color: string }> = {
-  'on-way':       { label: 'On the Way',    icon: Car,            color: 'text-violet-400' },
+  'on-way':       { label: 'On the Way',    icon: Car,            color: 'text-mint-500' },
   'running-late': { label: 'Running Late',  icon: AlertTriangle,  color: 'text-amber-500' },
   'arrived':      { label: "We're Here",    icon: CheckCircle2,   color: 'text-emerald-500' },
-  'complete':     { label: 'Job Done',      icon: CheckCheck,     color: 'text-teal-500' },
+  'complete':     { label: 'Job Done',      icon: CheckCheck,     color: 'text-mint-500' },
 }
 
 function buildMessage(template: TemplateKey, item: EnrichedJob): string {
@@ -146,17 +146,17 @@ function buildMessage(template: TemplateKey, item: EnrichedJob): string {
 }
 
 const SERVICE_COLORS: Record<string, string> = {
-  standard: 'bg-violet-500/15 text-violet-400',
-  deep: 'bg-purple-500/15 text-purple-500',
-  'move-out': 'bg-amber-500/15 text-amber-500',
-  airbnb: 'bg-teal-500/15 text-teal-500',
+  standard: 'bg-mint-500/12 text-mint-500',
+  deep: 'bg-mint-500/12 text-mint-500',
+  'move-out': 'bg-amber-500/12 text-amber-500',
+  airbnb: 'bg-emerald-500/12 text-emerald-500',
 }
 
 const STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'neutral'> = {
   scheduled: 'default', confirmed: 'success', 'in-progress': 'warning', completed: 'neutral',
 }
 
-const SECTION_LABEL = 'text-[11px] font-bold tracking-[0.09em] uppercase text-ink-400'
+const SECTION_LABEL = 'text-[12px] font-medium text-ink-500'
 
 export function MessagesClient({ jobs, customers, cleaners }: MessagesData) {
   const router = useRouter()
@@ -228,18 +228,18 @@ export function MessagesClient({ jobs, customers, cleaners }: MessagesData) {
   const isSent = sentSet.has(sentKey)
 
   return (
-    <div className="flex flex-col h-[calc(100vh-56px)] overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-60px)] overflow-hidden">
       {/* Mobile tab bar */}
-      <div className="flex md:hidden flex-shrink-0 border-b border-ink-100 bg-rail">
+      <div className="flex md:hidden flex-shrink-0 border-b border-line bg-rail">
         {(['routes', 'compose', 'sent'] as const).map(panel => (
           <button
             key={panel}
             onClick={() => setMobilePanel(panel)}
             className={cn(
-              'flex-1 py-3 text-sm font-medium capitalize transition-colors',
+              'flex-1 py-3 text-[13px] font-medium capitalize transition-colors',
               mobilePanel === panel
-                ? 'text-violet-400 border-b-2 border-violet-500 bg-violet-500/10'
-                : 'text-ink-500'
+                ? 'text-mint-500 border-b-2 border-mint-500 bg-mint-500/[0.05]'
+                : 'text-ink-500',
             )}
           >
             {panel === 'routes' ? 'Routes' : panel === 'compose' ? 'Compose' : 'Sent'}
@@ -250,14 +250,14 @@ export function MessagesClient({ jobs, customers, cleaners }: MessagesData) {
       <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
         {/* Left: Schedule timeline */}
         <div className={cn(
-          'flex-shrink-0 flex flex-col border-ink-100 bg-rail',
+          'flex-shrink-0 flex flex-col border-line bg-rail',
           'w-full md:w-80 md:border-r',
-          mobilePanel !== 'routes' ? 'hidden md:flex' : 'flex'
+          mobilePanel !== 'routes' ? 'hidden md:flex' : 'flex',
         )}>
-          <div className="p-4 border-b border-ink-100">
+          <div className="p-4 border-b border-line">
             <div className="flex items-center gap-2 mb-1">
-              <Navigation className="h-4 w-4 text-violet-400" />
-              <h2 className="text-sm font-semibold text-ink-900">Today&apos;s Routes</h2>
+              <Navigation className="h-[15px] w-[15px] text-mint-500" />
+              <h2 className="text-[14px] font-semibold text-ink-900 tracking-[-0.01em]">Today&apos;s Routes</h2>
               <span className="ml-auto text-[11px] text-ink-500">
                 {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
               </span>
@@ -269,13 +269,13 @@ export function MessagesClient({ jobs, customers, cleaners }: MessagesData) {
             {schedule.length === 0 && (
               <div className="p-6 text-center">
                 <Timer className="h-8 w-8 text-ink-300 mx-auto mb-2" />
-                <p className="text-sm text-ink-500">No jobs scheduled today</p>
+                <p className="text-[13px] text-ink-500">No jobs scheduled today</p>
               </div>
             )}
 
             <div className="relative">
               {/* Timeline line */}
-              <div className="absolute left-[2.15rem] top-4 bottom-4 w-px bg-ink-100" />
+              <div className="absolute left-[2.15rem] top-4 bottom-4 w-px bg-line" />
 
               {schedule.map((item, idx) => {
                 const isActive = selected?.job.id === item.job.id
@@ -287,8 +287,8 @@ export function MessagesClient({ jobs, customers, cleaners }: MessagesData) {
                     onClick={() => selectJob(item)}
                     className={cn(
                       'relative w-full flex items-start gap-3 px-3 py-3.5 text-left transition-colors',
-                      isActive ? 'bg-violet-500/10' : 'hover:bg-hover',
-                      idx < schedule.length - 1 && 'border-b border-ink-100/50'
+                      isActive ? 'bg-mint-500/[0.06]' : 'hover:bg-soft',
+                      idx < schedule.length - 1 && 'border-b border-line',
                     )}
                   >
                     {/* Timeline dot */}
@@ -299,8 +299,8 @@ export function MessagesClient({ jobs, customers, cleaners }: MessagesData) {
                         : item.job.status === 'completed'
                         ? 'border-emerald-500 bg-emerald-500/20'
                         : isActive
-                        ? 'border-violet-500 bg-violet-500/20'
-                        : 'border-ink-200 bg-soft'
+                        ? 'border-mint-500 bg-mint-500/20'
+                        : 'border-line-strong bg-soft',
                     )}>
                       {item.job.status === 'in-progress' && (
                         <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
@@ -309,14 +309,14 @@ export function MessagesClient({ jobs, customers, cleaners }: MessagesData) {
                         <CheckCircle2 className="h-2.5 w-2.5 text-emerald-500" />
                       )}
                       {(item.job.status === 'scheduled' || item.job.status === 'confirmed') && isActive && (
-                        <span className="h-1.5 w-1.5 rounded-full bg-violet-400" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-mint-500" />
                       )}
                     </div>
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-semibold text-ink-700 truncate">
+                        <span className="text-[13px] font-semibold text-ink-900 truncate">
                           {item.customer?.name || 'Unknown'}
                         </span>
                         <div className="flex items-center gap-1 ml-1 flex-shrink-0">
@@ -328,13 +328,13 @@ export function MessagesClient({ jobs, customers, cleaners }: MessagesData) {
                       </div>
                       <div className="flex items-center gap-1.5 mb-1">
                         <Clock className="h-3 w-3 text-ink-400" />
-                        <span className="text-[12px] text-ink-500 tnum">{item.etaTime}</span>
+                        <span className="num text-[12px] text-ink-500">{item.etaTime}</span>
                         {!item.isOnSchedule && (
                           <span className="text-[11px] text-amber-500">delayed</span>
                         )}
                         <span className={cn(
-                          'rounded px-1.5 py-0.5 text-[11px] font-medium',
-                          SERVICE_COLORS[item.job.serviceType] || 'bg-ink-500/15 text-ink-500'
+                          'rounded-[6px] px-1.5 py-0.5 text-[10.5px] font-medium',
+                          SERVICE_COLORS[item.job.serviceType] || 'bg-soft text-ink-500',
                         )}>
                           {getServiceLabel(item.job.serviceType)}
                         </span>
@@ -347,8 +347,8 @@ export function MessagesClient({ jobs, customers, cleaners }: MessagesData) {
                       </div>
                       {item.driveFromPrev !== null && (
                         <div className="mt-1 flex items-center gap-1">
-                          <Car className="h-3 w-3 text-ink-300" />
-                          <span className="text-[11px] text-ink-300">{item.driveFromPrev}min drive from prev</span>
+                          <Car className="h-3 w-3 text-ink-400" />
+                          <span className="num text-[11px] text-ink-400">{item.driveFromPrev}min drive from prev</span>
                         </div>
                       )}
                     </div>
@@ -362,7 +362,7 @@ export function MessagesClient({ jobs, customers, cleaners }: MessagesData) {
         {/* Center: Notification Composer */}
         <div className={cn(
           'flex flex-1 flex-col overflow-hidden',
-          mobilePanel !== 'compose' ? 'hidden md:flex' : 'flex'
+          mobilePanel !== 'compose' ? 'hidden md:flex' : 'flex',
         )}>
           {selected ? (
             <AnimatePresence mode="wait">
@@ -375,34 +375,34 @@ export function MessagesClient({ jobs, customers, cleaners }: MessagesData) {
                 className="flex flex-1 flex-col overflow-hidden"
               >
                 {/* Customer header */}
-                <div className="px-6 py-5 border-b border-ink-100 bg-rail">
+                <div className="px-6 py-5 border-b border-line bg-rail">
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-2.5 mb-2">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-violet-700 text-xs font-bold text-white">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-mint-400 to-mint-600 text-[12px] font-semibold text-page">
                           {selected.customer?.name?.split(' ').map(n => n[0]).join('') || '??'}
                         </div>
                         <div>
-                          <h3 className="text-sm font-semibold text-ink-900">{selected.customer?.name || 'Unknown Customer'}</h3>
+                          <h3 className="text-[14px] font-semibold text-ink-900">{selected.customer?.name || 'Unknown Customer'}</h3>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             <Phone className="h-3 w-3 text-ink-500" />
-                            <span className="text-[12px] text-ink-500 tnum">{selected.customer?.phone}</span>
+                            <span className="num text-[12px] text-ink-500">{selected.customer?.phone}</span>
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <Badge variant={STATUS_BADGE[selected.job.status] || 'default'} className="capitalize">
+                        <Badge variant={STATUS_BADGE[selected.job.status] || 'default'}>
                           {selected.job.status}
                         </Badge>
                         <span className="text-[12px] text-ink-500">
                           {getServiceLabel(selected.job.serviceType)} · {selected.job.estimatedDuration} min
                         </span>
                         <span className="text-[12px] text-ink-500">·</span>
-                        <span className="text-[12px] font-medium text-emerald-500 tnum">{formatCurrency(selected.job.price)}</span>
+                        <span className="num text-[12px] font-medium text-emerald-500">{formatCurrency(selected.job.price)}</span>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="tnum text-ink-900 text-[28px] font-bold tracking-[-0.02em]">{selected.etaTime}</div>
+                      <div className="num text-ink-900 text-[28px] font-semibold tracking-[-0.02em]">{selected.etaTime}</div>
                       <div className="text-[12px] text-ink-500 mt-0.5">
                         {selected.isOnSchedule ? 'on schedule' : 'running late'}
                       </div>
@@ -411,53 +411,53 @@ export function MessagesClient({ jobs, customers, cleaners }: MessagesData) {
                 </div>
 
                 {/* ETA Breakdown */}
-                <div className="px-6 py-4 border-b border-ink-100">
+                <div className="px-6 py-4 border-b border-line">
                   <p className={cn('mb-3', SECTION_LABEL)}>ETA Breakdown</p>
                   <div className="flex items-center gap-2 flex-wrap">
                     {selected.prevJobEnd !== null ? (
                       <>
-                        <div className="flex items-center gap-2 rounded-lg bg-soft px-3 py-2">
+                        <div className="flex items-center gap-2 rounded-[8px] bg-soft border border-line px-3 py-2">
                           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                           <div>
                             <div className="text-[11px] text-ink-500">Prev job ends</div>
-                            <div className="text-sm font-semibold text-ink-900 tnum">{minToTime(selected.prevJobEnd)}</div>
+                            <div className="num text-[13px] font-semibold text-ink-900">{minToTime(selected.prevJobEnd)}</div>
                           </div>
                         </div>
-                        <ChevronRight className="h-4 w-4 text-ink-300" />
-                        <div className="flex items-center gap-2 rounded-lg bg-soft px-3 py-2">
-                          <Car className="h-3.5 w-3.5 text-violet-400" />
+                        <ChevronRight className="h-4 w-4 text-ink-400" />
+                        <div className="flex items-center gap-2 rounded-[8px] bg-soft border border-line px-3 py-2">
+                          <Car className="h-3.5 w-3.5 text-mint-500" />
                           <div>
                             <div className="text-[11px] text-ink-500">Drive time</div>
-                            <div className="text-sm font-semibold text-ink-900 tnum">{selected.driveFromPrev} min</div>
+                            <div className="num text-[13px] font-semibold text-ink-900">{selected.driveFromPrev} min</div>
                           </div>
                         </div>
-                        <ChevronRight className="h-4 w-4 text-ink-300" />
+                        <ChevronRight className="h-4 w-4 text-ink-400" />
                       </>
                     ) : (
                       <>
-                        <div className="flex items-center gap-2 rounded-lg bg-soft px-3 py-2">
-                          <Timer className="h-3.5 w-3.5 text-violet-400" />
+                        <div className="flex items-center gap-2 rounded-[8px] bg-soft border border-line px-3 py-2">
+                          <Timer className="h-3.5 w-3.5 text-mint-500" />
                           <div>
                             <div className="text-[11px] text-ink-500">First job of day</div>
-                            <div className="text-sm font-semibold text-ink-900">Starting fresh</div>
+                            <div className="text-[13px] font-medium text-ink-900">Starting fresh</div>
                           </div>
                         </div>
-                        <ChevronRight className="h-4 w-4 text-ink-300" />
+                        <ChevronRight className="h-4 w-4 text-ink-400" />
                       </>
                     )}
-                    <div className="flex items-center gap-2 rounded-lg bg-violet-500/10 border border-violet-500/20 px-3 py-2">
-                      <Navigation className="h-3.5 w-3.5 text-violet-400" />
+                    <div className="flex items-center gap-2 rounded-[8px] bg-mint-500/8 border border-mint-500/20 px-3 py-2">
+                      <Navigation className="h-3.5 w-3.5 text-mint-500" />
                       <div>
-                        <div className="text-[11px] text-violet-400">Arrives at</div>
-                        <div className="text-sm font-bold text-ink-900 tnum">{selected.etaTime}</div>
+                        <div className="text-[11px] text-mint-500">Arrives at</div>
+                        <div className="num text-[13px] font-semibold text-ink-900">{selected.etaTime}</div>
                       </div>
                     </div>
                     {!selected.isOnSchedule && (
-                      <div className="flex items-center gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2">
+                      <div className="flex items-center gap-2 rounded-[8px] bg-amber-500/10 border border-amber-500/20 px-3 py-2">
                         <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
                         <div>
                           <div className="text-[11px] text-amber-500">Delay</div>
-                          <div className="text-sm font-bold text-ink-900 tnum">
+                          <div className="num text-[13px] font-semibold text-ink-900">
                             +{selected.etaMinutes - parseMin(selected.job.scheduledTime)} min
                           </div>
                         </div>
@@ -467,13 +467,13 @@ export function MessagesClient({ jobs, customers, cleaners }: MessagesData) {
                 </div>
 
                 {/* Team pills */}
-                <div className="px-6 py-3.5 border-b border-ink-100">
+                <div className="px-6 py-3.5 border-b border-line">
                   <div className="flex items-center gap-2">
                     <span className={SECTION_LABEL}>Team</span>
                     {selected.cleaners.map(c => (
-                      <div key={c.id} className="flex items-center gap-1.5 rounded-full bg-soft pl-1.5 pr-2.5 py-1">
+                      <div key={c.id} className="flex items-center gap-1.5 rounded-full bg-soft border border-line pl-1.5 pr-2.5 py-1">
                         <div
-                          className="flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold text-white"
+                          className="flex h-5 w-5 items-center justify-center rounded-full text-[10.5px] font-semibold text-page"
                           style={{ background: c.color }}
                         >
                           {c.initials}
@@ -485,7 +485,7 @@ export function MessagesClient({ jobs, customers, cleaners }: MessagesData) {
                 </div>
 
                 {/* Template selector */}
-                <div className="px-6 py-4 border-b border-ink-100">
+                <div className="px-6 py-4 border-b border-line">
                   <p className={cn('mb-2.5', SECTION_LABEL)}>Notification Type</p>
                   <div className="flex gap-2 flex-wrap">
                     {(Object.entries(TEMPLATES) as [TemplateKey, typeof TEMPLATES[TemplateKey]][]).map(([key, tmpl]) => (
@@ -493,13 +493,13 @@ export function MessagesClient({ jobs, customers, cleaners }: MessagesData) {
                         key={key}
                         onClick={() => selectTemplate(key)}
                         className={cn(
-                          'flex items-center gap-1.5 rounded-lg border px-3 py-2 text-[13px] font-medium transition-colors',
+                          'flex items-center gap-1.5 rounded-[8px] border px-3 py-2 text-[12.5px] font-medium transition-colors',
                           activeTemplate === key
-                            ? 'border-violet-500/50 bg-violet-500/10 text-violet-400'
-                            : 'border-ink-100 text-ink-500 hover:border-ink-200 hover:text-ink-700'
+                            ? 'border-mint-500/50 bg-mint-500/8 text-mint-500'
+                            : 'border-line text-ink-500 hover:border-line-strong hover:text-ink-700',
                         )}
                       >
-                        <tmpl.icon className={cn('h-3.5 w-3.5', activeTemplate === key ? 'text-violet-400' : 'text-ink-400')} />
+                        <tmpl.icon className={cn('h-3.5 w-3.5', activeTemplate === key ? 'text-mint-500' : 'text-ink-400')} />
                         {tmpl.label}
                       </button>
                     ))}
@@ -512,24 +512,24 @@ export function MessagesClient({ jobs, customers, cleaners }: MessagesData) {
                     <p className={SECTION_LABEL}>Message Preview</p>
                     <div className="flex items-center gap-1.5 text-[11px] text-ink-400">
                       <MessageSquare className="h-3 w-3" />
-                      SMS · {message.length} chars
+                      SMS · <span className="num">{message.length}</span> chars
                     </div>
                   </div>
 
                   {/* Phone mockup */}
                   <div className="mx-auto max-w-sm">
-                    <div className="rounded-2xl border border-ink-100 bg-card p-4">
+                    <div className="rounded-[14px] border border-line bg-card p-4">
                       {/* SMS header */}
-                      <div className="mb-3 flex items-center gap-2 border-b border-ink-100 pb-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-violet-700 text-[11px] font-bold text-white">
+                      <div className="mb-3 flex items-center gap-2 border-b border-line pb-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-mint-400 to-mint-600 text-[11px] font-semibold text-page">
                           DC
                         </div>
                         <div>
-                          <div className="text-sm font-semibold text-ink-900">David&apos;s Cleaning</div>
+                          <div className="text-[13px] font-semibold text-ink-900">David&apos;s Cleaning</div>
                           <div className="text-[11px] text-ink-500">SMS Notification</div>
                         </div>
                       </div>
-                      <div className="rounded-xl bg-soft p-3.5 text-sm text-ink-700 leading-relaxed">
+                      <div className="rounded-[10px] bg-soft p-3.5 text-[13px] text-ink-700 leading-relaxed">
                         {message}
                       </div>
                     </div>
@@ -537,9 +537,9 @@ export function MessagesClient({ jobs, customers, cleaners }: MessagesData) {
 
                   {/* Editable textarea */}
                   <div className="mt-4">
-                    <p className="text-[11px] text-ink-400 mb-2">Edit message</p>
+                    <p className="text-[11.5px] text-ink-500 mb-2">Edit message</p>
                     <textarea
-                      className="w-full resize-none rounded-xl bg-soft border border-ink-100 px-4 py-3 text-sm text-ink-700 placeholder:text-ink-400 focus:outline-none focus:border-violet-500/40 transition-colors"
+                      className="w-full resize-none rounded-[10px] bg-soft border border-line px-4 py-3 text-[13px] text-ink-700 placeholder:text-ink-400 focus:outline-none focus:border-mint-500/40 transition-colors"
                       rows={4}
                       value={message}
                       onChange={e => setMessage(e.target.value)}
@@ -548,13 +548,13 @@ export function MessagesClient({ jobs, customers, cleaners }: MessagesData) {
                 </div>
 
                 {/* Send bar */}
-                <div className="px-6 py-4 border-t border-ink-100 bg-rail">
+                <div className="px-6 py-4 border-t border-line bg-rail">
                   <div className="flex items-center gap-3">
                     <div className="flex-1">
-                      <div className="text-sm font-medium text-ink-700">
+                      <div className="text-[13px] font-medium text-ink-700">
                         Send to: {selected.customer?.name}
                       </div>
-                      <div className="text-[12px] text-ink-500 mt-0.5 tnum">{selected.customer?.phone}</div>
+                      <div className="num text-[12px] text-ink-500 mt-0.5">{selected.customer?.phone}</div>
                     </div>
                     <Button
                       variant="outline"
@@ -595,17 +595,17 @@ export function MessagesClient({ jobs, customers, cleaners }: MessagesData) {
           ) : (
             <div className="flex flex-1 items-center justify-center flex-col gap-3 text-center">
               <Bell className="h-10 w-10 text-ink-300" />
-              <p className="text-sm font-medium text-ink-500">No jobs today</p>
-              <p className="text-xs text-ink-400">Add jobs to the schedule to send arrival notifications</p>
+              <p className="text-[13px] font-medium text-ink-500">No jobs today</p>
+              <p className="text-[12px] text-ink-400">Add jobs to the schedule to send arrival notifications</p>
             </div>
           )}
         </div>
 
         {/* Right sidebar: send log */}
         <div className={cn(
-          'flex-shrink-0 border-ink-100 bg-rail p-4',
+          'flex-shrink-0 border-line bg-rail p-4',
           'w-full md:w-56 md:border-l',
-          mobilePanel !== 'sent' ? 'hidden md:block' : 'block'
+          mobilePanel !== 'sent' ? 'hidden md:block' : 'block',
         )}>
           <p className={cn('mb-3', SECTION_LABEL)}>Sent Today</p>
 
@@ -621,39 +621,39 @@ export function MessagesClient({ jobs, customers, cleaners }: MessagesData) {
                 const item = schedule.find(s => s.job.id === jobId)
                 if (!item) return null
                 return (
-                  <div key={key} className="rounded-lg bg-soft border border-ink-100 p-3">
+                  <div key={key} className="rounded-[8px] bg-soft border border-line p-3">
                     <div className="flex items-center gap-1.5 mb-1">
                       <CheckCheck className="h-3.5 w-3.5 text-emerald-500" />
                       <span className="text-[11px] font-medium text-emerald-500">Sent</span>
                     </div>
-                    <p className="text-[13px] font-medium text-ink-700 truncate">{item.customer?.name}</p>
+                    <p className="text-[12.5px] font-medium text-ink-700 truncate">{item.customer?.name}</p>
                     <p className="text-[11px] text-ink-400">{TEMPLATES[tpl]?.label}</p>
-                    <p className="text-[11px] text-ink-400 tnum">{new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</p>
+                    <p className="num text-[11px] text-ink-400">{new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</p>
                   </div>
                 )
               })}
             </div>
           )}
 
-          <div className="mt-6 border-t border-ink-100 pt-4">
+          <div className="mt-6 border-t border-line pt-4">
             <p className={cn('mb-2.5', SECTION_LABEL)}>Today&apos;s Stats</p>
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-[12px] text-ink-500">Jobs</span>
-                <span className="text-[13px] font-semibold text-ink-900 tnum">{schedule.length}</span>
+                <span className="text-[12px] text-ink-400">Jobs</span>
+                <span className="num text-[13px] font-semibold text-ink-900">{schedule.length}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[12px] text-ink-500">Notified</span>
-                <span className="text-[13px] font-semibold text-emerald-500 tnum">{new Set([...sentSet].map(k => k.split('-')[0])).size}</span>
+                <span className="text-[12px] text-ink-400">Notified</span>
+                <span className="num text-[13px] font-semibold text-emerald-500">{new Set([...sentSet].map(k => k.split('-')[0])).size}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[12px] text-ink-500">Revenue</span>
-                <span className="text-[13px] font-semibold text-ink-900 tnum">
+                <span className="text-[12px] text-ink-400">Revenue</span>
+                <span className="num text-[13px] font-semibold text-ink-900">
                   {formatCurrency(schedule.reduce((s, i) => s + i.job.price, 0))}
                 </span>
               </div>
               {schedule.some(s => !s.isOnSchedule) && (
-                <div className="flex items-center gap-1.5 mt-2 rounded-lg bg-amber-500/10 border border-amber-500/20 px-2.5 py-2">
+                <div className="flex items-center gap-1.5 mt-2 rounded-[8px] bg-amber-500/10 border border-amber-500/20 px-2.5 py-2">
                   <AlertTriangle className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
                   <span className="text-[11px] text-amber-500">Delays detected</span>
                 </div>

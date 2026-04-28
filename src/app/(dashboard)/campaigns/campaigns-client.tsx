@@ -5,7 +5,6 @@ import {
   Bell, Send, Link2, Clock, CheckCircle2, RefreshCw,
   Sparkles, Copy, Users, ChevronDown, ChevronRight, AlertCircle, Zap, Route
 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/ui/avatar'
@@ -21,9 +20,9 @@ type CampaignsData = {
   jobs: Job[]
 }
 
-const AVATAR_COLORS = ['#8B85F2','#A78BFA','#F472B6','#34D399','#FBBF24','#7A75E0','#2DD4BF','#F87171','#A78BFA','#06b6d4','#34D399','#F87171']
+const AVATAR_COLORS = ['#5EEAD4','#34D399','#F472B6','#60A5FA','#FBBF24','#A78BFA','#2DD4BF','#F87171','#22D3EE','#06b6d4','#34D399','#F87171']
 
-const STATUS_CONFIG: Record<string, { label: string; variant: 'default' | 'success' | 'warning' | 'neutral' | 'danger' | 'purple'; icon: React.ReactNode }> = {
+const STATUS_CONFIG: Record<string, { label: string; variant: 'default' | 'success' | 'warning' | 'neutral' | 'danger'; icon: React.ReactNode }> = {
   pending: { label: 'Ready to Send', variant: 'warning', icon: <Clock className="h-3 w-3" /> },
   sent: { label: 'Sent', variant: 'default', icon: <Send className="h-3 w-3" /> },
   clicked: { label: 'Link Clicked', variant: 'success', icon: <CheckCircle2 className="h-3 w-3" /> },
@@ -63,20 +62,20 @@ function CampaignRow({ campaign, customers }: { campaign: NurturingCampaign; cus
   }
 
   return (
-    <div className={cn('border-b border-ink-200 last:border-0 transition-colors', campaign.status === 'pending' && 'bg-amber-500/[0.02]')}>
+    <div className={cn('border-b border-line last:border-0 transition-colors', campaign.status === 'pending' && 'bg-amber-500/[0.02]')}>
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex w-full items-center gap-3 px-4 py-4 text-left hover:bg-hover transition-colors"
+        className="flex w-full items-center gap-3 px-4 py-4 text-left hover:bg-soft transition-colors"
       >
         <Avatar initials={initials} color={avatarColor} size="sm" />
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <p className="text-[14px] font-semibold text-ink-900 truncate">{customer.name}</p>
+            <p className="text-[13.5px] font-semibold text-ink-900 truncate">{customer.name}</p>
             <span className="hidden sm:inline text-ink-400 text-[12px]">{customer.city}</span>
           </div>
           <p className="text-ink-500 mt-0.5 text-[12px]">
-            Last cleaned {campaign.daysSinceLastJob}d ago · {TRIGGER_LABELS[campaign.trigger]}
+            Last cleaned <span className="num">{campaign.daysSinceLastJob}d</span> ago · {TRIGGER_LABELS[campaign.trigger]}
           </p>
         </div>
 
@@ -98,19 +97,19 @@ function CampaignRow({ campaign, customers }: { campaign: NurturingCampaign; cus
           >
             <div className="px-4 pb-4 pl-16 space-y-3">
               {/* Message preview */}
-              <div className="rounded-[14px] bg-page border border-ink-200 p-4">
-                <p className="mb-2 text-[11px] font-bold tracking-[0.09em] text-ink-400 uppercase">Follow-up Message</p>
-                <p className="text-[14px] text-ink-700 leading-relaxed">{campaign.message}</p>
+              <div className="rounded-[10px] bg-page border border-line p-4">
+                <p className="mb-2 text-[12px] font-medium text-ink-500">Follow-up Message</p>
+                <p className="text-[13.5px] text-ink-700 leading-relaxed">{campaign.message}</p>
               </div>
 
               {/* Booking link */}
               {bookingUrl && (
-                <div className="flex items-center gap-2 rounded-lg bg-soft border border-ink-200 p-3.5">
-                  <Link2 className="h-4 w-4 text-violet-400 flex-shrink-0" />
-                  <span className="flex-1 text-ink-500 font-mono truncate text-[13px]">{bookingUrl}</span>
+                <div className="flex items-center gap-2 rounded-[10px] bg-soft border border-line p-3.5">
+                  <Link2 className="h-4 w-4 text-mint-500 flex-shrink-0" />
+                  <span className="flex-1 text-ink-500 truncate text-[12.5px]">{bookingUrl}</span>
                   <button
                     onClick={handleCopy}
-                    className="text-violet-400 hover:text-violet-500 flex-shrink-0 font-medium text-[13px]"
+                    className="text-mint-500 hover:text-mint-400 flex-shrink-0 font-medium text-[12.5px]"
                   >
                     {copied ? '✓ Copied' : 'Copy'}
                   </button>
@@ -165,25 +164,25 @@ function SlotCard({
     <button
       onClick={onSelect}
       className={cn(
-        'w-full rounded-[14px] border p-4 text-left transition-colors',
+        'w-full rounded-[10px] border p-4 text-left transition-colors',
         selected
-          ? 'border-violet-500/60 bg-violet-500/10 shadow-[0_0_12px_rgba(139,133,242,0.18)]'
-          : 'border-ink-200 bg-soft hover:border-ink-300 hover:bg-hover'
+          ? 'border-mint-500/60 bg-mint-500/8'
+          : 'border-line bg-soft hover:border-line-strong hover:bg-hover',
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <p className="text-[14px] font-semibold text-ink-900 truncate">{slot.label}</p>
+          <p className="text-[13.5px] font-semibold text-ink-900 truncate">{slot.label}</p>
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             {slot.insertionLabel ? (
               <div className="flex items-center gap-1">
                 {isOnRoute
                   ? <Zap className="h-3.5 w-3.5 text-emerald-500" />
                   : isGood
-                  ? <Route className="h-3.5 w-3.5 text-violet-400" />
+                  ? <Route className="h-3.5 w-3.5 text-mint-500" />
                   : null}
                 <span className={cn('font-medium text-[12px]',
-                  isOnRoute ? 'text-emerald-500' : isGood ? 'text-violet-400' : 'text-ink-500'
+                  isOnRoute ? 'text-emerald-500' : isGood ? 'text-mint-500' : 'text-ink-500',
                 )}>
                   {slot.insertionLabel}
                 </span>
@@ -191,7 +190,7 @@ function SlotCard({
             ) : (
               <span className="text-ink-500 text-[12px]">Available</span>
             )}
-            <span className="text-ink-300 text-[12px]">·</span>
+            <span className="text-ink-400 text-[12px]">·</span>
             <span className="text-ink-400 text-[12px]">{slotCleaners.map(c => c.name.split(' ')[0]).join(' & ')}</span>
           </div>
         </div>
@@ -202,7 +201,7 @@ function SlotCard({
         </div>
       </div>
       {selected && (
-        <div className="mt-2.5 flex items-center gap-1.5 text-violet-400 text-[12px]">
+        <div className="mt-2.5 flex items-center gap-1.5 text-mint-500 text-[12px]">
           <CheckCircle2 className="h-3.5 w-3.5" /> Selected — copy link to share
         </div>
       )}
@@ -237,13 +236,13 @@ export function CampaignsClient({ customers, cleaners }: CampaignsData) {
   const selectedCustomer = customers.find(c => c.id === bookingCustomerId)
 
   return (
-    <div className="space-y-7 max-w-6xl">
+    <div className="space-y-6">
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {([
           { label: 'Ready to Send',   value: pendingCount,        icon: Bell,  tone: 'amber'   as const },
-          { label: 'Sent This Cycle', value: sentCount,           icon: Send,  tone: 'violet'  as const },
-          { label: 'Total Campaigns', value: totalReach,          icon: Users, tone: 'purple'  as const },
+          { label: 'Sent This Cycle', value: sentCount,           icon: Send,  tone: 'mint'    as const },
+          { label: 'Total Campaigns', value: totalReach,          icon: Users, tone: 'mint'    as const },
           { label: 'Links Generated', value: bookingLinks.length, icon: Link2, tone: 'emerald' as const },
         ]).map((s, i) => (
           <motion.div key={s.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>
@@ -258,7 +257,7 @@ export function CampaignsClient({ customers, cleaners }: CampaignsData) {
             <Bell className="h-3.5 w-3.5 mr-1.5" />
             Nurturing Campaigns
             {pendingCount > 0 && (
-              <span className="ml-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-amber-500/20 px-1 font-bold text-amber-500 text-[11px]">
+              <span className="ml-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-amber-500/20 px-1 font-semibold text-amber-500 text-[10.5px]">
                 {pendingCount}
               </span>
             )}
@@ -272,46 +271,42 @@ export function CampaignsClient({ customers, cleaners }: CampaignsData) {
         {/* Nurturing Campaigns Tab */}
         <TabsContent value="nurturing" className="space-y-4">
           {/* Info banner */}
-          <div className="flex items-start gap-3 rounded-[14px] bg-gradient-to-r from-amber-500/10 to-rose-500/10 border border-amber-500/20 p-4">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/20 flex-shrink-0">
-              <Sparkles className="h-4 w-4 text-amber-500" />
+          <div className="card flex items-start gap-3 px-5 py-4">
+            <div className="flex h-9 w-9 items-center justify-center rounded-[8px] bg-amber-500/12 flex-shrink-0">
+              <Sparkles className="h-[16px] w-[16px] text-amber-500" />
             </div>
             <div>
-              <p className="text-[14px] font-semibold text-ink-900">3-Week Follow-up Automation</p>
-              <p className="text-ink-500 mt-1 leading-relaxed text-[13px]">
+              <p className="text-[13.5px] font-semibold text-ink-900">3-Week Follow-up Automation</p>
+              <p className="text-ink-500 mt-1 leading-relaxed text-[12.5px]">
                 AI detects customers whose last cleaning was 21+ days ago and generates personalized follow-up messages with booking links. Each link shows route-optimized time slots.
               </p>
             </div>
           </div>
 
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Follow-up Queue</CardTitle>
-                <Badge variant="warning">{pendingCount} pending</Badge>
+          <div className="card">
+            <div className="flex items-center justify-between border-b border-line px-5 py-4">
+              <h2 className="text-[14.5px] font-semibold text-ink-900 tracking-[-0.01em]">Follow-up Queue</h2>
+              <Badge variant="warning"><span className="num">{pendingCount}</span>&nbsp;pending</Badge>
+            </div>
+            {campaigns.length === 0 ? (
+              <div className="px-4 py-8 text-center text-[13px] text-ink-500">
+                No customers need follow-up yet.
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              {campaigns.length === 0 ? (
-                <div className="px-4 py-8 text-center text-[14px] text-ink-500">
-                  No customers need follow-up yet.
-                </div>
-              ) : (
-                campaigns.map(c => <CampaignRow key={c.id} campaign={c} customers={customers} />)
-              )}
-            </CardContent>
-          </Card>
+            ) : (
+              campaigns.map(c => <CampaignRow key={c.id} campaign={c} customers={customers} />)
+            )}
+          </div>
         </TabsContent>
 
         {/* Booking Links Tab */}
         <TabsContent value="booking-links" className="space-y-4">
-          <div className="flex items-start gap-3 rounded-[14px] bg-gradient-to-r from-violet-500/10 to-purple-500/10 border border-violet-500/20 p-4">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-500/20 flex-shrink-0">
-              <Link2 className="h-4 w-4 text-violet-400" />
+          <div className="card flex items-start gap-3 px-5 py-4">
+            <div className="flex h-9 w-9 items-center justify-center rounded-[8px] bg-mint-500/12 flex-shrink-0">
+              <Link2 className="h-[16px] w-[16px] text-mint-500" />
             </div>
             <div>
-              <p className="text-[14px] font-semibold text-ink-900">Route-Smart Booking Links</p>
-              <p className="text-ink-500 mt-1 leading-relaxed text-[13px]">
+              <p className="text-[13.5px] font-semibold text-ink-900">Route-Smart Booking Links</p>
+              <p className="text-ink-500 mt-1 leading-relaxed text-[12.5px]">
                 Generate a personalized booking link for any customer. Available time slots are calculated based on team schedules and cleaning routes — prioritizing slots that cluster nearby jobs to reduce drive time.
               </p>
             </div>
@@ -320,13 +315,13 @@ export function CampaignsClient({ customers, cleaners }: CampaignsData) {
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-5">
             {/* Customer selector + link gen */}
             <div className="lg:col-span-2 space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Generate Booking Link</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+              <div className="card">
+                <div className="border-b border-line px-5 py-4">
+                  <h2 className="text-[14.5px] font-semibold text-ink-900 tracking-[-0.01em]">Generate Booking Link</h2>
+                </div>
+                <div className="p-5 space-y-4">
                   <div>
-                    <label className="mb-2.5 block text-[11px] font-bold tracking-[0.09em] text-ink-400 uppercase">Select Customer</label>
+                    <label className="mb-2.5 block text-[12px] font-medium text-ink-500">Select Customer</label>
                     <div className="space-y-1.5 max-h-64 overflow-y-auto">
                       {customers.map((c, i) => {
                         const initials = c.name.split(' ').map(n => n[0]).join('')
@@ -336,10 +331,10 @@ export function CampaignsClient({ customers, cleaners }: CampaignsData) {
                             key={c.id}
                             onClick={() => setBookingCustomerId(c.id)}
                             className={cn(
-                              'flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left transition-colors',
+                              'flex w-full items-center gap-2.5 rounded-[8px] px-3 py-2.5 text-left transition-colors',
                               bookingCustomerId === c.id
-                                ? 'bg-violet-500/15 border border-violet-500/30'
-                                : 'hover:bg-hover border border-transparent'
+                                ? 'bg-mint-500/8 border border-mint-500/30'
+                                : 'hover:bg-soft border border-transparent',
                             )}
                           >
                             <Avatar initials={initials} color={color} size="sm" />
@@ -347,7 +342,7 @@ export function CampaignsClient({ customers, cleaners }: CampaignsData) {
                               <p className="font-medium text-ink-900 truncate text-[13px]">{c.name}</p>
                               <p className="text-ink-500 text-[11px]">{c.city}</p>
                             </div>
-                            {bookingCustomerId === c.id && <CheckCircle2 className="h-3.5 w-3.5 text-violet-400 flex-shrink-0" />}
+                            {bookingCustomerId === c.id && <CheckCircle2 className="h-3.5 w-3.5 text-mint-500 flex-shrink-0" />}
                           </button>
                         )
                       })}
@@ -364,11 +359,11 @@ export function CampaignsClient({ customers, cleaners }: CampaignsData) {
 
                   {activeLink && (
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2 rounded-lg bg-page border border-emerald-500/30 p-3.5">
+                      <div className="flex items-center gap-2 rounded-[10px] bg-page border border-emerald-500/30 p-3.5">
                         <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-emerald-500 text-[13px]">Link Generated!</p>
-                          <p className="text-ink-500 font-mono truncate text-[11px]">
+                          <p className="text-ink-500 truncate text-[11px]">
                             /book/{activeLink.token.slice(0, 18)}…
                           </p>
                         </div>
@@ -387,30 +382,30 @@ export function CampaignsClient({ customers, cleaners }: CampaignsData) {
                       </p>
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
 
             {/* Available Slots */}
             <div className="lg:col-span-3">
-              <Card>
-                <CardHeader>
-                  <CardTitle>
+              <div className="card">
+                <div className="border-b border-line px-5 py-4">
+                  <h2 className="text-[14.5px] font-semibold text-ink-900 tracking-[-0.01em]">
                     Available Slots
                     {selectedCustomer && (
-                      <span className="text-ink-500 font-normal text-[14px] ml-1">— {selectedCustomer.name}</span>
+                      <span className="text-ink-500 font-normal text-[13px] ml-1">— {selectedCustomer.name}</span>
                     )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
+                  </h2>
+                </div>
+                <div className="p-5">
                   {loadingSlots ? (
                     <div className="space-y-2">
                       {Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="h-16 rounded-[14px] bg-soft animate-pulse" />
+                        <div key={i} className="h-16 rounded-[10px] bg-soft animate-pulse" />
                       ))}
                     </div>
                   ) : availableSlots.length === 0 ? (
-                    <div className="py-12 text-center text-[14px] text-ink-500">
+                    <div className="py-12 text-center text-[13px] text-ink-500">
                       Select a customer and click &ldquo;Generate Booking Link&rdquo; to see available slots based on team schedules and cleaning routes.
                     </div>
                   ) : (
@@ -426,45 +421,43 @@ export function CampaignsClient({ customers, cleaners }: CampaignsData) {
                       ))}
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Previously generated links */}
           {bookingLinks.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Generated Links</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                {bookingLinks.map(link => {
-                  const customer = customers.find(c => c.id === link.customerId)
-                  if (!customer) return null
-                  const initials = customer.name.split(' ').map(n => n[0]).join('')
-                  const color = AVATAR_COLORS[customers.indexOf(customer) % AVATAR_COLORS.length]
-                  const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/book/${link.token}`
-                  return (
-                    <div key={link.token} className="flex items-center gap-3 px-4 py-3.5 border-b border-ink-200 last:border-0">
-                      <Avatar initials={initials} color={color} size="sm" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[14px] font-medium text-ink-900">{customer.name}</p>
-                        <p className="text-ink-500 font-mono truncate text-[12px]">/book/{link.token.slice(0, 20)}…</p>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <Badge variant="neutral">{link.slots.length} slots</Badge>
-                        <button
-                          onClick={() => { navigator.clipboard.writeText(url) }}
-                          className="text-violet-400 hover:text-violet-500"
-                        >
-                          <Copy className="h-4 w-4" />
-                        </button>
-                      </div>
+            <div className="card">
+              <div className="border-b border-line px-5 py-4">
+                <h2 className="text-[14.5px] font-semibold text-ink-900 tracking-[-0.01em]">Generated Links</h2>
+              </div>
+              {bookingLinks.map(link => {
+                const customer = customers.find(c => c.id === link.customerId)
+                if (!customer) return null
+                const initials = customer.name.split(' ').map(n => n[0]).join('')
+                const color = AVATAR_COLORS[customers.indexOf(customer) % AVATAR_COLORS.length]
+                const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/book/${link.token}`
+                return (
+                  <div key={link.token} className="flex items-center gap-3 px-4 py-3.5 border-b border-line last:border-0">
+                    <Avatar initials={initials} color={color} size="sm" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13.5px] font-medium text-ink-900">{customer.name}</p>
+                      <p className="text-ink-500 truncate text-[12px]">/book/{link.token.slice(0, 20)}…</p>
                     </div>
-                  )
-                })}
-              </CardContent>
-            </Card>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Badge variant="neutral"><span className="num">{link.slots.length}</span>&nbsp;slots</Badge>
+                      <button
+                        onClick={() => { navigator.clipboard.writeText(url) }}
+                        className="text-mint-500 hover:text-mint-400"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           )}
         </TabsContent>
       </Tabs>

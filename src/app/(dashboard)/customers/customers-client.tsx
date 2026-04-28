@@ -118,12 +118,12 @@ export function CustomersClient({ customers, jobs, cleaners }: CustomersData) {
 
       {/* ─── AI banner */}
       {inactiveCount > 0 && (
-        <div className="card-tile flex items-center gap-4 px-5 py-4">
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[6px] bg-mint-500/10">
+        <div className="card flex items-center gap-4 px-5 py-4">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[8px] bg-mint-500/12">
             <Sparkles className="h-[16px] w-[16px] text-mint-500" />
           </div>
           <div className="min-w-0 flex-1">
-            <span className="grid-label !text-mint-500/80">AI Insight</span>
+            <span className="text-[12px] font-medium text-mint-500">AI Insight</span>
             <p className="mt-1 text-[13px] text-ink-700 leading-[1.5]">
               <span className="num font-semibold text-ink-900">{inactiveCount}</span> customers haven't booked in 30+ days. Send re-engagement texts in one click.
             </p>
@@ -184,13 +184,13 @@ export function CustomersClient({ customers, jobs, cleaners }: CustomersData) {
               <button
                 onClick={() => setSelected(isSelected ? null : customer)}
                 className={cn(
-                  'card-tile flex w-full flex-col gap-4 p-5 text-left transition-all',
-                  isSelected && 'border-mint-500 bg-soft/60',
+                  'card flex w-full flex-col gap-4 p-5 text-left transition-all',
+                  isSelected && '!border-mint-500/60 bg-soft/60',
                 )}
               >
                 <div className="flex items-start gap-3">
                   <div
-                    className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[6px] font-mono text-[11.5px] font-semibold text-page"
+                    className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[8px] text-[12px] font-semibold text-page"
                     style={{ backgroundColor: color }}
                   >
                     {initials}
@@ -211,18 +211,18 @@ export function CustomersClient({ customers, jobs, cleaners }: CustomersData) {
 
                 <div className="flex items-end justify-between gap-3">
                   <div>
-                    <span className="grid-label">Spent</span>
-                    <p className="num mt-1 text-[20px] font-semibold text-ink-900 leading-none">
+                    <span className="text-[12px] text-ink-500">Spent</span>
+                    <p className="num mt-1 text-[20px] font-semibold text-ink-900 leading-none tracking-[-0.02em]">
                       {formatCurrency(customer.totalSpent)}
                     </p>
                   </div>
                   {lastJob ? (
                     <div className="text-right">
-                      <span className="grid-label">Last job</span>
+                      <span className="text-[12px] text-ink-500">Last job</span>
                       <p className="num mt-1 text-[12.5px] text-ink-500">{lastJob.scheduledDate}</p>
                     </div>
                   ) : (
-                    <span className="grid-label">No jobs yet</span>
+                    <span className="text-[12px] text-ink-500">No jobs yet</span>
                   )}
                 </div>
               </button>
@@ -306,20 +306,20 @@ function DetailPanel({
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
         transition={{ type: 'spring', damping: 30, stiffness: 320 }}
-        className="fixed right-0 top-0 z-50 flex h-full w-full flex-col border-l border-line-strong bg-card shadow-[0_0_80px_rgba(0,0,0,0.7)] sm:w-[420px]"
+        className="fixed right-0 top-0 z-50 flex h-full w-full flex-col border-l border-line-strong bg-card shadow-[var(--shadow-pop)] sm:w-[420px]"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
           <div className="flex items-center gap-3">
             <div
-              className="flex h-11 w-11 items-center justify-center rounded-[8px] font-mono text-[13px] font-semibold text-page"
+              className="flex h-11 w-11 items-center justify-center rounded-[8px] text-[13px] font-semibold text-page"
               style={{ backgroundColor: color }}
             >
               {initials}
             </div>
             <div className="min-w-0">
               <p className="truncate text-[14px] font-semibold text-ink-900">{customer.name}</p>
-              <p className="mt-0.5 truncate text-[11.5px] text-ink-400 font-mono">
+              <p className="mt-0.5 truncate text-[11.5px] text-ink-400">
                 {customer.city} · <span className="num">{customer.jobHistory.length}</span> jobs
               </p>
             </div>
@@ -327,7 +327,7 @@ function DetailPanel({
           <button
             onClick={onClose}
             aria-label="Close"
-            className="flex h-7 w-7 items-center justify-center rounded-[6px] text-ink-400 hover:bg-soft hover:text-ink-900"
+            className="flex h-7 w-7 items-center justify-center rounded-[8px] text-ink-400 hover:bg-soft hover:text-ink-900"
           >
             <X className="h-4 w-4" />
           </button>
@@ -337,15 +337,15 @@ function DetailPanel({
         <div className="flex-1 overflow-y-auto p-5 space-y-6">
           {/* Mini stats */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="card-tile p-4 text-center">
-              <span className="grid-label">Total spent</span>
-              <p className="num mt-2 text-[22px] font-semibold text-ink-900 leading-none">
+            <div className="card p-4 text-center">
+              <span className="text-[12px] text-ink-500">Total spent</span>
+              <p className="num mt-2 text-[22px] font-semibold text-ink-900 leading-none tracking-[-0.02em]">
                 {formatCurrency(customer.totalSpent)}
               </p>
             </div>
-            <div className="card-tile p-4 text-center">
-              <span className="grid-label">Jobs</span>
-              <p className="num mt-2 text-[22px] font-semibold text-ink-900 leading-none">
+            <div className="card p-4 text-center">
+              <span className="text-[12px] text-ink-500">Jobs</span>
+              <p className="num mt-2 text-[22px] font-semibold text-ink-900 leading-none tracking-[-0.02em]">
                 {customer.jobHistory.length}
               </p>
             </div>
@@ -353,7 +353,7 @@ function DetailPanel({
 
           {/* Contact */}
           <div className="space-y-3">
-            <span className="grid-label">Contact</span>
+            <span className="text-[12px] font-medium text-ink-500">Contact</span>
             <div className="space-y-2">
               {[
                 { Icon: Phone, label: customer.phone },
@@ -371,7 +371,7 @@ function DetailPanel({
           {/* Source + notes */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="grid-label">Source</span>
+              <span className="text-[12px] font-medium text-ink-500">Source</span>
               <Badge variant={SOURCE_BADGE[customer.source] ?? 'neutral'}>{customer.source}</Badge>
             </div>
             {customer.notes && (
@@ -384,21 +384,21 @@ function DetailPanel({
           {/* Preferred cleaners */}
           {preferred.length > 0 && (
             <div className="space-y-3">
-              <span className="grid-label">Preferred cleaners</span>
+              <span className="text-[12px] font-medium text-ink-500">Preferred cleaners</span>
               <div className="flex flex-wrap gap-2">
                 {preferred.map((c) => (
                   <div
                     key={c.id}
-                    className="flex items-center gap-2 rounded-[6px] border border-line bg-soft px-2.5 py-1.5"
+                    className="flex items-center gap-2 rounded-[8px] border border-line bg-soft px-2.5 py-1.5"
                   >
                     <div
-                      className="flex h-5 w-5 items-center justify-center rounded-full font-mono text-[9px] font-semibold text-page"
+                      className="flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-semibold text-page"
                       style={{ backgroundColor: c.color }}
                     >
                       {c.initials}
                     </div>
                     <span className="text-[12px] text-ink-700">{c.name.split(' ')[0]}</span>
-                    <span className="text-[10.5px] text-amber-500 font-mono">
+                    <span className="num text-[10.5px] text-amber-500">
                       <Star className="mr-0.5 inline h-2.5 w-2.5 fill-amber-500" />
                       {c.rating}
                     </span>
@@ -410,11 +410,11 @@ function DetailPanel({
 
           {/* Recent jobs */}
           <div className="space-y-3">
-            <span className="grid-label">Recent jobs</span>
+            <span className="text-[12px] font-medium text-ink-500">Recent jobs</span>
             {customerJobs.length === 0 ? (
               <p className="text-center text-[12.5px] italic text-ink-400 py-2">No jobs yet</p>
             ) : (
-              <ul className="card-tile overflow-hidden">
+              <ul className="card overflow-hidden">
                 {customerJobs.slice(0, 5).map((job, idx) => (
                   <li
                     key={job.id}
@@ -427,7 +427,7 @@ function DetailPanel({
                       <p className="text-[12.5px] font-medium text-ink-900 truncate">
                         {getServiceLabel(job.serviceType)}
                       </p>
-                      <p className="mt-0.5 flex items-center gap-1 text-[10.5px] text-ink-400 font-mono">
+                      <p className="mt-0.5 flex items-center gap-1 text-[10.5px] text-ink-400">
                         <Clock className="h-2.5 w-2.5" />
                         <span className="num">{job.scheduledDate}</span>
                         <span>·</span>
@@ -452,7 +452,7 @@ function DetailPanel({
           {feedback && (
             <div
               className={cn(
-                'rounded-[6px] border px-3 py-2 text-[12px] flex items-center gap-2',
+                'rounded-[8px] border px-3 py-2 text-[12px] flex items-center gap-2',
                 feedback.kind === 'ok'
                   ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-500'
                   : 'border-rose-500/30 bg-rose-500/10 text-rose-500',
@@ -473,14 +473,14 @@ function DetailPanel({
           <div className="grid grid-cols-2 gap-2">
             <a
               href={`tel:${customer.phone}`}
-              className="flex h-7 items-center justify-center gap-2 rounded-[6px] border border-line bg-elev px-3 text-[12px] font-medium text-ink-700 transition-colors hover:bg-hover hover:text-ink-900 hover:border-line-strong"
+              className="flex h-8 items-center justify-center gap-2 rounded-[8px] border border-line bg-elev px-3 text-[12px] font-medium text-ink-700 transition-colors hover:bg-hover hover:text-ink-900 hover:border-line-strong"
             >
               <Phone className="h-3.5 w-3.5" />
               Call
             </a>
             <a
               href={`/messages?customer=${customer.id}`}
-              className="flex h-7 items-center justify-center gap-2 rounded-[6px] border border-line bg-elev px-3 text-[12px] font-medium text-ink-700 transition-colors hover:bg-hover hover:text-ink-900 hover:border-line-strong"
+              className="flex h-8 items-center justify-center gap-2 rounded-[8px] border border-line bg-elev px-3 text-[12px] font-medium text-ink-700 transition-colors hover:bg-hover hover:text-ink-900 hover:border-line-strong"
             >
               <Mail className="h-3.5 w-3.5" />
               Message

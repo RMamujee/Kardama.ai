@@ -35,17 +35,17 @@ const PERIOD_LABEL: Record<Period, string> = {
 
 const TOOLTIP_STYLE = {
   contentStyle: {
-    background: '#0F1B2D',
-    border: '1px solid #25395A',
-    borderRadius: 8,
-    color: '#F2F5FB',
-    fontFamily: 'var(--font-mono)',
-    fontSize: 11.5,
+    background: '#131316',
+    border: '1px solid #2E2E34',
+    borderRadius: 10,
+    color: '#F5F5F7',
+    fontFamily: 'var(--font-sans)',
+    fontSize: 12,
     padding: '8px 10px',
     boxShadow: '0 24px 64px -16px rgba(0,0,0,0.7)',
   },
-  labelStyle: { color: '#7283A6', textTransform: 'uppercase' as const, letterSpacing: '0.08em', fontSize: 10 },
-  itemStyle: { color: '#F2F5FB' },
+  labelStyle: { color: '#92929D', fontSize: 11 },
+  itemStyle: { color: '#F5F5F7' },
 }
 
 const SERVICE_COLORS = ['#5EEAD4', '#34D399', '#F5A524', '#60A5FA', '#F87171']
@@ -225,7 +225,7 @@ export function AnalyticsClient({ jobs, customers, cleaners }: AnalyticsData) {
       {/* ── Header + period selector ─────────────────────────────────────── */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <span className="grid-label">Reports</span>
+          <span className="text-[12px] text-ink-500">Reports</span>
           <h2 className="mt-1.5 text-[20px] font-semibold text-ink-900 tracking-[-0.015em]">
             Performance, {PERIOD_LABEL[period]}
           </h2>
@@ -284,11 +284,11 @@ export function AnalyticsClient({ jobs, customers, cleaners }: AnalyticsData) {
       </motion.div>
 
       {/* ── Revenue trend chart ────────────────────────────────────────────── */}
-      <div className="card-tile">
+      <div className="card">
         <div className="flex items-center justify-between border-b border-line px-5 py-4 sm:px-6">
           <div>
-            <h3 className="text-[14px] font-semibold text-ink-900">Revenue trend</h3>
-            <p className="mt-0.5 text-[11.5px] text-ink-400 font-mono">
+            <h2 className="text-[14.5px] font-semibold text-ink-900 tracking-[-0.01em]">Revenue trend</h2>
+            <p className="mt-0.5 text-[12px] text-ink-500">
               {PERIOD_LABEL[period]} · {timeSeries.length} buckets
             </p>
           </div>
@@ -305,16 +305,16 @@ export function AnalyticsClient({ jobs, customers, cleaners }: AnalyticsData) {
                   <stop offset="100%" stopColor="#5EEAD4" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="2 4" stroke="#1A2B47" vertical={false} />
+              <CartesianGrid strokeDasharray="2 4" stroke="#232328" vertical={false} />
               <XAxis
                 dataKey="label"
-                tick={{ fill: '#7283A6', fontSize: 10.5, fontFamily: 'var(--font-mono)' }}
+                tick={{ fill: '#92929D', fontSize: 11, fontFamily: 'var(--font-sans)' }}
                 axisLine={false}
                 tickLine={false}
                 interval="preserveStartEnd"
               />
               <YAxis
-                tick={{ fill: '#7283A6', fontSize: 10.5, fontFamily: 'var(--font-mono)' }}
+                tick={{ fill: '#92929D', fontSize: 11, fontFamily: 'var(--font-sans)' }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v: number) => `$${(v / 1000).toFixed(1)}k`}
@@ -330,7 +330,7 @@ export function AnalyticsClient({ jobs, customers, cleaners }: AnalyticsData) {
                 fill="url(#mint-grad)"
                 strokeWidth={2}
                 dot={false}
-                activeDot={{ r: 4, fill: '#5EEAD4', stroke: '#0F1B2D', strokeWidth: 2 }}
+                activeDot={{ r: 4, fill: '#5EEAD4', stroke: '#131316', strokeWidth: 2 }}
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -340,10 +340,10 @@ export function AnalyticsClient({ jobs, customers, cleaners }: AnalyticsData) {
       {/* ── Two-up: Top customers + Service mix ────────────────────────────── */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {/* Top customers */}
-        <div className="card-tile">
+        <div className="card">
           <div className="flex items-center justify-between border-b border-line px-5 py-4 sm:px-6">
-            <h3 className="text-[14px] font-semibold text-ink-900">Top customers</h3>
-            <span className="grid-label">Top 5</span>
+            <h2 className="text-[14.5px] font-semibold text-ink-900 tracking-[-0.01em]">Top customers</h2>
+            <span className="text-[12px] text-ink-500">Top 5</span>
           </div>
           <div className="space-y-4 px-5 py-5 sm:px-6">
             {topCustomers.length === 0 && (
@@ -376,10 +376,12 @@ export function AnalyticsClient({ jobs, customers, cleaners }: AnalyticsData) {
         </div>
 
         {/* Service mix */}
-        <div className="card-tile flex flex-col">
+        <div className="card flex flex-col">
           <div className="flex items-center justify-between border-b border-line px-5 py-4 sm:px-6">
-            <h3 className="text-[14px] font-semibold text-ink-900">Service mix</h3>
-            <span className="grid-label">{periodJobs.length} jobs</span>
+            <h2 className="text-[14.5px] font-semibold text-ink-900 tracking-[-0.01em]">Service mix</h2>
+            <span className="text-[12px] text-ink-500">
+              <span className="num">{periodJobs.length}</span> jobs
+            </span>
           </div>
           <div className="space-y-3.5 px-5 py-5 sm:px-6">
             {serviceMix.length === 0 && (
@@ -415,10 +417,10 @@ export function AnalyticsClient({ jobs, customers, cleaners }: AnalyticsData) {
       {/* ── Service area + Team performance ────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         {/* Service area */}
-        <div className="card-tile lg:col-span-1">
+        <div className="card lg:col-span-1">
           <div className="flex items-center justify-between border-b border-line px-5 py-4 sm:px-6">
-            <h3 className="text-[14px] font-semibold text-ink-900">Service area</h3>
-            <span className="grid-label">Long Beach 15mi</span>
+            <h2 className="text-[14.5px] font-semibold text-ink-900 tracking-[-0.01em]">Service area</h2>
+            <span className="text-[12px] text-ink-500">Long Beach 15mi</span>
           </div>
           <div className="space-y-3.5 px-5 py-5 sm:px-6">
             {cityBreakdown.length === 0 && (
@@ -444,19 +446,21 @@ export function AnalyticsClient({ jobs, customers, cleaners }: AnalyticsData) {
         </div>
 
         {/* Team performance */}
-        <div className="card-tile lg:col-span-2 overflow-hidden">
+        <div className="card lg:col-span-2 overflow-hidden">
           <div className="flex items-center justify-between border-b border-line px-5 py-4 sm:px-6">
-            <h3 className="text-[14px] font-semibold text-ink-900">Team performance</h3>
-            <span className="grid-label">{teamData.length} teams</span>
+            <h2 className="text-[14.5px] font-semibold text-ink-900 tracking-[-0.01em]">Team performance</h2>
+            <span className="text-[12px] text-ink-500">
+              <span className="num">{teamData.length}</span> teams
+            </span>
           </div>
           <div>
             {/* Header row */}
             <div className="grid grid-cols-[1.5fr_60px_120px_100px_60px] gap-3 border-b border-line px-5 py-2.5 sm:px-6">
-              <div className="grid-label">Team</div>
-              <div className="grid-label text-right">Jobs</div>
-              <div className="grid-label text-right">Revenue</div>
-              <div className="grid-label text-right">Completion</div>
-              <div className="grid-label text-right">Rating</div>
+              <div className="text-[12px] font-medium text-ink-500">Team</div>
+              <div className="text-[12px] font-medium text-ink-500 text-right">Jobs</div>
+              <div className="text-[12px] font-medium text-ink-500 text-right">Revenue</div>
+              <div className="text-[12px] font-medium text-ink-500 text-right">Completion</div>
+              <div className="text-[12px] font-medium text-ink-500 text-right">Rating</div>
             </div>
             {teamData.length === 0 && (
               <p className="px-6 py-6 text-center text-[12.5px] italic text-ink-400">
@@ -473,7 +477,7 @@ export function AnalyticsClient({ jobs, customers, cleaners }: AnalyticsData) {
               >
                 <div className="min-w-0">
                   <p className="text-[13px] font-medium text-ink-900">Team {team.team}</p>
-                  <p className="mt-0.5 text-[11px] text-ink-400 font-mono truncate">{team.cleaners || '—'}</p>
+                  <p className="mt-0.5 text-[11.5px] text-ink-400 truncate">{team.cleaners || '—'}</p>
                 </div>
                 <div className="num text-right text-[13px] text-ink-700">{team.jobs}</div>
                 <div className="num text-right text-[13px] font-semibold text-ink-900">
@@ -499,20 +503,20 @@ export function AnalyticsClient({ jobs, customers, cleaners }: AnalyticsData) {
       </div>
 
       {/* ── AI summary ─────────────────────────────────────────────────────── */}
-      <div className="card-tile">
+      <div className="card">
         <div className="flex items-center justify-between border-b border-line px-5 py-4 sm:px-6">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-[6px] bg-mint-500/10">
+            <div className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-mint-500/12">
               <Sparkles className="h-[14px] w-[14px] text-mint-500" strokeWidth={2.25} />
             </div>
-            <h3 className="text-[14px] font-semibold text-ink-900">AI Summary</h3>
+            <h2 className="text-[14.5px] font-semibold text-ink-900 tracking-[-0.01em]">AI Summary</h2>
             <Badge variant="default">{PERIOD_LABEL[period]}</Badge>
           </div>
         </div>
         <div className="grid grid-cols-1 gap-px bg-line md:grid-cols-2">
           {generateInsights(period, totalRevenue, completedCount, completionRate, topCustomers).map((insight, i) => (
             <div key={i} className="bg-card px-5 py-4 sm:px-6">
-              <span className="grid-label !text-mint-500/80">{insight.title}</span>
+              <span className="text-[12px] font-medium text-mint-500">{insight.title}</span>
               <p className="mt-2 text-[13px] leading-[1.55] text-ink-700">{insight.text}</p>
             </div>
           ))}
@@ -529,7 +533,7 @@ function Trend({ value }: { value: number }) {
   return (
     <span
       className={cn(
-        'flex items-center gap-1 font-mono text-[11px] font-medium',
+        'num flex items-center gap-1 text-[11px] font-medium',
         up ? 'text-emerald-500' : 'text-rose-500',
       )}
     >

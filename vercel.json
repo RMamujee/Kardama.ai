@@ -7,6 +7,10 @@
     {
       "path": "/api/campaigns/scan",
       "schedule": "0 17 * * *"
+    },
+    {
+      "path": "/api/leads/scan",
+      "schedule": "0 */4 * * *"
     }
   ]
 }

@@ -1,10 +1,10 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   MessageCircle, ThumbsUp, Clock, MapPin, CheckCircle2,
   XCircle, UserPlus, RotateCcw, Send, ChevronDown, Filter,
-  Globe2, Camera, AlertTriangle, Eye,
+  Globe2, Camera, AlertTriangle, Eye, RefreshCw, Plus,
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -143,6 +143,198 @@ function RespondModal({ lead, onClose }: RespondModalProps) {
                 <><span className="animate-spin">⟳</span> Sending...</>
               ) : (
                 <><Send className="h-4 w-4" /> Send Response</>
+              )}
+            </Button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
+// ─── Add Lead Modal ──────────────────────────────────────────────────────────
+
+const SOUTH_BAY_CITIES = [
+  'Long Beach', 'Torrance', 'El Segundo', 'Manhattan Beach', 'Redondo Beach',
+  'Hawthorne', 'Lakewood', 'Carson', 'Signal Hill', 'Compton', 'Gardena',
+  'Inglewood', 'Lawndale', 'Hermosa Beach', 'Bellflower', 'West Carson',
+]
+
+function autoDetectUrgency(text: string): 'high' | 'medium' | 'low' {
+  const lower = text.toLowerCase()
+  if (['asap', 'today', 'tonight', 'urgently', 'immediately', 'last minute', 'this week'].some(kw => lower.includes(kw))) return 'high'
+  if (['next week', 'soon', 'this month'].some(kw => lower.includes(kw))) return 'medium'
+  return 'low'
+}
+
+function autoDetectLocation(text: string): string {
+  const lower = text.toLowerCase()
+  const found = SOUTH_BAY_CITIES.find(c => lower.includes(c.toLowerCase()))
+  return found ? `${found}, CA` : ''
+}
+
+const PLATFORMS: { value: LeadPlatform; label: string }[] = [
+  { value: 'facebook-group', label: 'FB Group' },
+  { value: 'facebook-page',  label: 'FB Page' },
+  { value: 'instagram',      label: 'Instagram' },
+  { value: 'nextdoor',       label: 'Nextdoor' },
+]
+
+function AddLeadModal({ onClose }: { onClose: () => void }) {
+  const { addLead } = useSocialStore()
+  const [platform, setPlatform] = useState<LeadPlatform>('facebook-group')
+  const [author, setAuthor] = useState('')
+  const [groupOrPage, setGroupOrPage] = useState('')
+  const [content, setContent] = useState('')
+  const [location, setLocation] = useState('')
+  const [urgency, setUrgency] = useState<'high' | 'medium' | 'low'>('low')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  function handleContentChange(val: string) {
+    setContent(val)
+    setUrgency(autoDetectUrgency(val))
+    const detectedLocation = autoDetectLocation(val)
+    if (detectedLocation && !location) setLocation(detectedLocation)
+  }
+
+  async function handleSave() {
+    if (!content.trim() || !author.trim()) return
+    setSaving(true)
+    setError(null)
+    try {
+      await addLead({ platform, author: author.trim(), groupOrPage: groupOrPage.trim(), content: content.trim(), location: location.trim(), urgency })
+      setSaved(true)
+      setTimeout(onClose, 1000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save')
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="w-full max-w-lg rounded-2xl bg-card border border-ink-200 shadow-2xl overflow-hidden"
+      >
+        <div className="flex items-center justify-between px-6 py-4 border-b border-ink-200">
+          <div>
+            <p className="text-[13px] font-semibold text-ink-900">Add Lead Manually</p>
+            <p className="text-[12px] text-ink-500">Paste a post you found — saved as a real lead in the database</p>
+          </div>
+          <button onClick={onClose} className="text-ink-500 hover:text-ink-700 transition-colors">
+            <XCircle className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          {/* Platform */}
+          <div>
+            <p className="text-[12px] font-medium text-ink-400 mb-1.5">Platform</p>
+            <div className="flex gap-1.5 flex-wrap">
+              {PLATFORMS.map(p => (
+                <button
+                  key={p.value}
+                  onClick={() => setPlatform(p.value)}
+                  className={cn(
+                    'rounded-lg border px-3 py-1.5 text-[12px] font-medium transition-colors',
+                    platform === p.value
+                      ? 'border-violet-500/60 bg-violet-500/15 text-violet-400'
+                      : 'border-ink-200 text-ink-500 hover:border-ink-100 hover:text-ink-700'
+                  )}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Author + Group */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-[12px] font-medium text-ink-400 mb-1.5">Author name *</p>
+              <Input
+                value={author}
+                onChange={e => setAuthor(e.target.value)}
+                placeholder="Ashley M."
+                className="text-[12px]"
+              />
+            </div>
+            <div>
+              <p className="text-[12px] font-medium text-ink-400 mb-1.5">Group / Page</p>
+              <Input
+                value={groupOrPage}
+                onChange={e => setGroupOrPage(e.target.value)}
+                placeholder="Long Beach Moms"
+                className="text-[12px]"
+              />
+            </div>
+          </div>
+
+          {/* Post content */}
+          <div>
+            <p className="text-[12px] font-medium text-ink-400 mb-1.5">Post content *</p>
+            <textarea
+              value={content}
+              onChange={e => handleContentChange(e.target.value)}
+              rows={5}
+              placeholder="Paste the Facebook post or message here..."
+              className="w-full rounded-xl bg-page border border-ink-200 px-3 py-2.5 text-[12px] text-ink-700 placeholder:text-ink-400 resize-none focus:outline-none focus:border-violet-500/50 transition-colors"
+            />
+          </div>
+
+          {/* Location + Urgency */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-[12px] font-medium text-ink-400 mb-1.5">Location</p>
+              <Input
+                value={location}
+                onChange={e => setLocation(e.target.value)}
+                placeholder="Long Beach, CA"
+                className="text-[12px]"
+              />
+            </div>
+            <div>
+              <p className="text-[12px] font-medium text-ink-400 mb-1.5">Urgency (auto-detected)</p>
+              <div className="flex gap-1.5">
+                {(['high', 'medium', 'low'] as const).map(u => (
+                  <button
+                    key={u}
+                    onClick={() => setUrgency(u)}
+                    className={cn(
+                      'flex-1 rounded-lg border py-1.5 text-[11px] font-medium capitalize transition-colors',
+                      urgency === u && u === 'high'   && 'border-rose-500/60 bg-rose-500/15 text-rose-500',
+                      urgency === u && u === 'medium' && 'border-amber-500/60 bg-amber-500/15 text-amber-500',
+                      urgency === u && u === 'low'    && 'border-ink-300 bg-ink-500/10 text-ink-500',
+                      urgency !== u && 'border-ink-200 text-ink-400 hover:border-ink-100'
+                    )}
+                  >
+                    {u}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {error && <p className="text-[12px] text-rose-500">{error}</p>}
+
+          <div className="flex gap-2 pt-1">
+            <Button variant="outline" className="flex-1" onClick={onClose} disabled={saving}>Cancel</Button>
+            <Button
+              className="flex-1"
+              onClick={handleSave}
+              disabled={saving || saved || !content.trim() || !author.trim()}
+            >
+              {saved ? (
+                <><CheckCircle2 className="h-4 w-4 text-emerald-500" /> Saved!</>
+              ) : saving ? (
+                <><span className="animate-spin">⟳</span> Saving...</>
+              ) : (
+                <><Plus className="h-4 w-4" /> Save Lead</>
               )}
             </Button>
           </div>
@@ -321,11 +513,15 @@ function LeadCard({ lead, onRespond }: LeadCardProps) {
 }
 
 export function LeadMonitor() {
-  const { leads } = useSocialStore()
+  const { leads, fetchLeads, leadsLoading } = useSocialStore()
   const [statusFilter, setStatusFilter] = useState<LeadStatus | 'all'>('all')
   const [platformFilter, setPlatformFilter] = useState<LeadPlatform | 'all'>('all')
   const [search, setSearch] = useState('')
   const [respondingTo, setRespondingTo] = useState<SocialLead | null>(null)
+  const [addingLead, setAddingLead] = useState(false)
+
+  // Load real leads from Supabase on first render
+  useEffect(() => { fetchLeads() }, [fetchLeads])
 
   const filtered = leads.filter(l => {
     if (statusFilter !== 'all' && l.status !== statusFilter) return false
@@ -361,12 +557,30 @@ export function LeadMonitor() {
               </div>
               <CardTitle>Social Lead Monitor</CardTitle>
             </div>
-            {urgentCount > 0 && (
-              <span className="flex items-center gap-1.5 rounded-full bg-rose-500/15 px-2.5 py-1 text-[12px] font-medium text-rose-500">
-                <AlertTriangle className="h-3 w-3" />
-                {urgentCount} urgent
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              {urgentCount > 0 && (
+                <span className="flex items-center gap-1.5 rounded-full bg-rose-500/15 px-2.5 py-1 text-[12px] font-medium text-rose-500">
+                  <AlertTriangle className="h-3 w-3" />
+                  {urgentCount} urgent
+                </span>
+              )}
+              <button
+                onClick={() => fetchLeads()}
+                disabled={leadsLoading}
+                className="flex items-center gap-1.5 rounded-lg border border-ink-200 px-2.5 py-1 text-[12px] text-ink-500 hover:border-ink-100 hover:text-ink-700 transition-colors disabled:opacity-40"
+                title="Refresh leads"
+              >
+                <RefreshCw className={`h-3 w-3 ${leadsLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
+              <button
+                onClick={() => setAddingLead(true)}
+                className="flex items-center gap-1.5 rounded-lg border border-violet-500/40 bg-violet-500/10 px-2.5 py-1 text-[12px] font-medium text-violet-400 hover:bg-violet-500/20 transition-colors"
+              >
+                <Plus className="h-3 w-3" />
+                Add Lead
+              </button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -455,6 +669,13 @@ export function LeadMonitor() {
             lead={respondingTo}
             onClose={() => setRespondingTo(null)}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Add lead modal */}
+      <AnimatePresence>
+        {addingLead && (
+          <AddLeadModal onClose={() => setAddingLead(false)} />
         )}
       </AnimatePresence>
     </div>

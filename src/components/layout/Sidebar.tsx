@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, CalendarDays, Map, DollarSign, Megaphone,
   Users, UserCheck, BarChart3, MessageSquare, Send, Bell,
-  LogOut, type LucideIcon,
+  MessagesSquare, LogOut, type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -25,6 +25,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: 'Customers', href: '/customers', icon: Users },
       { label: 'Team',      href: '/team',      icon: UserCheck },
+      { label: 'Chats',     href: '/chats',     icon: MessagesSquare },
       { label: 'Payments',  href: '/payments',  icon: DollarSign },
     ],
   },

@@ -7,6 +7,8 @@ const TILE_HOSTS = [
   'https://server.arcgisonline.com',
   'https://*.tile.openstreetmap.org',
   'https://unpkg.com',
+  // TomTom traffic overlay tiles
+  'https://api.tomtom.com',
 ]
 
 // Routing/geocoding APIs the live map and AI features call from the browser.

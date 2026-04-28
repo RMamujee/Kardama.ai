@@ -19,7 +19,7 @@ function rateLimited(ip: string): boolean {
 
 // ───────────────────────── route classification ─────────────────────────
 const PUBLIC_PATHS = ['/login', '/auth/callback']
-const PUBLIC_PREFIXES = ['/book', '/api/bookings', '/api/sms', '/api/webhooks', '/api/auth']
+const PUBLIC_PREFIXES = ['/book', '/request', '/api/bookings', '/api/intake', '/api/sms', '/api/webhooks', '/api/auth']
 const OWNER_PREFIXES = [
   '/dashboard', '/customers', '/scheduling', '/payments', '/team',
   '/campaigns', '/marketing', '/messages', '/inbox', '/analytics', '/map',
@@ -49,6 +49,7 @@ export async function proxy(req: NextRequest) {
     pathname.startsWith('/api/sms') ||
     pathname.startsWith('/api/campaigns') ||
     pathname.startsWith('/api/marketing') ||
+    pathname.startsWith('/api/intake') ||
     pathname === '/api/bookings/token' ||
     pathname.startsWith('/api/bookings/token/')
 

@@ -1,10 +1,8 @@
 import { create } from 'zustand'
-import { Job, SchedulingRequest, RankedTeam, SchedulingResult } from '@/types'
-import { JOBS } from '@/lib/mock-data'
+import { SchedulingRequest, RankedTeam, SchedulingResult } from '@/types'
 import { computeSchedulingRecommendations } from '@/lib/scheduling-engine'
 
 interface SchedulingStore {
-  jobs: Job[]
   weekOffset: number
   bookingOpen: boolean
   bookingStep: number
@@ -21,11 +19,9 @@ interface SchedulingStore {
   setPendingRequest: (r: SchedulingRequest) => void
   computeRecommendations: (r: SchedulingRequest) => SchedulingResult
   selectTeam: (ids: [string, string]) => void
-  addJob: (j: Omit<Job, 'id' | 'createdAt'>) => void
 }
 
-export const useSchedulingStore = create<SchedulingStore>((set, get) => ({
-  jobs: JOBS,
+export const useSchedulingStore = create<SchedulingStore>((set) => ({
   weekOffset: 0,
   bookingOpen: false,
   bookingStep: 0,
@@ -46,8 +42,4 @@ export const useSchedulingStore = create<SchedulingStore>((set, get) => ({
     return result
   },
   selectTeam: (ids) => set({ selectedTeam: ids }),
-  addJob: (j) => {
-    const job: Job = { ...j, id: `j-${Date.now()}`, createdAt: new Date().toISOString().split('T')[0] }
-    set((s) => ({ jobs: [...s.jobs, job] }))
-  },
 }))

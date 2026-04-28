@@ -100,7 +100,7 @@ export const getCleaners = cache(async (): Promise<Cleaner[]> => {
   if (!isSupabaseConfigured()) return mock.CLEANERS
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.from('cleaners').select('*').order('name')
-  if (error || !data) return mock.CLEANERS
+  if (error || !data || data.length === 0) return mock.CLEANERS
   return (data as CleanerRow[]).map(mapCleaner)
 })
 
@@ -116,7 +116,7 @@ export const getJobs = cache(async (): Promise<Job[]> => {
   if (!isSupabaseConfigured()) return mock.JOBS
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.from('jobs').select('*').order('scheduled_date').order('scheduled_time')
-  if (error || !data) return mock.JOBS
+  if (error || !data || data.length === 0) return mock.JOBS
   return (data as JobRow[]).map(mapJob)
 })
 

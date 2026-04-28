@@ -2,6 +2,7 @@ import { Phone, MapPin, Clock } from 'lucide-react'
 import { requireCleaner } from '@/lib/supabase/dal'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { updateMyStatus, updateJobStatus } from './actions'
+import { LocationTracker } from './LocationTracker'
 
 const STATUS_LABEL: Record<string, string> = {
   scheduled: 'Scheduled',
@@ -47,6 +48,8 @@ export default async function CleanerHomePage() {
 
   return (
     <div className="mx-auto flex max-w-md flex-col gap-4">
+      <LocationTracker />
+
       <section
         className="rounded-2xl border p-4"
         style={{ background: 'var(--bg-card)', borderColor: 'var(--ink-100)' }}

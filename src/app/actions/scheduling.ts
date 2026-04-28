@@ -139,7 +139,7 @@ export async function acceptBookingRequest(requestId: string): Promise<void> {
   // Confirmation SMS to the customer — non-fatal, never blocks scheduling
   if (req.customer_phone) {
     const businessName = process.env.NEXT_PUBLIC_BUSINESS_NAME || 'Your cleaner'
-    const when = formatWhen(req.preferred_date, req.preferred_time)
+    const when = formatWhen(scheduledDate, scheduledTime)
     const body = `${businessName}: You're confirmed for ${when} at ${req.address}. Reply to this text with any questions.`
     sendSms(req.customer_phone, body).catch(e => console.error('Confirmation SMS failed:', e))
   }

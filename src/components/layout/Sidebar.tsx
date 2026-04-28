@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, CalendarDays, Map, DollarSign, Megaphone,
-  Users, UserCheck, BarChart3, MessageSquare, Send, Bell, Sparkles, LogOut,
-  type LucideIcon,
+  Users, UserCheck, BarChart3, MessageSquare, Send, Bell,
+  LogOut, type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -13,7 +13,7 @@ type NavSection = { label: string; items: NavItem[] }
 
 const NAV_SECTIONS: NavSection[] = [
   {
-    label: 'Field Service',
+    label: 'Operations',
     items: [
       { label: 'Dashboard',  href: '/dashboard',  icon: LayoutDashboard },
       { label: 'Scheduling', href: '/scheduling', icon: CalendarDays },
@@ -21,7 +21,7 @@ const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    label: 'CRM',
+    label: 'Customers',
     items: [
       { label: 'Customers', href: '/customers', icon: Users },
       { label: 'Team',      href: '/team',      icon: UserCheck },
@@ -40,32 +40,34 @@ const NAV_SECTIONS: NavSection[] = [
   },
 ]
 
+/**
+ * Sidebar — operations-console treatment.
+ * 232px wide. Section headers in mono uppercase. Active item gets a
+ * subtle mint fill and a 2px left signal bar. No fancy shadows.
+ */
 export function Sidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname()
 
   return (
-    <div className="flex h-screen w-[244px] flex-col bg-rail border-r border-ink-200">
-      {/* Logo */}
-      <div className="flex items-center gap-3 px-5 pt-5 pb-4">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-violet-700 shadow-[0_4px_12px_rgba(111,105,229,0.35)]">
-          <Sparkles className="h-[15px] w-[15px] text-white" />
-        </div>
+    <div className="flex h-screen w-[232px] flex-col bg-rail border-r border-line">
+      {/* Brand mark — geometric, not a sparkle */}
+      <div className="flex items-center gap-3 px-5 pt-6 pb-5">
+        <BrandMark />
         <div className="leading-tight">
-          <div className="text-[15px] font-bold text-ink-900 tracking-[-0.01em]">Kardama</div>
-          <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-violet-400">
-            AI Field Service
-          </div>
+          <div className="text-[15px] font-semibold text-ink-900 tracking-[-0.01em]">Kardama</div>
+          <div className="grid-label mt-0.5 text-mint-500/80">Field Console</div>
         </div>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-3 pb-3">
+      {/* Hairline separator under the brand */}
+      <div className="mx-5 border-b border-line" />
+
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4">
         {NAV_SECTIONS.map((section) => (
-          <div key={section.label} className="mb-5">
-            <p className="px-3 pt-2 pb-2 text-[10px] font-bold uppercase tracking-[0.09em] text-ink-400">
-              {section.label}
-            </p>
-            <ul className="flex flex-col gap-0.5">
+          <div key={section.label} className="mb-5 last:mb-0">
+            <p className="grid-label px-3 pt-1 pb-2.5">{section.label}</p>
+            <ul className="flex flex-col gap-px">
               {section.items.map(({ label, href, icon: Icon, badge }) => {
                 const active = pathname === href || pathname.startsWith(href + '/')
                 return (
@@ -75,22 +77,37 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
                       onClick={onClose}
                       aria-current={active ? 'page' : undefined}
                       className={cn(
-                        'group flex items-center gap-3 rounded-lg px-3 py-[9px] text-[13px] font-medium transition-colors duration-100',
+                        'group relative flex items-center gap-3 rounded-[6px]',
+                        'px-3 py-[7px] text-[13px] font-medium',
+                        'transition-[background-color,color] duration-100',
                         active
-                          ? 'bg-violet-500/10 text-violet-400 font-semibold'
-                          : 'text-ink-500 hover:bg-hover hover:text-ink-700'
+                          ? 'bg-mint-500/[0.08] text-mint-500'
+                          : 'text-ink-500 hover:bg-soft hover:text-ink-700',
                       )}
                     >
+                      {/* Left signal bar — only present when active */}
+                      {active && (
+                        <span
+                          aria-hidden
+                          className="absolute left-0 top-1/2 h-4 w-[2px] -translate-y-1/2 -translate-x-px rounded-r-full bg-mint-500"
+                        />
+                      )}
                       <Icon
                         className={cn(
-                          'h-[17px] w-[17px] flex-shrink-0 transition-colors',
-                          active ? 'text-violet-400' : 'text-ink-400 group-hover:text-ink-700'
+                          'h-[16px] w-[16px] flex-shrink-0',
+                          active ? 'text-mint-500' : 'text-ink-400 group-hover:text-ink-600',
                         )}
-                        strokeWidth={1.8}
+                        strokeWidth={1.75}
                       />
                       <span className="flex-1 truncate">{label}</span>
                       {badge != null && (
-                        <span className="min-w-[18px] rounded-full bg-violet-500 px-1.5 py-0.5 text-center text-[10px] font-bold text-white">
+                        <span
+                          className={cn(
+                            'min-w-[18px] rounded-full px-1.5 py-px text-center font-mono',
+                            'text-[10px] font-semibold leading-none',
+                            active ? 'bg-mint-500 text-page' : 'bg-soft text-ink-500 border border-line',
+                          )}
+                        >
                           {badge}
                         </span>
                       )}
@@ -103,22 +120,42 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
         ))}
       </nav>
 
-      {/* User */}
-      <div className="border-t border-ink-200 p-3">
+      {/* User block */}
+      <div className="border-t border-line p-3">
         <button
           type="button"
-          className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-hover"
+          className="group flex w-full items-center gap-3 rounded-[6px] px-3 py-2.5 text-left transition-colors hover:bg-soft"
         >
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-500/70 text-[12px] font-bold text-page">
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[6px] bg-mint-500 font-mono text-[11.5px] font-semibold text-page">
             DC
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-[13px] font-semibold text-ink-700">David Chen</p>
             <p className="truncate text-[11px] text-ink-400 mt-0.5">Owner · Long Beach</p>
           </div>
-          <LogOut className="h-[17px] w-[17px] flex-shrink-0 text-ink-300 transition-colors group-hover:text-ink-500" />
+          <LogOut className="h-[15px] w-[15px] flex-shrink-0 text-ink-400 transition-colors group-hover:text-ink-700" strokeWidth={1.75} />
         </button>
       </div>
+    </div>
+  )
+}
+
+/**
+ * BrandMark — a geometric tile, not a pre-fab sparkle.
+ * 32x32, mint stroke arcs that suggest a "K" + the sweeping motion of cleaning.
+ */
+function BrandMark() {
+  return (
+    <div className="relative flex h-9 w-9 items-center justify-center rounded-[8px] bg-mint-500">
+      <svg viewBox="0 0 24 24" className="h-[20px] w-[20px]" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M6 4 L6 20 M6 12 L18 4 M9 12 L18 20"
+          stroke="#08101F"
+          strokeWidth="2.5"
+          strokeLinecap="square"
+          strokeLinejoin="miter"
+        />
+      </svg>
     </div>
   )
 }

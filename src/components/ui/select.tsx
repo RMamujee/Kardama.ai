@@ -10,17 +10,18 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(({ classN
     <select
       ref={ref}
       className={cn(
-        'h-[42px] w-full appearance-none rounded-[10px] border border-[#1e2a3a] bg-[#0d1321] pl-3.5 pr-9 text-[13.5px] text-slate-100 shadow-sm',
-        'focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50',
+        'h-9 w-full appearance-none rounded-[6px] bg-soft text-ink-900',
+        'border border-line pl-3 pr-9 text-[13px]',
+        'focus:outline-none focus:border-mint-500',
         'disabled:cursor-not-allowed disabled:opacity-40',
-        '[&>option]:bg-[#111827] [&>option]:text-slate-100',
-        className
+        '[&>option]:bg-card [&>option]:text-ink-900',
+        className,
       )}
       {...props}
     >
       {children}
     </select>
-    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
+    <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-ink-400" />
   </div>
 ))
 Select.displayName = 'Select'

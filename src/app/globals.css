@@ -1,57 +1,100 @@
 @import "tailwindcss";
 
-/* ─────────────────────────────────────────────────────────────
-   Design system — dark theme
-   Exposed as Tailwind v4 utilities via @theme.
-   Use: bg-page, bg-card, text-ink-900, border-ink-200,
-        text-violet-400, bg-violet-500/20, etc.
-   ───────────────────────────────────────────────────────────── */
+/* ═════════════════════════════════════════════════════════════════════════
+   KARDAMA — OPERATIONS CONSOLE
+   A dark canvas with a single mint signal color. Designed to read at a
+   glance: monospace numerals, sharp dividers, dense data with intentional
+   negative space where it matters. No gradients, no glow, no decoration
+   that doesn't carry information.
+   ═════════════════════════════════════════════════════════════════════════ */
+
 @theme {
-  --color-page:   #0A0E1A;
-  --color-rail:   #0D1322;
-  --color-card:   #111726;
-  --color-soft:   #161D2E;
-  --color-hover:  #1A2236;
-  --color-elev:   #1B2336;
+  /* ── Surfaces ─────────────────────────────────────────────────────────
+     Cooler, more saturated than before. The canvas is closer to true
+     navy than slate, which makes the mint accent sing. */
+  --color-page:    #08101F;
+  --color-rail:    #0B1626;
+  --color-card:    #0F1B2D;
+  --color-soft:    #14223A;
+  --color-hover:   #1B2D49;
+  --color-elev:    #1F3354;
+  --color-line:    #1A2B47;   /* subtle dividers */
+  --color-line-strong: #25395A;
 
-  --color-ink-50:  #1A2034;
-  --color-ink-100: #232B40;
-  --color-ink-200: #3A4258;
-  --color-ink-300: #535B70;
-  --color-ink-400: #6E778C;
-  --color-ink-500: #9099AE;
-  --color-ink-700: #D7DCE8;
-  --color-ink-900: #F2F5FA;
+  /* ── Ink (text) ──────────────────────────────────────────────────────
+     Cooler tones that match the navy canvas. */
+  --color-ink-50:  #1A2540;
+  --color-ink-100: #25324F;
+  --color-ink-200: #3A4A6C;
+  --color-ink-300: #56678C;
+  --color-ink-400: #7283A6;
+  --color-ink-500: #93A3C2;
+  --color-ink-600: #B6C2D9;
+  --color-ink-700: #D6DEEC;
+  --color-ink-900: #F2F5FB;
 
-  --color-violet-50:  #1D1B3A;
-  --color-violet-100: #2B2A5C;
-  --color-violet-200: #3F3D8A;
-  --color-violet-400: #7A75E0;
-  --color-violet-500: #8B85F2;
-  --color-violet-600: #6F69E5;
-  --color-violet-700: #524CCB;
+  /* ── Mint (the brand) ────────────────────────────────────────────────
+     Primary accent. Used for active state, primary actions, focus rings,
+     and the brand mark. Sparingly. The whole UI should feel like the
+     mint is significant — not background noise. */
+  --color-mint-50:  #062A26;
+  --color-mint-100: #0A3D38;
+  --color-mint-200: #115048;
+  --color-mint-300: #1A786C;
+  --color-mint-400: #2BB7A4;
+  --color-mint-500: #5EEAD4;
+  --color-mint-600: #2DD4BF;
+  --color-mint-700: #14B8A6;
 
-  --color-emerald-500: #34D399;
-  --color-amber-500:   #FBBF24;
-  --color-rose-500:    #F87171;
-  --color-purple-500:  #A78BFA;
-  --color-teal-500:    #2DD4BF;
-  --color-pink-500:    #F472B6;
+  /* ── Status (used as actual signals, not decoration) ─────────────────
+     If the user sees rose, something is wrong. If amber, something
+     needs attention. If emerald, something completed cleanly. */
+  --color-emerald-500: #10D67E;
+  --color-amber-500:   #F5A524;
+  --color-rose-500:    #F26464;
 
-  --radius-card: 14px;
-  --radius-tile: 12px;
+  /* ── Legacy compat — pages still using these shouldn't break. ────────
+     Map the old violet/blue tokens to mint so nothing reads purple
+     mid-migration. */
+  --color-violet-50:  var(--color-mint-50);
+  --color-violet-100: var(--color-mint-100);
+  --color-violet-200: var(--color-mint-200);
+  --color-violet-400: var(--color-mint-400);
+  --color-violet-500: var(--color-mint-500);
+  --color-violet-600: var(--color-mint-600);
+  --color-violet-700: var(--color-mint-700);
+  --color-purple-500: var(--color-mint-500);
+  --color-teal-500:   var(--color-mint-500);
+  --color-pink-500:   var(--color-amber-500);
 
-  --shadow-tile:    0 1px 0 rgba(255,255,255,0.02) inset, 0 1px 2px rgba(0,0,0,0.4);
-  --shadow-pop:     0 1px 0 rgba(255,255,255,0.04) inset, 0 12px 32px rgba(0,0,0,0.55);
-  --shadow-overlay: 0 24px 64px rgba(0,0,0,0.7);
+  /* ── Geometry ────────────────────────────────────────────────────────
+     Sharper than the previous design. Buttons and inputs sit at 6px,
+     cards at 12px. Pills (badges, sliders) are full radius. */
+  --radius-card: 12px;
+  --radius-tile: 8px;
+  --radius-input: 6px;
+  --radius-button: 6px;
 
-  --font-sans: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* ── Shadows ─────────────────────────────────────────────────────────
+     Used only for floating layers (popovers, modals). Cards get a 1px
+     border, never a shadow. */
+  --shadow-pop:     0 24px 64px -16px rgba(0,0,0,0.7), 0 0 0 1px var(--color-line-strong);
+  --shadow-overlay: 0 32px 80px -16px rgba(0,0,0,0.85);
+  --shadow-mint:    0 0 0 4px rgba(94,234,212,0.18);
+
+  /* ── Type ────────────────────────────────────────────────────────────
+     Two families: Geist for body/UI, Geist Mono for ALL numerals,
+     kbd-style chrome, and small-caps section labels.
+     These map to Tailwind's font-sans / font-mono utilities. */
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: var(--font-geist-mono), 'JetBrains Mono', 'SF Mono', 'Fira Code', Consolas, monospace;
 }
 
-/* ─── Legacy aliases ─────────────────────────────────────────
-   Older components still reference var(--bg-*), var(--ink-*),
-   var(--blue-*), var(--green-500), etc. Keep these mapped while
-   the codebase migrates to the new tokens. */
+/* ═════════════════════════════════════════════════════════════════════════
+   Legacy aliases — pages haven't been fully migrated yet. Keep these
+   pointing at the new tokens so older `var(--bg-card)` / `var(--ink-900)`
+   references just look right.
+   ═════════════════════════════════════════════════════════════════════════ */
 :root {
   --bg-page:  var(--color-page);
   --bg-rail:  var(--color-rail);
@@ -59,6 +102,7 @@
   --bg-soft:  var(--color-soft);
   --bg-hover: var(--color-hover);
   --bg-elev:  var(--color-elev);
+  --bg-line:  var(--color-line);
 
   --ink-50:  var(--color-ink-50);
   --ink-100: var(--color-ink-100);
@@ -66,41 +110,45 @@
   --ink-300: var(--color-ink-300);
   --ink-400: var(--color-ink-400);
   --ink-500: var(--color-ink-500);
+  --ink-600: var(--color-ink-600);
   --ink-700: var(--color-ink-700);
   --ink-900: var(--color-ink-900);
 
-  --blue-50:  var(--color-violet-50);
-  --blue-100: var(--color-violet-100);
-  --blue-200: var(--color-violet-200);
-  --blue-400: var(--color-violet-400);
-  --blue-500: var(--color-violet-500);
-  --blue-600: var(--color-violet-600);
-  --blue-700: var(--color-violet-700);
+  /* The blue/violet aliases now point at mint — no purple anywhere. */
+  --blue-50:  var(--color-mint-50);
+  --blue-100: var(--color-mint-100);
+  --blue-200: var(--color-mint-200);
+  --blue-400: var(--color-mint-400);
+  --blue-500: var(--color-mint-500);
+  --blue-600: var(--color-mint-600);
+  --blue-700: var(--color-mint-700);
 
-  --green-500:  var(--color-emerald-500);
-  --green-50:   #0F2B22;
-  --amber-500:  var(--color-amber-500);
-  --amber-50:   #2B2210;
-  --red-500:    var(--color-rose-500);
-  --red-50:     #2A1518;
-  --violet-500: var(--color-purple-500);
-  --violet-50:  #1F1A38;
-  --teal-500:   var(--color-teal-500);
-  --teal-50:    #0E2A28;
-  --pink-500:   var(--color-pink-500);
-  --pink-50:    #2A1422;
+  --green-500: var(--color-emerald-500);
+  --green-50:  #052920;
+  --amber-500: var(--color-amber-500);
+  --amber-50:  #2B1F08;
+  --red-500:   var(--color-rose-500);
+  --red-50:    #2B1518;
+  --violet-500: var(--color-mint-500);
+  --violet-50:  var(--color-mint-50);
+  --teal-500:  var(--color-mint-500);
+  --teal-50:   var(--color-mint-50);
+  --pink-500:  var(--color-amber-500);
+  --pink-50:   #2B1F08;
 
-  --r-sm: 8px;
-  --r-md: 12px;
-  --r-lg: 16px;
-  --r-xl: 20px;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 12px;
+  --r-xl: 16px;
 
-  --shadow-sm: var(--shadow-tile);
+  --shadow-sm: 0 0 0 1px var(--color-line);
   --shadow-md: var(--shadow-pop);
   --shadow-lg: var(--shadow-pop);
 }
 
-/* ─── Reset & base ──────────────────────────────────────────── */
+/* ═════════════════════════════════════════════════════════════════════════
+   Reset + base
+   ═════════════════════════════════════════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { color-scheme: dark; }
 
@@ -108,49 +156,136 @@ body {
   font-family: var(--font-sans);
   background: var(--color-page);
   color: var(--color-ink-900);
-  font-size: 14px;
-  line-height: 1.55;
+  font-size: 13.5px;
+  line-height: 1.5;
+  letter-spacing: -0.005em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: 'cv11', 'ss01';
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
+
+  /* Subtle texture — a single noise overlay applied to the whole page.
+     Keeps large dark surfaces from reading as flat dead pixels. */
+  background-image:
+    radial-gradient(1200px 600px at 100% 0%, rgba(94,234,212,0.025), transparent 60%),
+    radial-gradient(800px 600px at 0% 100%, rgba(94,234,212,0.018), transparent 60%);
+  background-attachment: fixed;
 }
 
-/* Tabular numerals for stats / data */
-.tnum { font-variant-numeric: tabular-nums; }
+/* ── Typography utilities ─────────────────────────────────────────────── */
 
-/* ─── Scrollbar ─────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 8px; height: 8px; }
+/* Numbers always tabular-mono. The dashboard reads as data, not prose. */
+.tnum, .num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'cv01' 1;
+  letter-spacing: -0.01em;
+}
+
+/* Operations-style label — Mono, uppercase, tracked. Used on every section
+   header, KPI label, and metadata row. This is the visual signature of
+   the design system. */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-ink-400);
+}
+
+/* kbd-style chip for keyboard shortcuts and inline metadata */
+.kbd {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--color-soft);
+  border: 1px solid var(--color-line);
+  color: var(--color-ink-500);
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-ink-100); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--color-ink-200); }
+::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-line-strong); background-clip: padding-box; }
 
-/* ─── Leaflet overrides ────────────────────────────────────── */
+/* ── Selection ─────────────────────────────────────────────────────────── */
+::selection {
+  background: rgba(94,234,212,0.25);
+  color: var(--color-ink-900);
+}
+
+/* ── Focus ring (universal) ────────────────────────────────────────────── */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-mint);
+}
+
+/* ── Leaflet overrides ────────────────────────────────────────────────── */
 .leaflet-container { background: var(--color-rail) !important; font-family: inherit !important; }
 .leaflet-popup-content-wrapper {
   background: var(--color-card) !important;
   color: var(--color-ink-900) !important;
-  border: 1px solid var(--color-ink-100) !important;
-  border-radius: 12px !important;
+  border: 1px solid var(--color-line-strong) !important;
+  border-radius: var(--radius-card) !important;
   box-shadow: var(--shadow-pop) !important;
 }
 .leaflet-popup-tip { background: var(--color-card) !important; }
 .leaflet-control-zoom a {
   background: var(--color-card) !important;
   color: var(--color-ink-500) !important;
-  border-color: var(--color-ink-100) !important;
+  border-color: var(--color-line) !important;
 }
 .leaflet-control-zoom a:hover { background: var(--color-hover) !important; color: var(--color-ink-900) !important; }
-.leaflet-control-attribution { background: rgba(10,14,26,0.8) !important; color: var(--color-ink-400) !important; }
-
-/* ─── Gradient text ─────────────────────────────────────────── */
-.gradient-text {
-  background: linear-gradient(135deg, var(--color-violet-500), var(--color-purple-500));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.leaflet-control-attribution {
+  background: rgba(8,16,31,0.8) !important;
+  color: var(--color-ink-400) !important;
+  font-family: var(--font-mono-stack) !important;
+  font-size: 10px !important;
 }
 
-/* ─── Loading shimmer ──────────────────────────────────────── */
+/* ── Live indicators ───────────────────────────────────────────────────── */
+@keyframes pulse-mint {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(94,234,212,0.55); }
+  50%      { box-shadow: 0 0 0 6px rgba(94,234,212,0); }
+}
+.pulse-dot { animation: pulse-mint 2s infinite; }
+
+@keyframes gps-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(94,234,212,0.65); }
+  70%  { box-shadow: 0 0 0 14px rgba(94,234,212,0); }
+  100% { box-shadow: 0 0 0 0 rgba(94,234,212,0); }
+}
+.gps-dot { animation: gps-ring 1.8s infinite; }
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(94,234,212,0.3); }
+  50%      { box-shadow: 0 0 0 6px rgba(94,234,212,0); }
+}
+.pulse-glow { animation: pulse-glow 2s infinite; }
+
+/* ── Page transitions ──────────────────────────────────────────────────── */
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.anim-slide-up { animation: slide-up 280ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.anim-fade-in { animation: fade-in 200ms ease-out both; }
+
+/* ── Loading shimmer ───────────────────────────────────────────────────── */
 @keyframes shimmer {
   0% { background-position: -200% center; }
   100% { background-position: 200% center; }
@@ -161,88 +296,87 @@ body {
   animation: shimmer 1.5s infinite;
 }
 
-/* ─── GPS / live indicators ─────────────────────────────────── */
-@keyframes gps-ring {
-  0%   { box-shadow: 0 0 0 0 rgba(139,133,242,0.7); }
-  70%  { box-shadow: 0 0 0 14px rgba(139,133,242,0); }
-  100% { box-shadow: 0 0 0 0 rgba(139,133,242,0); }
-}
-.gps-dot { animation: gps-ring 1.8s infinite; }
-
-@keyframes pulse-dot {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(52,211,153,0.5); }
-  50%      { box-shadow: 0 0 0 6px rgba(52,211,153,0); }
-}
-.pulse-dot { animation: pulse-dot 2s infinite; }
-
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(139,133,242,0.4); }
-  50%      { box-shadow: 0 0 0 6px rgba(139,133,242,0); }
-}
-.pulse-glow { animation: pulse-glow 2s infinite; }
-
-/* ─── Page transitions ─────────────────────────────────────── */
-@keyframes slide-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.anim-slide-up { animation: slide-up 320ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
-
-@keyframes fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-.anim-fade-in { animation: fade-in 240ms ease-out both; }
-
-/* ─── AI status pill ────────────────────────────────────────── */
+/* ── AI status pill ────────────────────────────────────────────────────── */
 .ai-pill {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 4px 10px; border-radius: 999px;
-  background: linear-gradient(135deg, rgba(139,133,242,0.14), rgba(45,212,191,0.10));
-  border: 1px solid rgba(139,133,242,0.30);
-  color: var(--color-violet-400);
-  font-size: 11px; font-weight: 600;
-  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px 5px 8px;
+  border-radius: 999px;
+  background: rgba(94,234,212,0.08);
+  border: 1px solid rgba(94,234,212,0.22);
+  color: var(--color-mint-500);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 .ai-pill .pulse {
   width: 6px; height: 6px; border-radius: 999px;
-  background: var(--color-violet-500);
-  box-shadow: 0 0 8px var(--color-violet-500);
+  background: var(--color-mint-500);
+  box-shadow: 0 0 8px var(--color-mint-500);
+  animation: pulse-mint 2s infinite;
 }
 
-/* ─── Card variants (used as @apply via class names) ─────────
-   These are written so existing className uses keep working
-   while we migrate. */
+/* ═════════════════════════════════════════════════════════════════════════
+   Surface variants — used directly via class on cards / tiles.
+   The card-tile / stat-tile classes are the load-bearing visual
+   primitives. Hover states change ONLY the border, never position,
+   so the layout never reflows on mouse move.
+   ═════════════════════════════════════════════════════════════════════════ */
+
 .card-tile {
   background: var(--color-card);
-  border: 1px solid var(--color-ink-200);
+  border: 1px solid var(--color-line);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow-tile);
-  transition: border-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+  transition: border-color 120ms ease, background-color 120ms ease;
 }
-.card-tile-hover:hover {
-  border-color: var(--color-violet-200);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-pop);
+.card-tile:hover {
+  border-color: var(--color-line-strong);
 }
 
-/* Top-edge violet accent for KPI tiles */
+/* Stat tile — KPI block. Has a thin mint signal line at the very top. */
 .stat-tile {
   background: var(--color-card);
-  border: 1px solid var(--color-ink-200);
+  border: 1px solid var(--color-line);
   border-radius: var(--radius-card);
   position: relative;
-  overflow: hidden;
-  transition: border-color 150ms ease, transform 150ms ease;
+  transition: border-color 120ms ease;
 }
 .stat-tile::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0;
+  top: 0; left: 16px; right: 16px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(139,133,242,0.5), transparent);
+  background: linear-gradient(90deg, transparent, rgba(94,234,212,0.4), transparent);
+  opacity: 0.6;
+  transition: opacity 200ms ease;
 }
-.stat-tile:hover {
-  border-color: var(--color-violet-200);
-  transform: translateY(-1px);
+.stat-tile:hover { border-color: var(--color-line-strong); }
+.stat-tile:hover::before { opacity: 1; }
+
+/* Section divider used between stacked rows of dense data */
+.row-divider { border-top: 1px solid var(--color-line); }
+
+/* Subtle data-table row: 36px height, mono numerals, hairline border */
+.data-row {
+  display: grid;
+  align-items: center;
+  padding: 0 16px;
+  min-height: 44px;
+  border-top: 1px solid var(--color-line);
+  transition: background-color 80ms ease;
+}
+.data-row:first-child { border-top: 0; }
+.data-row:hover { background: var(--color-soft); }
+
+/* Inline grid label that anchors a stat to its number */
+.grid-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-ink-400);
 }

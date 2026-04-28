@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import type { Cleaner, Job } from '@/types'
+import type { Cleaner, CleanerStatus, Job } from '@/types'
 import {
   buildOptimizedRoutes, TeamRoute, RouteStop, RealLegOverrides,
 } from '@/lib/routing-engine'
@@ -11,6 +11,7 @@ import { fetchTeamRoute, RealRoute, CONGESTION_COLOR } from '@/lib/mapbox-routin
 import { RoutingPanel } from './RoutingPanel'
 import { Crosshair, WifiOff, AlertTriangle, X, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 
 // Free tile layers — no API key required
 const TILE_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
@@ -74,6 +75,29 @@ function makeGpsIcon(): L.DivIcon {
   })
 }
 
+function cleanerLiveIcon(initials: string, color: string, status: CleanerStatus): L.DivIcon {
+  const dotColor = status === 'en-route' ? '#f59e0b' : '#10b981'
+  return L.divIcon({
+    className: '',
+    html: `<div style="position:relative;width:38px;height:38px;">
+      <div style="
+        width:38px;height:38px;border-radius:50%;background:${color};
+        border:3px solid ${dotColor};
+        display:flex;align-items:center;justify-content:center;
+        font-weight:700;color:white;font-size:11px;
+        box-shadow:0 0 0 5px ${dotColor}35,0 2px 10px rgba(0,0,0,0.4);
+        font-family:-apple-system,sans-serif;
+      ">${initials}</div>
+      <span style="
+        position:absolute;bottom:0;right:0;
+        width:12px;height:12px;border-radius:50%;
+        background:${dotColor};border:2px solid #111827;
+      "></span>
+    </div>`,
+    iconSize: [38, 38], iconAnchor: [19, 19], popupAnchor: [0, -21],
+  })
+}
+
 function FlyTo({ lat, lng }: { lat: number; lng: number }) {
   const map = useMap()
   useEffect(() => { map.flyTo([lat, lng], 15, { animate: true, duration: 1.2 }) }, [map, lat, lng])
@@ -132,11 +156,49 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
   const watchRef   = useRef<number | null>(null)
   const fetchAbort = useRef<AbortController | null>(null)
 
+  type LivePos = { id: string; initials: string; color: string; name: string; currentLat: number; currentLng: number; status: CleanerStatus; currentJobId: string | null }
+  const [livePositions, setLivePositions] = useState<LivePos[]>(() =>
+    cleaners.map(c => ({ id: c.id, initials: c.initials, color: c.color, name: c.name, currentLat: c.currentLat, currentLng: c.currentLng, status: c.status, currentJobId: c.currentJobId }))
+  )
+
   useEffect(() => {
     fixLeafletIcons()
     setOverrides(loadOverrides())
     setMounted(true)
   }, [])
+
+  // Sync livePositions when cleaners prop changes (page refresh)
+  useEffect(() => {
+    setLivePositions(cleaners.map(c => ({
+      id: c.id, initials: c.initials, color: c.color, name: c.name,
+      currentLat: c.currentLat, currentLng: c.currentLng,
+      status: c.status, currentJobId: c.currentJobId,
+    })))
+  }, [cleaners])
+
+  // Supabase Realtime — live cleaner positions pushed from the mobile app
+  useEffect(() => {
+    if (!mounted) return
+    const supabase = getSupabaseBrowserClient()
+    const channel = supabase
+      .channel('cleaner-positions')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'cleaners' },
+        (payload) => {
+          const r = payload.new as { id: string; current_lat: number; current_lng: number; status: CleanerStatus; current_job_id: string | null }
+          setLivePositions(prev =>
+            prev.map(c =>
+              c.id === r.id
+                ? { ...c, currentLat: Number(r.current_lat), currentLng: Number(r.current_lng), status: r.status, currentJobId: r.current_job_id }
+                : c,
+            ),
+          )
+        },
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [mounted])
 
   // Today's jobs with cancellation overrides applied. Memoised so referential
   // equality only changes when overrides change.
@@ -357,6 +419,29 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
               </span>
             )
           })}
+
+          {/* Live cleaner positions from mobile GPS */}
+          {livePositions
+            .filter(c => (c.status === 'en-route' || c.status === 'cleaning') && c.currentLat !== 0 && c.currentLng !== 0)
+            .map(c => (
+              <Marker key={`live-${c.id}`}
+                position={[c.currentLat, c.currentLng]}
+                icon={cleanerLiveIcon(c.initials, c.color, c.status)}
+              >
+                <Popup>
+                  <div style={{ minWidth: 155, padding: 4 }}>
+                    <b style={{ fontSize: 13 }}>{c.name}</b>
+                    <p style={{ fontSize: 12, fontWeight: 600, marginTop: 3, color: c.status === 'en-route' ? '#f59e0b' : '#10b981' }}>
+                      {c.status === 'en-route' ? '↗ En Route' : '✦ Cleaning'}
+                    </p>
+                    {c.currentJobId && (
+                      <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>Job {c.currentJobId}</p>
+                    )}
+                  </div>
+                </Popup>
+              </Marker>
+            ))
+          }
 
           {gpsTracking && gpsPos && (
             <Circle center={[gpsPos.lat, gpsPos.lng]} radius={Math.max(gpsPos.accuracy, 10)}

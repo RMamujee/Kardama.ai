@@ -120,21 +120,24 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
         ))}
       </nav>
 
-      {/* User block */}
+      {/* User block — clicking the LogOut icon submits a real form to /auth/signout */}
       <div className="border-t border-line p-3">
-        <button
-          type="button"
-          className="group flex w-full items-center gap-3 rounded-[6px] px-3 py-2.5 text-left transition-colors hover:bg-soft"
-        >
-          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[6px] bg-mint-500 font-mono text-[11.5px] font-semibold text-page">
-            DC
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[13px] font-semibold text-ink-700">David Chen</p>
-            <p className="truncate text-[11px] text-ink-400 mt-0.5">Owner · Long Beach</p>
-          </div>
-          <LogOut className="h-[15px] w-[15px] flex-shrink-0 text-ink-400 transition-colors group-hover:text-ink-700" strokeWidth={1.75} />
-        </button>
+        <form action="/auth/signout" method="post" className="contents">
+          <button
+            type="submit"
+            aria-label="Sign out"
+            className="group flex w-full items-center gap-3 rounded-[6px] px-3 py-2.5 text-left transition-colors hover:bg-soft"
+          >
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[6px] bg-mint-500 font-mono text-[11.5px] font-semibold text-page">
+              DC
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-semibold text-ink-700">David Chen</p>
+              <p className="truncate text-[11px] text-ink-400 mt-0.5">Owner · Long Beach</p>
+            </div>
+            <LogOut className="h-[15px] w-[15px] flex-shrink-0 text-ink-400 transition-colors group-hover:text-ink-700" strokeWidth={1.75} />
+          </button>
+        </form>
       </div>
     </div>
   )

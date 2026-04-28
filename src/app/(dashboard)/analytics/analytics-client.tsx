@@ -5,390 +5,575 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import {
-  TrendingUp, DollarSign, Briefcase, Star,
-  ArrowUpRight, ArrowDownRight, Sparkles,
+  TrendingUp, DollarSign, Briefcase, Star, ArrowUpRight, ArrowDownRight, Sparkles,
 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { StatTile } from '@/components/ui/stat-tile'
-import { formatCurrency } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
+import { formatCurrency, cn } from '@/lib/utils'
 import type { Cleaner, Customer, Job } from '@/types'
 
-type AnalyticsData = {
-  jobs: Job[]
-  customers: Customer[]
-  cleaners: Cleaner[]
+type AnalyticsData = { jobs: Job[]; customers: Customer[]; cleaners: Cleaner[] }
+
+type Period = 'week' | 'month' | 'quarter' | 'year'
+
+const PERIOD_DAYS: Record<Period, number> = {
+  week:    7,
+  month:   30,
+  quarter: 90,
+  year:    365,
 }
 
-// ─── Static mock data ──────────────────────────────────────────────────────────
-
-function generateMonthlyData() {
-  const months = ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr']
-  const base   = [2200, 2800, 3100, 3400, 2900, 3200, 3600, 3100, 2700, 3500, 3900, 4200]
-  return months.map((month, i) => ({
-    month,
-    revenue: base[i],
-    jobs:    Math.floor(base[i] / 180),
-  }))
+const PERIOD_LABEL: Record<Period, string> = {
+  week:    'this week',
+  month:   'this month',
+  quarter: 'last 90 days',
+  year:    'this year',
 }
 
-const SERVICE_DATA = [
-  { name: 'Standard Clean',      value: 52, color: '#8B85F2' },
-  { name: 'Deep Clean',          value: 24, color: '#A78BFA' },
-  { name: 'Move-Out',            value: 12, color: '#FBBF24' },
-  { name: 'Airbnb',              value:  8, color: '#34D399' },
-  { name: 'Post-Construction',   value:  4, color: '#F87171' },
-]
-
-const AREA_CITIES = [
-  { city: 'Long Beach',      jobs: 47, pct: 42 },
-  { city: 'Torrance',        jobs: 28, pct: 25 },
-  { city: 'Manhattan Beach', jobs: 18, pct: 16 },
-  { city: 'Redondo Beach',   jobs: 12, pct: 11 },
-  { city: 'Other',           jobs:  7, pct:  6 },
-]
-
-const AI_INSIGHTS = [
-  { icon: '📈', text: 'Revenue is up 18% over the past 3 months — Long Beach growth is the primary driver.' },
-  { icon: '🏆', text: 'Deep cleans have 40% higher profit margin than standard — consider promoting them more.' },
-  { icon: '🔄', text: 'Client retention rate is 68% — industry avg is 55%. Your repeat business is strong.' },
-  { icon: '📍', text: 'Long Beach accounts for 42% of all jobs — within your target 15-mile radius focus area.' },
-]
+// ─── Tooltip styling shared by all charts ─────────────────────────────────────
 
 const TOOLTIP_STYLE = {
   contentStyle: {
-    background: '#111726',
-    border: '1px solid #3A4258',
-    borderRadius: 10,
-    color: '#F2F5FA',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+    background: '#0F1B2D',
+    border: '1px solid #25395A',
+    borderRadius: 8,
+    color: '#F2F5FB',
+    fontFamily: 'var(--font-mono)',
+    fontSize: 11.5,
+    padding: '8px 10px',
+    boxShadow: '0 24px 64px -16px rgba(0,0,0,0.7)',
   },
-  labelStyle: { color: '#9099AE' },
-  itemStyle: { color: '#F2F5FA' },
+  labelStyle: { color: '#7283A6', textTransform: 'uppercase' as const, letterSpacing: '0.08em', fontSize: 10 },
+  itemStyle: { color: '#F2F5FB' },
 }
 
-// ─── Page ──────────────────────────────────────────────────────────────────────
+const SERVICE_COLORS = ['#5EEAD4', '#34D399', '#F5A524', '#60A5FA', '#F87171']
+
+// ═══════════════════════════════════════════════════════════════════════════
 
 export function AnalyticsClient({ jobs, customers, cleaners }: AnalyticsData) {
-  const [period, setPeriod] = useState('year')
-  const monthlyData = useMemo(() => generateMonthlyData(), [])
+  const [period, setPeriod] = useState<Period>('year')
 
-  // KPI derivations from data
-  const totalRevenue   = monthlyData.reduce((s, m) => s + m.revenue, 0)
-  const totalJobs      = jobs.length
-  const completedJobs  = jobs.filter(j => j.status === 'completed').length
-  const avgJobValue    = totalJobs > 0 ? Math.round(jobs.reduce((s, j) => s + j.price, 0) / totalJobs) : 0
-  const completionRate = totalJobs > 0 ? Math.round((completedJobs / totalJobs) * 100) : 0
+  // ── Period range — used to filter jobs/customers/payments throughout
+  const range = useMemo(() => {
+    const end = new Date()
+    const start = new Date()
+    start.setDate(end.getDate() - PERIOD_DAYS[period])
+    return { start, end, days: PERIOD_DAYS[period] }
+  }, [period])
 
-  // Top customers by totalSpent
-  const topCustomers = [...customers]
-    .sort((a, b) => b.totalSpent - a.totalSpent)
-    .slice(0, 5)
-    .map(c => {
-      const parts = c.name.split(' ')
-      const label = parts[0] + (parts[1] ? ' ' + parts[1][0] + '.' : '')
-      return { name: label, value: c.totalSpent }
+  // ── Jobs in period (drives every KPI)
+  const periodJobs = useMemo(
+    () => jobs.filter((j) => {
+      const d = new Date(j.scheduledDate)
+      return d >= range.start && d <= range.end
+    }),
+    [jobs, range],
+  )
+
+  const completedInPeriod = periodJobs.filter((j) => j.status === 'completed')
+  const totalRevenue =
+    completedInPeriod.reduce((s, j) => s + j.price, 0)
+    || periodJobs.reduce((s, j) => s + j.price, 0) // fall back if no completed
+  const completedCount = completedInPeriod.length
+  const avgJobValue = periodJobs.length > 0 ? Math.round(periodJobs.reduce((s, j) => s + j.price, 0) / periodJobs.length) : 0
+  const completionRate = periodJobs.length > 0 ? Math.round((completedCount / periodJobs.length) * 100) : 0
+
+  // ── Comparison: previous equivalent window
+  const previousJobs = useMemo(() => {
+    const prevEnd = new Date(range.start)
+    const prevStart = new Date(range.start)
+    prevStart.setDate(prevStart.getDate() - PERIOD_DAYS[period])
+    return jobs.filter((j) => {
+      const d = new Date(j.scheduledDate)
+      return d >= prevStart && d < prevEnd
     })
+  }, [jobs, range.start, period])
+
+  const previousRevenue = previousJobs
+    .filter((j) => j.status === 'completed')
+    .reduce((s, j) => s + j.price, 0) || previousJobs.reduce((s, j) => s + j.price, 0)
+  const revenueChange = previousRevenue > 0
+    ? Math.round(((totalRevenue - previousRevenue) / previousRevenue) * 100)
+    : null
+  const jobsChange = previousJobs.length > 0
+    ? Math.round(((completedCount - previousJobs.length) / previousJobs.length) * 100)
+    : null
+
+  // ── Time series for the area chart
+  // For 'week'/'month': daily buckets. For 'quarter'/'year': weekly buckets.
+  const timeSeries = useMemo(() => {
+    const buckets = period === 'week' ? 7 : period === 'month' ? 30 : period === 'quarter' ? 13 : 52
+    const granularity = period === 'week' || period === 'month' ? 'day' : 'week'
+    const result: { label: string; revenue: number; jobs: number }[] = []
+    const totalDays = PERIOD_DAYS[period]
+    const step = totalDays / buckets
+
+    for (let i = 0; i < buckets; i++) {
+      const start = new Date(range.start)
+      start.setDate(start.getDate() + Math.floor(i * step))
+      const end = new Date(range.start)
+      end.setDate(end.getDate() + Math.floor((i + 1) * step))
+      const bucketJobs = jobs.filter((j) => {
+        const d = new Date(j.scheduledDate)
+        return d >= start && d < end
+      })
+      const revenue = bucketJobs.reduce((s, j) => s + j.price, 0)
+      const label = granularity === 'day'
+        ? start.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })
+        : start.toLocaleDateString('en-US', { month: 'short' })
+      result.push({ label, revenue, jobs: bucketJobs.length })
+    }
+
+    return result
+  }, [jobs, range.start, period])
+
+  // ── Top customers in period
+  const topCustomers = useMemo(() => {
+    const totals = new Map<string, number>()
+    for (const j of periodJobs) {
+      totals.set(j.customerId, (totals.get(j.customerId) ?? 0) + j.price)
+    }
+    return Array.from(totals.entries())
+      .map(([id, value]) => {
+        const c = customers.find((x) => x.id === id)
+        if (!c) return null
+        const parts = c.name.split(' ')
+        const label = parts[0] + (parts[1] ? ' ' + parts[1][0] + '.' : '')
+        return { name: label, value }
+      })
+      .filter((x): x is { name: string; value: number } => x !== null)
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5)
+  }, [periodJobs, customers])
+
   const maxCustomerSpend = topCustomers[0]?.value || 1
 
-  // Team performance rows
-  const teamData = (['team-a', 'team-b', 'team-c', 'team-d'] as const).map(teamId => {
-    const teamCleaners = cleaners.filter(c => c.teamId === teamId)
-    const teamJobs     = jobs.filter(j => teamCleaners.some(c => j.cleanerIds.includes(c.id)))
-    const completed    = teamJobs.filter(j => j.status === 'completed')
-    const revenue      = completed.reduce((s, j) => s + j.price, 0)
-    const avgRating    = teamCleaners.length
-      ? teamCleaners.reduce((s, c) => s + c.rating, 0) / teamCleaners.length
-      : 0
-    const names: Record<string, string> = { 'team-a': 'Alpha', 'team-b': 'Beta', 'team-c': 'Gamma', 'team-d': 'Delta' }
-    return {
-      team:           names[teamId],
-      cleaners:       teamCleaners.map(c => c.name.split(' ')[0]).join(' + '),
-      jobs:           teamJobs.length,
-      completed:      completed.length,
-      revenue,
-      completionRate: teamJobs.length > 0 ? Math.round(completed.length / teamJobs.length * 100) : 0,
-      rating:         avgRating.toFixed(1),
+  // ── Service mix in period
+  const serviceMix = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const j of periodJobs) {
+      counts.set(j.serviceType, (counts.get(j.serviceType) ?? 0) + 1)
     }
-  })
+    const total = Array.from(counts.values()).reduce((s, n) => s + n, 0) || 1
+    const labels: Record<string, string> = {
+      standard: 'Standard',
+      deep: 'Deep clean',
+      'move-out': 'Move-out',
+      'post-construction': 'Post-construction',
+      airbnb: 'Airbnb',
+    }
+    return Array.from(counts.entries())
+      .map(([type, count], i) => ({
+        name: labels[type] ?? type,
+        pct: Math.round((count / total) * 100),
+        color: SERVICE_COLORS[i % SERVICE_COLORS.length],
+        count,
+      }))
+      .sort((a, b) => b.pct - a.pct)
+  }, [periodJobs])
 
-  const kpis = [
-    { label: 'Annual Revenue',  value: formatCurrency(totalRevenue),  change: '+18%', up: true,  icon: DollarSign, tone: 'violet'  as const },
-    { label: 'Jobs Completed',  value: completedJobs.toString(),      change: '+12%', up: true,  icon: Briefcase,  tone: 'emerald' as const },
-    { label: 'Avg Job Value',   value: formatCurrency(avgJobValue),   change: '+5%',  up: true,  icon: TrendingUp, tone: 'purple'  as const },
-    { label: 'Completion Rate', value: `${completionRate}%`,          change: '-2%',  up: false, icon: Star,       tone: 'amber'   as const },
-  ]
+  // ── Cities in period
+  const cityBreakdown = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const j of periodJobs) {
+      const c = customers.find((x) => x.id === j.customerId)
+      if (!c) continue
+      counts.set(c.city, (counts.get(c.city) ?? 0) + 1)
+    }
+    const total = Array.from(counts.values()).reduce((s, n) => s + n, 0) || 1
+    return Array.from(counts.entries())
+      .map(([city, count]) => ({
+        city,
+        jobs: count,
+        pct: Math.round((count / total) * 100),
+      }))
+      .sort((a, b) => b.jobs - a.jobs)
+      .slice(0, 6)
+  }, [periodJobs, customers])
+
+  // ── Team performance in period
+  const teamData = useMemo(() => {
+    const teamIds = Array.from(new Set(cleaners.map((c) => c.teamId).filter(Boolean) as string[])).sort()
+    const greekify: Record<string, string> = {
+      'team-a': 'Alpha', 'team-b': 'Beta', 'team-c': 'Gamma',
+      'team-d': 'Delta', 'team-e': 'Epsilon',
+    }
+    return teamIds.map((teamId) => {
+      const teamCleaners = cleaners.filter((c) => c.teamId === teamId)
+      const teamJobs = periodJobs.filter((j) => teamCleaners.some((c) => j.cleanerIds.includes(c.id)))
+      const completed = teamJobs.filter((j) => j.status === 'completed')
+      const revenue = completed.reduce((s, j) => s + j.price, 0)
+      const avgRating = teamCleaners.length
+        ? teamCleaners.reduce((s, c) => s + c.rating, 0) / teamCleaners.length
+        : 0
+      return {
+        team: greekify[teamId] ?? teamId,
+        cleaners: teamCleaners.map((c) => c.name.split(' ')[0]).join(' + '),
+        jobs: teamJobs.length,
+        completed: completed.length,
+        revenue,
+        completionRate: teamJobs.length > 0 ? Math.round((completed.length / teamJobs.length) * 100) : 0,
+        rating: avgRating.toFixed(1),
+      }
+    })
+  }, [cleaners, periodJobs])
 
   return (
-    <div className="space-y-7 max-w-7xl">
-
-      {/* ── Period selector ───────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      {/* ── Header + period selector ─────────────────────────────────────── */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-[20px] font-bold text-ink-900">Analytics &amp; Reports</h1>
-          <p className="text-[14px] text-ink-500 mt-1">Long Beach service area · all teams</p>
+          <span className="grid-label">Reports</span>
+          <h2 className="mt-1.5 text-[20px] font-semibold text-ink-900 tracking-[-0.015em]">
+            Performance, {PERIOD_LABEL[period]}
+          </h2>
         </div>
-        <Tabs defaultValue="year" onValueChange={v => setPeriod(v as typeof period)}>
+        <Tabs value={period} onValueChange={(v) => setPeriod(v as Period)}>
           <TabsList>
-            <TabsTrigger value="week">This Week</TabsTrigger>
-            <TabsTrigger value="month">This Month</TabsTrigger>
-            <TabsTrigger value="quarter">Last 3 Months</TabsTrigger>
-            <TabsTrigger value="year">This Year</TabsTrigger>
+            <TabsTrigger value="week">7d</TabsTrigger>
+            <TabsTrigger value="month">30d</TabsTrigger>
+            <TabsTrigger value="quarter">90d</TabsTrigger>
+            <TabsTrigger value="year">1y</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
 
-      {/* ── KPI row ───────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {kpis.map((kpi, i) => (
-          <motion.div
-            key={kpi.label}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.07 }}
-          >
-            <StatTile
-              label={kpi.label}
-              value={kpi.value}
-              icon={kpi.icon}
-              tone={kpi.tone}
-              trend={
-                <span className={`flex items-center gap-1 text-[12px] font-medium ${kpi.up ? 'text-emerald-500' : 'text-rose-500'}`}>
-                  {kpi.up
-                    ? <ArrowUpRight className="h-3.5 w-3.5" />
-                    : <ArrowDownRight className="h-3.5 w-3.5" />
-                  }
-                  {kpi.change}
-                </span>
-              }
-              sub="vs last year"
-            />
-          </motion.div>
-        ))}
+      {/* ── KPI strip ──────────────────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.32 }}
+        className="grid grid-cols-2 gap-4 lg:grid-cols-4"
+      >
+        <StatTile
+          label="Revenue"
+          value={formatCurrency(totalRevenue)}
+          sub={`vs previous ${PERIOD_LABEL[period]}`}
+          icon={DollarSign}
+          tone="mint"
+          trend={
+            revenueChange != null && (
+              <Trend value={revenueChange} />
+            )
+          }
+        />
+        <StatTile
+          label="Jobs completed"
+          value={completedCount}
+          sub={`${periodJobs.length} total scheduled`}
+          icon={Briefcase}
+          tone="emerald"
+          trend={jobsChange != null && <Trend value={jobsChange} />}
+        />
+        <StatTile
+          label="Avg job value"
+          value={formatCurrency(avgJobValue)}
+          sub="all service types"
+          icon={TrendingUp}
+          tone="mint"
+        />
+        <StatTile
+          label="Completion rate"
+          value={`${completionRate}%`}
+          sub="of scheduled jobs"
+          icon={Star}
+          tone={completionRate >= 80 ? 'emerald' : completionRate >= 60 ? 'amber' : 'rose'}
+        />
+      </motion.div>
+
+      {/* ── Revenue trend chart ────────────────────────────────────────────── */}
+      <div className="card-tile">
+        <div className="flex items-center justify-between border-b border-line px-5 py-4 sm:px-6">
+          <div>
+            <h3 className="text-[14px] font-semibold text-ink-900">Revenue trend</h3>
+            <p className="mt-0.5 text-[11.5px] text-ink-400 font-mono">
+              {PERIOD_LABEL[period]} · {timeSeries.length} buckets
+            </p>
+          </div>
+          <Badge variant="success" dot>
+            <span className="num">{formatCurrency(totalRevenue)}</span>
+          </Badge>
+        </div>
+        <div className="px-2 py-4 sm:px-4 sm:py-5">
+          <ResponsiveContainer width="100%" height={220}>
+            <AreaChart data={timeSeries} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="mint-grad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"   stopColor="#5EEAD4" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="#5EEAD4" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="2 4" stroke="#1A2B47" vertical={false} />
+              <XAxis
+                dataKey="label"
+                tick={{ fill: '#7283A6', fontSize: 10.5, fontFamily: 'var(--font-mono)' }}
+                axisLine={false}
+                tickLine={false}
+                interval="preserveStartEnd"
+              />
+              <YAxis
+                tick={{ fill: '#7283A6', fontSize: 10.5, fontFamily: 'var(--font-mono)' }}
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(v: number) => `$${(v / 1000).toFixed(1)}k`}
+              />
+              <Tooltip
+                formatter={(v) => [`$${Number(v).toLocaleString()}`, 'revenue']}
+                {...TOOLTIP_STYLE}
+              />
+              <Area
+                type="monotone"
+                dataKey="revenue"
+                stroke="#5EEAD4"
+                fill="url(#mint-grad)"
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4, fill: '#5EEAD4', stroke: '#0F1B2D', strokeWidth: 2 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
-      {/* ── Revenue trend chart ───────────────────────────────────────────── */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Revenue Trend</CardTitle>
-                <CardDescription>Last 12 months · Long Beach service area</CardDescription>
-              </div>
-              <Badge variant="success" className="text-xs">{formatCurrency(totalRevenue)} YTD</Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#8B85F2" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#8B85F2" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#3A4258" />
-                <XAxis
-                  dataKey="month"
-                  tick={{ fill: '#6E778C', fontSize: 12 }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fill: '#6E778C', fontSize: 12 }}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v: number) => `$${(v / 1000).toFixed(1)}k`}
-                />
-                <Tooltip
-                  formatter={(v) => [`$${Number(v).toLocaleString()}`, 'Revenue']}
-                  {...TOOLTIP_STYLE}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#8B85F2"
-                  fill="url(#revenueGrad)"
-                  strokeWidth={2.5}
-                  dot={false}
-                  activeDot={{ r: 5, fill: '#8B85F2', stroke: '#111726', strokeWidth: 2 }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* ── Split row: Top Customers + Service Mix / Geographic ──────────── */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-
-        {/* Top Customers */}
-        <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle>Top Customers</CardTitle>
-              <CardDescription>By total spend · all time</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {topCustomers.map((c, i) => (
-                  <div key={c.name} className="space-y-2">
-                    <div className="flex items-center justify-between text-[14px]">
-                      <div className="flex items-center gap-2.5">
-                        <span className="text-[12px] font-mono text-ink-400 w-4">{i + 1}</span>
-                        <span className="text-ink-900 font-medium">{c.name}</span>
-                      </div>
-                      <span className="text-emerald-500 font-bold text-[14px] tnum">{formatCurrency(c.value)}</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-soft overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${(c.value / maxCustomerSpend) * 100}%` }}
-                        transition={{ delay: 0.5 + i * 0.1, duration: 0.6 }}
-                        className="h-full rounded-full bg-gradient-to-r from-violet-600 to-purple-500"
-                      />
-                    </div>
+      {/* ── Two-up: Top customers + Service mix ────────────────────────────── */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        {/* Top customers */}
+        <div className="card-tile">
+          <div className="flex items-center justify-between border-b border-line px-5 py-4 sm:px-6">
+            <h3 className="text-[14px] font-semibold text-ink-900">Top customers</h3>
+            <span className="grid-label">Top 5</span>
+          </div>
+          <div className="space-y-4 px-5 py-5 sm:px-6">
+            {topCustomers.length === 0 && (
+              <p className="text-center text-[12.5px] italic text-ink-400 py-4">
+                No customer activity in this window
+              </p>
+            )}
+            {topCustomers.map((c, i) => (
+              <div key={c.name} className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="num w-4 text-[11.5px] text-ink-400">{i + 1}</span>
+                    <span className="text-[13px] font-medium text-ink-900">{c.name}</span>
                   </div>
-                ))}
+                  <span className="num text-[13px] font-semibold text-ink-900">
+                    {formatCurrency(c.value)}
+                  </span>
+                </div>
+                <div className="h-1 overflow-hidden rounded-full bg-soft">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${(c.value / maxCustomerSpend) * 100}%` }}
+                    transition={{ delay: 0.2 + i * 0.08, duration: 0.6 }}
+                    className="h-full rounded-full bg-mint-500"
+                  />
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+            ))}
+          </div>
+        </div>
 
-        {/* Service Mix + Geographic */}
-        <motion.div
-          initial={{ opacity: 0, x: 16 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.4 }}
-          className="space-y-5"
-        >
-          {/* Service Type Breakdown */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Service Mix</CardTitle>
-              <CardDescription>% of total jobs by service type</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3.5">
-                {SERVICE_DATA.map(s => (
-                  <div key={s.name} className="flex items-center gap-3">
-                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
-                    <span className="text-[14px] text-ink-700 flex-1">{s.name}</span>
-                    <div className="flex items-center gap-2.5">
-                      <div className="h-1.5 w-24 rounded-full bg-soft overflow-hidden">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${s.value}%` }}
-                          transition={{ delay: 0.6, duration: 0.5 }}
-                          className="h-full rounded-full"
-                          style={{ backgroundColor: s.color }}
-                        />
-                      </div>
-                      <span className="text-[12px] text-ink-500 w-8 text-right tnum">{s.value}%</span>
-                    </div>
+        {/* Service mix */}
+        <div className="card-tile flex flex-col">
+          <div className="flex items-center justify-between border-b border-line px-5 py-4 sm:px-6">
+            <h3 className="text-[14px] font-semibold text-ink-900">Service mix</h3>
+            <span className="grid-label">{periodJobs.length} jobs</span>
+          </div>
+          <div className="space-y-3.5 px-5 py-5 sm:px-6">
+            {serviceMix.length === 0 && (
+              <p className="text-center text-[12.5px] italic text-ink-400 py-4">
+                No jobs in this window
+              </p>
+            )}
+            {serviceMix.map((s) => (
+              <div key={s.name} className="flex items-center gap-3">
+                <span
+                  className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
+                  style={{ backgroundColor: s.color }}
+                />
+                <span className="flex-1 text-[12.5px] text-ink-700">{s.name}</span>
+                <div className="flex items-center gap-2.5">
+                  <div className="h-1 w-24 overflow-hidden rounded-full bg-soft">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${s.pct}%` }}
+                      transition={{ duration: 0.5 }}
+                      className="h-full rounded-full"
+                      style={{ backgroundColor: s.color }}
+                    />
                   </div>
-                ))}
+                  <span className="num w-9 text-right text-[11.5px] text-ink-500">{s.pct}%</span>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Geographic Breakdown */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Service Area</CardTitle>
-              <CardDescription>Long Beach 15-mile radius</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3.5">
-                {AREA_CITIES.map(a => (
-                  <div key={a.city} className="flex items-center gap-3">
-                    <span className="text-[14px] text-ink-700 w-32 flex-shrink-0">{a.city}</span>
-                    <div className="flex-1 h-1.5 rounded-full bg-soft overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${a.pct}%` }}
-                        transition={{ delay: 0.7, duration: 0.5 }}
-                        className="h-full rounded-full bg-gradient-to-r from-violet-500 to-purple-500"
-                      />
-                    </div>
-                    <span className="text-[12px] text-ink-500 w-14 text-right tnum">{a.jobs} jobs</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* ── Team Performance ──────────────────────────────────────────────── */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
-        <Card>
-          <CardHeader>
-            <CardTitle>Team Performance</CardTitle>
-            <CardDescription>All-time stats by team</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1">
-              {/* Header row */}
-              <div className="grid grid-cols-6 gap-4 px-3 pb-2.5 border-b border-ink-200 text-[11px] font-bold tracking-[0.09em] text-ink-400 uppercase">
-                <div className="col-span-2">Team</div>
-                <div>Jobs</div>
-                <div>Revenue</div>
-                <div>Completion</div>
-                <div>Rating</div>
+      {/* ── Service area + Team performance ────────────────────────────────── */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        {/* Service area */}
+        <div className="card-tile lg:col-span-1">
+          <div className="flex items-center justify-between border-b border-line px-5 py-4 sm:px-6">
+            <h3 className="text-[14px] font-semibold text-ink-900">Service area</h3>
+            <span className="grid-label">Long Beach 15mi</span>
+          </div>
+          <div className="space-y-3.5 px-5 py-5 sm:px-6">
+            {cityBreakdown.length === 0 && (
+              <p className="text-center text-[12.5px] italic text-ink-400 py-4">
+                No jobs in this window
+              </p>
+            )}
+            {cityBreakdown.map((a) => (
+              <div key={a.city} className="flex items-center gap-3">
+                <span className="w-28 flex-shrink-0 truncate text-[12.5px] text-ink-700">{a.city}</span>
+                <div className="h-1 flex-1 overflow-hidden rounded-full bg-soft">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${a.pct}%` }}
+                    transition={{ duration: 0.5 }}
+                    className="h-full rounded-full bg-mint-500"
+                  />
+                </div>
+                <span className="num w-12 text-right text-[11.5px] text-ink-500">{a.jobs}</span>
               </div>
+            ))}
+          </div>
+        </div>
 
-              {teamData.map((team) => (
-                <div
-                  key={team.team}
-                  className="grid grid-cols-6 gap-4 items-center px-3 py-4 rounded-lg hover:bg-hover transition-colors"
-                >
-                  <div className="col-span-2">
-                    <p className="text-[14px] font-medium text-ink-900">Team {team.team}</p>
-                    <p className="text-[12px] text-ink-400 mt-0.5">{team.cleaners}</p>
-                  </div>
-                  <div className="text-[14px] text-ink-700 tnum">{team.jobs}</div>
-                  <div className="text-[14px] font-medium text-emerald-500 tnum">{formatCurrency(team.revenue)}</div>
-                  <div>
-                    <span className={`text-[14px] font-medium tnum ${team.completionRate >= 80 ? 'text-emerald-500' : 'text-amber-500'}`}>
-                      {team.completionRate}%
-                    </span>
-                  </div>
-                  <div className="text-[14px] text-amber-500 tnum">⭐ {team.rating}</div>
+        {/* Team performance */}
+        <div className="card-tile lg:col-span-2 overflow-hidden">
+          <div className="flex items-center justify-between border-b border-line px-5 py-4 sm:px-6">
+            <h3 className="text-[14px] font-semibold text-ink-900">Team performance</h3>
+            <span className="grid-label">{teamData.length} teams</span>
+          </div>
+          <div>
+            {/* Header row */}
+            <div className="grid grid-cols-[1.5fr_60px_120px_100px_60px] gap-3 border-b border-line px-5 py-2.5 sm:px-6">
+              <div className="grid-label">Team</div>
+              <div className="grid-label text-right">Jobs</div>
+              <div className="grid-label text-right">Revenue</div>
+              <div className="grid-label text-right">Completion</div>
+              <div className="grid-label text-right">Rating</div>
+            </div>
+            {teamData.length === 0 && (
+              <p className="px-6 py-6 text-center text-[12.5px] italic text-ink-400">
+                No team activity in this window
+              </p>
+            )}
+            {teamData.map((team, i) => (
+              <div
+                key={team.team}
+                className={cn(
+                  'grid grid-cols-[1.5fr_60px_120px_100px_60px] items-center gap-3 px-5 py-3 sm:px-6',
+                  i < teamData.length - 1 && 'border-b border-line',
+                )}
+              >
+                <div className="min-w-0">
+                  <p className="text-[13px] font-medium text-ink-900">Team {team.team}</p>
+                  <p className="mt-0.5 text-[11px] text-ink-400 font-mono truncate">{team.cleaners || '—'}</p>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* ── AI Business Summary ───────────────────────────────────────────── */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
-        <Card className="border-violet-500/20">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-violet-400" />
-              <CardTitle className="text-violet-400">AI Business Summary</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-              {AI_INSIGHTS.map((insight, i) => (
-                <div
-                  key={i}
-                  className="flex items-start gap-3 rounded-[14px] bg-violet-500/[0.06] border border-violet-500/15 p-4"
-                >
-                  <span className="text-[18px] flex-shrink-0">{insight.icon}</span>
-                  <p className="text-[14px] text-ink-700 leading-relaxed">{insight.text}</p>
+                <div className="num text-right text-[13px] text-ink-700">{team.jobs}</div>
+                <div className="num text-right text-[13px] font-semibold text-ink-900">
+                  {formatCurrency(team.revenue)}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+                <div className="text-right">
+                  <span
+                    className={cn(
+                      'num text-[13px] font-medium',
+                      team.completionRate >= 80 ? 'text-emerald-500'
+                        : team.completionRate >= 60 ? 'text-amber-500'
+                        : 'text-rose-500',
+                    )}
+                  >
+                    {team.completionRate}%
+                  </span>
+                </div>
+                <div className="num text-right text-[13px] text-amber-500">★ {team.rating}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
+      {/* ── AI summary ─────────────────────────────────────────────────────── */}
+      <div className="card-tile">
+        <div className="flex items-center justify-between border-b border-line px-5 py-4 sm:px-6">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-7 w-7 items-center justify-center rounded-[6px] bg-mint-500/10">
+              <Sparkles className="h-[14px] w-[14px] text-mint-500" strokeWidth={2.25} />
+            </div>
+            <h3 className="text-[14px] font-semibold text-ink-900">AI Summary</h3>
+            <Badge variant="default">{PERIOD_LABEL[period]}</Badge>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-px bg-line md:grid-cols-2">
+          {generateInsights(period, totalRevenue, completedCount, completionRate, topCustomers).map((insight, i) => (
+            <div key={i} className="bg-card px-5 py-4 sm:px-6">
+              <span className="grid-label !text-mint-500/80">{insight.title}</span>
+              <p className="mt-2 text-[13px] leading-[1.55] text-ink-700">{insight.text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   )
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function Trend({ value }: { value: number }) {
+  const up = value >= 0
+  return (
+    <span
+      className={cn(
+        'flex items-center gap-1 font-mono text-[11px] font-medium',
+        up ? 'text-emerald-500' : 'text-rose-500',
+      )}
+    >
+      {up ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+      {up ? '+' : ''}{value}%
+    </span>
+  )
+}
+
+function generateInsights(
+  period: Period,
+  revenue: number,
+  completedCount: number,
+  completionRate: number,
+  topCustomers: { name: string; value: number }[],
+) {
+  const out: { title: string; text: string }[] = []
+  if (revenue > 0) {
+    out.push({
+      title: 'Revenue signal',
+      text: `${formatCurrency(revenue)} in ${PERIOD_LABEL[period]}, with ${completedCount} job${completedCount === 1 ? '' : 's'} completed.`,
+    })
+  }
+  if (completionRate < 80 && completionRate > 0) {
+    out.push({
+      title: 'Operational risk',
+      text: `Completion rate is ${completionRate}% — investigate cancellations or delays before they compound.`,
+    })
+  }
+  if (topCustomers[0]) {
+    const share = Math.round((topCustomers[0].value / Math.max(1, revenue)) * 100)
+    out.push({
+      title: 'Customer concentration',
+      text: `${topCustomers[0].name} drove ${share}% of revenue this window. Strong account, watch concentration risk.`,
+    })
+  }
+  if (completedCount > 0) {
+    out.push({
+      title: 'Recommendation',
+      text: 'Deep cleans typically carry 40% higher margin than standard cleans — promote them in re-engagement texts.',
+    })
+  }
+  while (out.length < 4) {
+    out.push({ title: 'Heads up', text: 'Pick a longer window to see trends and recommendations.' })
+  }
+  return out.slice(0, 4)
 }

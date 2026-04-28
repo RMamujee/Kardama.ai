@@ -1,5 +1,6 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Send, Clock, MapPin, CheckCircle2, Navigation,
@@ -158,6 +159,8 @@ const STATUS_BADGE: Record<string, 'default' | 'success' | 'warning' | 'neutral'
 const SECTION_LABEL = 'text-[11px] font-bold tracking-[0.09em] uppercase text-ink-400'
 
 export function MessagesClient({ jobs, customers, cleaners }: MessagesData) {
+  const router = useRouter()
+  const params = useSearchParams()
   const schedule = useMemo(() => buildJobSchedule(jobs, customers, cleaners), [jobs, customers, cleaners])
   const [selected, setSelected] = useState<EnrichedJob | null>(schedule[0] || null)
   const [activeTemplate, setActiveTemplate] = useState<TemplateKey>('on-way')
@@ -167,6 +170,22 @@ export function MessagesClient({ jobs, customers, cleaners }: MessagesData) {
   const [sentSet, setSentSet] = useState<Set<string>>(new Set())
   const [sending, setSending] = useState(false)
   const [mobilePanel, setMobilePanel] = useState<'routes' | 'compose' | 'sent'>('routes')
+
+  // Cross-link from /customers detail panel: ?customer=ID auto-selects the
+  // first matching job today. If there's no job today for that customer we
+  // fall through to the default selection.
+  useEffect(() => {
+    const customerId = params.get('customer')
+    if (!customerId) return
+    const match = schedule.find((s) => s.customer?.id === customerId)
+    if (match) {
+      setSelected(match)
+      setMessage(buildMessage(activeTemplate, match))
+      setMobilePanel('compose')
+    }
+    router.replace('/messages', { scroll: false })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params])
 
   function selectJob(item: EnrichedJob) {
     setSelected(item)

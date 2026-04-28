@@ -1,6 +1,7 @@
 'use client'
-import { Bell, Menu, Search, Plus, Command } from 'lucide-react'
-import { usePathname } from 'next/navigation'
+import { Bell, Menu, Search, Plus, Command, UserPlus, Calendar, LinkIcon } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import * as Popover from '@radix-ui/react-popover'
 
 const PAGE_META: Record<string, { title: string; sub: string }> = {
   '/dashboard':  { title: 'Dashboard',     sub: 'Saturday, April 25 · Long Beach' },
@@ -25,6 +26,7 @@ const PAGE_META: Record<string, { title: string; sub: string }> = {
  */
 export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
   const pathname = usePathname()
+  const router = useRouter()
   const info = Object.entries(PAGE_META).find(([k]) => pathname.startsWith(k))?.[1]
             ?? { title: 'Kardama', sub: '' }
 
@@ -88,14 +90,45 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
           <Search className="h-[15px] w-[15px]" />
         </button>
 
-        {/* Primary action */}
-        <button
-          type="button"
-          className="hidden sm:inline-flex h-9 items-center gap-1.5 rounded-[6px] bg-mint-500 px-3 text-[12.5px] font-semibold text-page transition-colors hover:bg-mint-400"
-        >
-          <Plus className="h-[15px] w-[15px]" strokeWidth={2.5} />
-          New
-        </button>
+        {/* Primary action — popover with create options */}
+        <Popover.Root>
+          <Popover.Trigger asChild>
+            <button
+              type="button"
+              className="hidden sm:inline-flex h-9 items-center gap-1.5 rounded-[6px] bg-mint-500 px-3 text-[12.5px] font-semibold text-page transition-colors hover:bg-mint-400"
+            >
+              <Plus className="h-[15px] w-[15px]" strokeWidth={2.5} />
+              New
+            </button>
+          </Popover.Trigger>
+          <Popover.Portal>
+            <Popover.Content
+              align="end"
+              sideOffset={6}
+              className="z-50 w-[260px] rounded-[10px] border border-line-strong bg-card p-1.5 shadow-[0_24px_64px_-16px_rgba(0,0,0,0.7)] anim-fade-in"
+            >
+              <NewMenuItem
+                icon={UserPlus}
+                title="Customer"
+                hint="Add a new client to your CRM"
+                onSelect={() => router.push('/customers?new=1')}
+              />
+              <NewMenuItem
+                icon={Calendar}
+                title="Job"
+                hint="Schedule a one-off cleaning"
+                onSelect={() => router.push('/scheduling')}
+              />
+              <NewMenuItem
+                icon={LinkIcon}
+                title="Booking link"
+                hint="Generate a shareable /book/<token>"
+                onSelect={() => router.push('/campaigns')}
+              />
+              <Popover.Arrow className="fill-line-strong" />
+            </Popover.Content>
+          </Popover.Portal>
+        </Popover.Root>
 
         {/* Notifications */}
         <button
@@ -117,5 +150,33 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
         </button>
       </div>
     </header>
+  )
+}
+
+/** Single popover item — operations-console treatment, mono eyebrow + title */
+function NewMenuItem({
+  icon: Icon, title, hint, onSelect,
+}: {
+  icon: React.ElementType
+  title: string
+  hint: string
+  onSelect: () => void
+}) {
+  return (
+    <Popover.Close asChild>
+      <button
+        type="button"
+        onClick={onSelect}
+        className="group flex w-full items-start gap-3 rounded-[6px] px-2.5 py-2.5 text-left transition-colors hover:bg-soft"
+      >
+        <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[6px] bg-mint-500/10 text-mint-500">
+          <Icon className="h-[14px] w-[14px]" strokeWidth={2} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[12.5px] font-semibold text-ink-900 leading-tight">{title}</p>
+          <p className="mt-0.5 text-[11.5px] text-ink-400 leading-tight">{hint}</p>
+        </div>
+      </button>
+    </Popover.Close>
   )
 }

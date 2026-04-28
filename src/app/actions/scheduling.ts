@@ -161,6 +161,16 @@ export async function declineBookingRequest(requestId: string): Promise<void> {
   revalidatePath('/scheduling')
 }
 
+export async function deleteJob(jobId: string): Promise<void> {
+  await requireOwner()
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase.from('jobs').delete().eq('id', jobId)
+  if (error) throw new Error(error.message)
+  revalidatePath('/scheduling')
+  revalidatePath('/dashboard')
+  revalidatePath('/map')
+}
+
 export async function updateJob(
   jobId: string,
   patch: Partial<{

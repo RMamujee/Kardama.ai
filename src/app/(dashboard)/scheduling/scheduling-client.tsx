@@ -1,6 +1,6 @@
 'use client'
 import { useState, useMemo, useTransition } from 'react'
-import { ChevronLeft, ChevronRight, Plus, Sparkles, Inbox, CheckCircle2, XCircle, Clock, Pencil } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Sparkles, Inbox, CheckCircle2, XCircle, Clock, Pencil, Trash2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -8,7 +8,7 @@ import { Avatar } from '@/components/ui/avatar'
 import { useSchedulingStore } from '@/store/useSchedulingStore'
 import { formatTime, getServiceLabel, cn, formatCurrency } from '@/lib/utils'
 import { BookingWizard } from '@/components/scheduling/BookingWizard'
-import { acceptBookingRequest, declineBookingRequest, updateJob } from '@/app/actions/scheduling'
+import { acceptBookingRequest, declineBookingRequest, updateJob, deleteJob } from '@/app/actions/scheduling'
 import type { Cleaner, Customer, Job } from '@/types'
 import type { BookingRequest } from '@/lib/data'
 
@@ -116,6 +116,8 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
   const [view, setView] = useState<'week' | 'month'>('week')
   const [monthOffset, setMonthOffset] = useState(0)
   const [acceptError, setAcceptError] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const jobsByDay = useMemo(() => {
     const map: Record<string, Job[]> = {}
@@ -140,6 +142,30 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
   }, [jobs, monthDates])
 
   const today = fmtDate(new Date())
+
+  const selectedCustomer = useMemo(
+    () => selectedJob ? customers.find(c => c.id === selectedJob.customerId) ?? null : null,
+    [selectedJob, customers],
+  )
+
+  function handleDelete() {
+    if (!selectedJob) return
+    setIsDeleting(true)
+    startTransition(async () => {
+      try {
+        await deleteJob(selectedJob.id)
+        setSelectedJob(null)
+        setConfirmDelete(false)
+        setEditMode(false)
+        setDraft(null)
+      } catch (e) {
+        setAcceptError(e instanceof Error ? e.message : 'Failed to delete job')
+      } finally {
+        setIsDeleting(false)
+        setConfirmDelete(false)
+      }
+    })
+  }
 
   function handleAccept(id: string) {
     setActionTarget(id)
@@ -509,17 +535,45 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
           <div className="card">
             <div className="flex items-center justify-between border-b border-line px-5 py-4">
               <h2 className="text-[14.5px] font-semibold text-ink-900 tracking-[-0.01em]">
-                {editMode ? 'Edit Job' : 'Job Details'}
+                {editMode ? 'Edit Job' : confirmDelete ? 'Delete Job?' : 'Job Details'}
               </h2>
               <div className="flex items-center gap-2">
-                {!editMode && (
-                  <button
-                    onClick={() => openEdit(selectedJob)}
-                    className="flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-[12px] font-medium text-ink-600 hover:border-mint-500/40 hover:text-mint-500 transition-colors"
-                  >
-                    <Pencil className="h-3 w-3" />
-                    Edit
-                  </button>
+                {!editMode && !confirmDelete && (
+                  <>
+                    <button
+                      onClick={() => openEdit(selectedJob)}
+                      className="flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-[12px] font-medium text-ink-600 hover:border-mint-500/40 hover:text-mint-500 transition-colors"
+                    >
+                      <Pencil className="h-3 w-3" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => setConfirmDelete(true)}
+                      className="flex items-center gap-1.5 rounded-lg border border-rose-500/30 px-3 py-1.5 text-[12px] font-medium text-rose-500 hover:bg-rose-500/10 transition-colors"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      Delete
+                    </button>
+                  </>
+                )}
+                {confirmDelete && (
+                  <>
+                    <p className="text-[12px] text-ink-500 mr-1">This cannot be undone.</p>
+                    <button
+                      onClick={() => setConfirmDelete(false)}
+                      disabled={isDeleting}
+                      className="rounded-lg border border-line px-3 py-1.5 text-[12px] font-medium text-ink-500 hover:text-ink-700 disabled:opacity-40 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      disabled={isDeleting}
+                      className="rounded-lg bg-rose-500 px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-rose-600 disabled:opacity-50 transition-colors"
+                    >
+                      {isDeleting ? 'Deleting…' : 'Yes, delete'}
+                    </button>
+                  </>
                 )}
                 {editMode && (
                   <>
@@ -539,19 +593,35 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
                     </button>
                   </>
                 )}
-                <button
-                  onClick={() => { setSelectedJob(null); setEditMode(false); setDraft(null) }}
-                  className="text-[12px] text-ink-400 hover:text-ink-700 bg-transparent border-0 cursor-pointer transition-colors ml-1"
-                >
-                  Close
-                </button>
+                {!confirmDelete && (
+                  <button
+                    onClick={() => { setSelectedJob(null); setEditMode(false); setDraft(null); setConfirmDelete(false) }}
+                    className="text-[12px] text-ink-400 hover:text-ink-700 bg-transparent border-0 cursor-pointer transition-colors ml-1"
+                  >
+                    Close
+                  </button>
+                )}
               </div>
             </div>
 
             {/* Read mode */}
-            {!editMode && (
+            {!editMode && !confirmDelete && (
               <div className="p-5">
                 <div className="grid grid-cols-2 gap-5">
+                  {selectedCustomer && (
+                    <div className="col-span-2 rounded-lg border border-line bg-soft px-4 py-3 flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-[12px] font-medium text-ink-500 mb-0.5">Customer</p>
+                        <p className="text-[13px] font-semibold text-ink-900">{selectedCustomer.name}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[12px] font-medium text-ink-500 mb-0.5">Phone</p>
+                        <a href={`tel:${selectedCustomer.phone}`} className="text-[13px] font-medium text-mint-500 hover:text-mint-600">
+                          {selectedCustomer.phone}
+                        </a>
+                      </div>
+                    </div>
+                  )}
                   <div>
                     <p className="text-[12px] font-medium text-ink-500 mb-1.5">Address</p>
                     <p className="text-[13px] font-medium text-ink-900">{selectedJob.address}</p>
@@ -597,6 +667,17 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Delete confirmation body */}
+            {confirmDelete && (
+              <div className="p-5 text-center space-y-3">
+                <p className="text-[13px] text-ink-700">
+                  Delete the job at <span className="font-semibold text-ink-900">{selectedJob.address.split(',')[0]}</span> on{' '}
+                  <span className="font-semibold text-ink-900">{fmtDisplayDate(selectedJob.scheduledDate)}</span>?
+                </p>
+                <p className="text-[12px] text-ink-400">This will permanently remove it from the schedule.</p>
               </div>
             )}
 

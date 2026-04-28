@@ -120,6 +120,7 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
   const [showTraffic, setShowTraffic]   = useState(true)
   const [trafficFailed, setTrafficFailed] = useState(false)
   const [overrides, setOverrides]       = useState<Record<string, RouteStop['status']>>({})
+  const [unavailableTeamIds, setUnavailableTeamIds] = useState<Set<string>>(new Set())
   const [realRoutes, setRealRoutes]     = useState<Record<string, RealRoute | null>>({})
   const [loadingRoutes, setLoadingRoutes] = useState(false)
   const [gpsPos, setGpsPos]             = useState<GpsPos | null>(null)
@@ -143,11 +144,43 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
     return jobs.map(j => overrides[j.id] === 'cancelled' ? { ...j, status: 'cancelled' as const } : j)
   }, [jobs, overrides])
 
+  // Cleaners filtered to those whose team is still available.
+  const availableCleaners = useMemo(
+    () => cleaners.filter(c => !unavailableTeamIds.has(c.teamId)),
+    [cleaners, unavailableTeamIds],
+  )
+
+  // Available team IDs in stable order for round-robin redistribution.
+  const availableTeamIdList = useMemo(
+    () => [...new Set(availableCleaners.map(c => c.teamId))],
+    [availableCleaners],
+  )
+
+  // Redistribute jobs from unavailable teams across remaining available teams.
+  const redistributedJobs = useMemo(() => {
+    if (unavailableTeamIds.size === 0) return todayJobs
+    if (availableTeamIdList.length === 0) return todayJobs
+
+    let rrIdx = 0
+    return todayJobs.map(job => {
+      if (job.status === 'cancelled') return job
+      const lead = cleaners.find(c => c.id === job.cleanerIds[0])
+      if (!lead || !unavailableTeamIds.has(lead.teamId)) return job
+
+      // Round-robin to an available team's lead cleaner.
+      const newTeamId = availableTeamIdList[rrIdx % availableTeamIdList.length]
+      rrIdx++
+      const newLead = availableCleaners.find(c => c.teamId === newTeamId)
+      if (!newLead) return job
+      return { ...job, cleanerIds: [newLead.id, ...job.cleanerIds.slice(1)] }
+    })
+  }, [todayJobs, cleaners, unavailableTeamIds, availableTeamIdList, availableCleaners])
+
   // First pass: build routes with haversine estimates so the UI shows
   // something immediately. Then we ask OSRM for real geometry below.
   const haversineRoutes = useMemo(
-    () => buildOptimizedRoutes(todayJobs, cleaners),
-    [todayJobs, cleaners],
+    () => buildOptimizedRoutes(redistributedJobs, availableCleaners),
+    [redistributedJobs, availableCleaners],
   )
 
   // Re-build using OSRM real durations once they arrive.
@@ -162,9 +195,9 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
       }
     }
     return Object.keys(overridesByTeam).length > 0
-      ? buildOptimizedRoutes(todayJobs, cleaners, overridesByTeam)
+      ? buildOptimizedRoutes(redistributedJobs, availableCleaners, overridesByTeam)
       : haversineRoutes
-  }, [haversineRoutes, todayJobs, realRoutes])
+  }, [haversineRoutes, redistributedJobs, availableCleaners, realRoutes])
 
   // Fetch real road geometry from OSRM whenever the route shape changes.
   useEffect(() => {
@@ -197,6 +230,15 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
       if (status === null) delete next[jobId]
       else next[jobId] = status
       saveOverrides(next)
+      return next
+    })
+  }
+
+  function toggleTeamAvailability(teamId: string) {
+    setUnavailableTeamIds(prev => {
+      const next = new Set(prev)
+      if (next.has(teamId)) next.delete(teamId)
+      else next.add(teamId)
       return next
     })
   }
@@ -236,6 +278,8 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
       <RoutingPanel
         routes={routes}
         cleaners={cleaners}
+        unavailableTeamIds={unavailableTeamIds}
+        onToggleTeamAvailability={toggleTeamAvailability}
         overrides={overrides}
         onSetStopStatus={setStopStatus}
         gpsTracking={gpsTracking}

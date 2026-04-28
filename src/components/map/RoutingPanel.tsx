@@ -1,12 +1,12 @@
 'use client'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Cleaner } from '@/types'
 import { TeamRoute, RouteStop, findRescheduleSlots } from '@/lib/routing-engine'
 import { cn } from '@/lib/utils'
 import {
   Navigation, WifiOff, Wifi, Clock, ChevronDown, ChevronUp,
   MessageSquare, X, AlertTriangle, RotateCcw, Send, CheckCircle,
-  MapPin, DollarSign, ExternalLink, Undo2,
+  MapPin, DollarSign, ExternalLink, Undo2, UserX, UserCheck,
 } from 'lucide-react'
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -308,11 +308,12 @@ function StopRow({ stop, teamColor, teamName, isCancelled, onCancel, onUncancel,
 }
 
 // ─── Team card ────────────────────────────────────────────────────────────────
-function TeamCard({ route, overrides, onSetStopStatus, onFlyTo }: {
+function TeamCard({ route, overrides, onSetStopStatus, onFlyTo, onMarkUnavailable }: {
   route: TeamRoute
   overrides: Record<string, RouteStop['status']>
   onSetStopStatus: (jobId: string, status: RouteStop['status'] | null) => void
   onFlyTo: (lat: number, lng: number) => void
+  onMarkUnavailable: () => void
 }) {
   const [open, setOpen] = useState(false)
   const active = route.stops.filter(s => s.status !== 'cancelled')
@@ -323,10 +324,10 @@ function TeamCard({ route, overrides, onSetStopStatus, onFlyTo }: {
 
   return (
     <div className="rounded-[14px] border border-ink-200 overflow-hidden">
-      <button onClick={() => setOpen(v => !v)}
-        className="w-full flex items-start gap-2.5 p-3 bg-card hover:bg-hover transition-colors text-left">
+      {/* Header: team name + actions — split so buttons aren't nested */}
+      <div className="flex items-start gap-2.5 p-3 bg-card hover:bg-hover transition-colors">
         <div className="mt-1 h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ background: route.color }} />
-        <div className="flex-1 min-w-0">
+        <button onClick={() => setOpen(v => !v)} className="flex-1 min-w-0 text-left">
           <p className="text-[12px] font-semibold text-ink-900 truncate">{teamName}</p>
           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
             <span className="text-[11px] text-ink-500">{active.length} stops</span>
@@ -338,10 +339,20 @@ function TeamCard({ route, overrides, onSetStopStatus, onFlyTo }: {
             <span className="text-[11px] font-semibold text-emerald-500">${revenue}</span>
             <span className="ml-auto text-[11px] text-ink-400">{route.efficiency}% util</span>
           </div>
+        </button>
+        <div className="flex items-center gap-1 flex-shrink-0 mt-0.5">
+          <button
+            onClick={onMarkUnavailable}
+            title="Mark team unavailable — jobs will be redistributed"
+            className="h-6 w-6 flex items-center justify-center rounded border border-ink-200 text-ink-400 hover:text-rose-500 hover:border-rose-500/30 transition-colors"
+          >
+            <UserX className="h-2.5 w-2.5" />
+          </button>
+          <button onClick={() => setOpen(v => !v)} className="h-6 w-6 flex items-center justify-center">
+            {open ? <ChevronUp className="h-3.5 w-3.5 text-ink-400" /> : <ChevronDown className="h-3.5 w-3.5 text-ink-400" />}
+          </button>
         </div>
-        {open ? <ChevronUp className="h-3.5 w-3.5 text-ink-400 flex-shrink-0 mt-0.5" />
-               : <ChevronDown className="h-3.5 w-3.5 text-ink-400 flex-shrink-0 mt-0.5" />}
-      </button>
+      </div>
 
       {navUrl && active.length > 0 && (
         <div className="px-3 pb-2 pt-1">
@@ -393,6 +404,8 @@ function TeamCard({ route, overrides, onSetStopStatus, onFlyTo }: {
 interface Props {
   routes: TeamRoute[]
   cleaners: Cleaner[]
+  unavailableTeamIds: Set<string>
+  onToggleTeamAvailability: (teamId: string) => void
   overrides: Record<string, RouteStop['status']>
   onSetStopStatus: (jobId: string, status: RouteStop['status'] | null) => void
   gpsTracking: boolean
@@ -404,7 +417,8 @@ interface Props {
 
 // ─── RoutingPanel ─────────────────────────────────────────────────────────────
 export function RoutingPanel({
-  routes, cleaners, overrides, onSetStopStatus,
+  routes, cleaners, unavailableTeamIds, onToggleTeamAvailability,
+  overrides, onSetStopStatus,
   gpsTracking, trackedCleaner, onStartGPS, onStopGPS, onFlyTo,
 }: Props) {
   const today = new Date()
@@ -414,6 +428,17 @@ export function RoutingPanel({
   const totalKm   = routes.reduce((s, r) => s + r.totalKm, 0)
   const totalRev  = routes.reduce((s, r) => s + r.stops.filter(x => x.status !== 'cancelled').reduce((a, x) => a + x.job.price, 0), 0)
   const cancelledCount = Object.values(overrides).filter(s => s === 'cancelled').length
+
+  // Groups of cleaners for each unavailable team (for the restore section).
+  const unavailableTeamGroups = useMemo(() => {
+    const map = new Map<string, Cleaner[]>()
+    for (const c of cleaners) {
+      if (!unavailableTeamIds.has(c.teamId)) continue
+      if (!map.has(c.teamId)) map.set(c.teamId, [])
+      map.get(c.teamId)!.push(c)
+    }
+    return [...map.entries()].map(([teamId, members]) => ({ teamId, members }))
+  }, [cleaners, unavailableTeamIds])
 
   return (
     <div className="flex w-72 flex-col overflow-hidden border-r border-ink-200 bg-rail">
@@ -441,8 +466,13 @@ export function RoutingPanel({
           </div>
         </div>
         <p className="text-[11px] text-ink-400 mt-1">8:00 AM – 4:00 PM · 5 teams of 2</p>
+        {unavailableTeamIds.size > 0 && (
+          <p className="text-[11px] text-rose-400 mt-1">
+            ⚠ {unavailableTeamIds.size} team{unavailableTeamIds.size > 1 ? 's' : ''} unavailable · jobs redistributed
+          </p>
+        )}
         {cancelledCount > 0 && (
-          <p className="text-[11px] text-amber-500 mt-1">{cancelledCount} cancelled (saved for today)</p>
+          <p className="text-[11px] text-amber-500 mt-1">{cancelledCount} stop{cancelledCount > 1 ? 's' : ''} cancelled (saved for today)</p>
         )}
       </div>
 
@@ -482,18 +512,49 @@ export function RoutingPanel({
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
-        {routes.length === 0 ? (
+        {routes.length === 0 && unavailableTeamGroups.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 text-center">
             <MapPin className="h-8 w-8 text-ink-300 mb-2" />
             <p className="text-[12px] text-ink-400">No routes for today</p>
             <p className="text-[11px] text-ink-400 mt-1">Jobs scheduled for today will appear here</p>
           </div>
         ) : (
-          routes.map(route => (
-            <TeamCard key={route.teamId} route={route}
-              overrides={overrides}
-              onSetStopStatus={onSetStopStatus} onFlyTo={onFlyTo} />
-          ))
+          <>
+            {routes.map(route => (
+              <TeamCard key={route.teamId} route={route}
+                overrides={overrides}
+                onSetStopStatus={onSetStopStatus}
+                onFlyTo={onFlyTo}
+                onMarkUnavailable={() => onToggleTeamAvailability(route.teamId)} />
+            ))}
+
+            {unavailableTeamGroups.length > 0 && (
+              <div className="space-y-1.5 pt-1">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-rose-400 px-1">
+                  Unavailable
+                </p>
+                {unavailableTeamGroups.map(({ teamId, members }) => (
+                  <div key={teamId} className="rounded-[14px] border border-rose-500/20 bg-rose-500/5 overflow-hidden">
+                    <div className="flex items-center gap-2.5 p-3">
+                      <div className="h-2.5 w-2.5 rounded-full flex-shrink-0 bg-rose-400" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-semibold text-ink-500 truncate">
+                          {members.map(c => c.name.split(' ')[0]).join(' & ')}
+                        </p>
+                        <p className="text-[11px] text-rose-400 mt-0.5">Emergency — jobs redistributed</p>
+                      </div>
+                      <button
+                        onClick={() => onToggleTeamAvailability(teamId)}
+                        className="flex items-center gap-1 rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[11px] font-medium text-emerald-500 hover:bg-emerald-500/20 transition-colors flex-shrink-0"
+                      >
+                        <UserCheck className="h-2.5 w-2.5" /> Restore
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 

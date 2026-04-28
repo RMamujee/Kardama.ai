@@ -113,6 +113,7 @@ export function LiveMapView() {
   const [mounted, setMounted]           = useState(false)
   const [satellite, setSatellite]       = useState(false)
   const [showTraffic, setShowTraffic]   = useState(true)
+  const [trafficFailed, setTrafficFailed] = useState(false)
   const [overrides, setOverrides]       = useState<Record<string, RouteStop['status']>>({})
   const [realRoutes, setRealRoutes]     = useState<Record<string, RealRoute | null>>({})
   const [loadingRoutes, setLoadingRoutes] = useState(false)
@@ -250,11 +251,15 @@ export function LiveMapView() {
           {showTraffic && (
             <TileLayer
               key="traffic"
-              url={`https://api.tomtom.com/traffic/map/4/tile/flow/relative/{z}/{x}/{y}.png?key=${process.env.NEXT_PUBLIC_TOMTOM_API_KEY}`}
+              url={`https://api.tomtom.com/traffic/map/4/tile/flow/rainbow/{z}/{x}/{y}.png?key=${process.env.NEXT_PUBLIC_TOMTOM_API_KEY}`}
               attribution='© TomTom'
               maxZoom={19}
-              opacity={0.7}
+              opacity={0.8}
               tileSize={256}
+              eventHandlers={{
+                tileerror: () => setTrafficFailed(true),
+                tileload:  () => setTrafficFailed(false),
+              }}
             />
           )}
 
@@ -354,12 +359,16 @@ export function LiveMapView() {
 
           {/* Traffic toggle */}
           <button
-            onClick={() => setShowTraffic(v => !v)}
+            onClick={() => { setShowTraffic(v => !v); setTrafficFailed(false) }}
             className={cn(
-              'px-[14px] py-[7px] text-[12px] font-semibold cursor-pointer rounded-xl border border-ink-200 shadow-[0_4px_12px_rgba(0,0,0,0.4)] transition-colors',
-              showTraffic ? 'bg-orange-500 text-white' : 'bg-card text-ink-400 hover:text-ink-700'
+              'px-[14px] py-[7px] text-[12px] font-semibold cursor-pointer rounded-xl border shadow-[0_4px_12px_rgba(0,0,0,0.4)] transition-colors',
+              showTraffic && trafficFailed ? 'bg-orange-500 text-white border-rose-400'
+                : showTraffic             ? 'bg-orange-500 text-white border-ink-200'
+                :                           'bg-card text-ink-400 border-ink-200 hover:text-ink-700'
             )}
-          >Traffic</button>
+          >
+            Traffic{showTraffic && trafficFailed ? ' ⚠' : ''}
+          </button>
 
           {/* Centre on GPS */}
           <button

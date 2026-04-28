@@ -14,8 +14,6 @@ import { cn } from '@/lib/utils'
 
 // Free tile layers — no API key required
 const TILE_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-const TOMTOM_KEY = process.env.NEXT_PUBLIC_TOMTOM_API_KEY ?? ''
-const TILE_TRAFFIC = `https://api.tomtom.com/traffic/map/4/tile/flow/relative/{z}/{x}/{y}.png?key=${TOMTOM_KEY}`
 const TILE_SAT  = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
 const ATTR_CARTO = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>'
 const ATTR_SAT   = '© Esri — Source: Esri, Maxar, GeoEye, Earthstar Geographics'
@@ -249,12 +247,14 @@ export function LiveMapView() {
           style={{ height: '100%', width: '100%' }} zoomControl={false}>
 
           <TileLayer key={satellite ? 'sat' : 'dark'} url={tileUrl} attribution={tileAttr} maxZoom={19} />
-          {showTraffic && TOMTOM_KEY && (
+          {showTraffic && (
             <TileLayer
-              url={TILE_TRAFFIC}
+              key="traffic"
+              url={`https://api.tomtom.com/traffic/map/4/tile/flow/relative/{z}/{x}/{y}.png?key=${process.env.NEXT_PUBLIC_TOMTOM_API_KEY}`}
               attribution='© TomTom'
               maxZoom={19}
-              opacity={0.65}
+              opacity={0.7}
+              tileSize={256}
             />
           )}
 

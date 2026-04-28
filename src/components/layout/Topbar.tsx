@@ -64,14 +64,14 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
         </div>
 
         {/* Search bar — opens palette */}
-        <div className="hidden lg:flex flex-1 max-w-[480px] mx-2">
+        <div className="hidden lg:flex flex-1 max-w-[440px] mx-2">
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
-            className="group flex h-9 w-full items-center gap-2.5 rounded-[8px] border border-line bg-soft/40 px-3 text-left text-[12.5px] text-ink-400 transition-colors hover:border-line-strong hover:bg-soft hover:text-ink-500"
+            className="group flex h-10 w-full items-center gap-2.5 rounded-full bg-card px-4 text-left text-[13px] text-ink-500 transition-colors hover:bg-soft"
           >
-            <Search className="h-[14px] w-[14px] flex-shrink-0" />
-            <span className="flex-1 truncate">Search…</span>
+            <Search className="h-[15px] w-[15px] flex-shrink-0" />
+            <span className="flex-1 truncate font-medium">Search customers, jobs…</span>
             <span className="kbd flex items-center gap-0.5">
               <Command className="h-[10px] w-[10px]" />K
             </span>
@@ -94,19 +94,19 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
             type="button"
             aria-label="Search"
             onClick={() => setPaletteOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-[8px] border border-line bg-soft/40 text-ink-400 transition-colors hover:bg-soft hover:text-ink-900 hover:border-line-strong lg:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-elev text-ink-500 transition-colors hover:bg-hover hover:text-ink-900 lg:hidden"
           >
             <Search className="h-[15px] w-[15px]" />
           </button>
 
-          {/* + New popover */}
+          {/* + New popover — Spotify-style pill */}
           <Popover.Root>
             <Popover.Trigger asChild>
               <button
                 type="button"
-                className="hidden sm:inline-flex h-9 items-center gap-1.5 rounded-[8px] bg-gradient-to-b from-mint-400 to-mint-600 px-3 text-[12.5px] font-semibold text-page transition-[filter,box-shadow] hover:brightness-110 shadow-[0_2px_8px_-2px_rgba(94,234,212,0.45)]"
+                className="hidden sm:inline-flex h-9 items-center gap-1.5 rounded-full bg-mint-500 px-4 text-[13px] font-bold text-black transition-[transform,filter] hover:scale-[1.04] hover:bg-mint-400 active:scale-[0.98] shadow-[0_2px_12px_-2px_rgba(30,215,96,0.4)]"
               >
-                <Plus className="h-[15px] w-[15px]" strokeWidth={2.5} />
+                <Plus className="h-[15px] w-[15px]" strokeWidth={2.75} />
                 New
               </button>
             </Popover.Trigger>
@@ -143,9 +143,9 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
             <button
               type="button"
               aria-label="Notifications"
-              className="relative flex h-9 w-9 items-center justify-center rounded-[8px] border border-line bg-soft/40 text-ink-400 transition-colors hover:bg-soft hover:text-ink-900 hover:border-line-strong"
+              className="relative flex h-9 w-9 items-center justify-center rounded-full bg-elev text-ink-500 transition-colors hover:bg-hover hover:text-ink-900"
             >
-              <Bell className="h-[15px] w-[15px]" strokeWidth={1.75} />
+              <Bell className="h-[15px] w-[15px]" strokeWidth={2} />
               <span className="absolute top-1.5 right-1.5 h-[7px] w-[7px] rounded-full bg-mint-500 ring-2 ring-page" />
             </button>
           </NotificationsPopover>

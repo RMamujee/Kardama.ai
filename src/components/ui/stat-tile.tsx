@@ -45,12 +45,12 @@ export function StatTile({
         </div>
       </div>
 
-      <p className="num mt-3 text-[30px] font-semibold text-ink-900 leading-none tracking-[-0.025em]">
+      <p className="num mt-3 text-[32px] font-bold text-ink-900 leading-none tracking-[-0.03em]">
         {value}
       </p>
 
       {sub && (
-        <p className="mt-3 text-[12px] text-ink-500 truncate">{sub}</p>
+        <p className="mt-3 text-[12.5px] text-ink-500 truncate font-medium">{sub}</p>
       )}
     </div>
   )

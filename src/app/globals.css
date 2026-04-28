@@ -1,55 +1,57 @@
 @import "tailwindcss";
 
 /* ═════════════════════════════════════════════════════════════════════════
-   KARDAMA — Modern Refined SaaS
-   Linear / Stripe Dashboard / Cron-inspired. Pure near-black canvas,
-   soft elevation, mint reserved as a single signal accent. Sans-serif
-   throughout. No terminal-vibe monospace dominance. Generous whitespace.
+   KARDAMA — Spotify-inspired palette
+   Pure black canvas, vivid Spotify green as the brand signal, neutral-gray
+   ink hierarchy. Card surfaces step from #121212 → #181818 → #282828 like
+   Spotify's app does. No mint, no purple — just the green.
+   The token variable names (--color-mint-*) are preserved so the rest of
+   the system cascades without per-component refactors; they now hold green.
    ═════════════════════════════════════════════════════════════════════════ */
 
 @theme {
   /* ── Surfaces ─────────────────────────────────────────────────────────
-     Near-black canvas with a hint of cool. Cards float just slightly above
-     the canvas — the elevation is established by border + subtle gradient,
-     not by big drop shadows. */
-  --color-page:    #0A0A0C;
-  --color-rail:    #0C0C0F;     /* sidebar */
-  --color-card:    #131316;     /* primary surface */
-  --color-soft:    #18181C;     /* hover / nested surface */
-  --color-hover:   #1E1E23;     /* row hover */
-  --color-elev:    #232329;     /* button background */
-  --color-line:    #232328;     /* subtle dividers */
-  --color-line-strong: #2E2E34; /* card borders, hover dividers */
+     Pure-black canvas. Cards step up the same way Spotify's main + sidebar
+     surfaces do: page #000, content #121212, hover #1A1A1A, elev #282828. */
+  --color-page:    #000000;
+  --color-rail:    #000000;     /* sidebar — pure black like Spotify */
+  --color-card:    #121212;     /* primary surface */
+  --color-soft:    #181818;     /* hover / nested surface */
+  --color-hover:   #282828;     /* row hover (Spotify's signature) */
+  --color-elev:    #2A2A2A;     /* button / chip background */
+  --color-line:    #1F1F1F;     /* subtle dividers */
+  --color-line-strong: #2A2A2A; /* card borders, hover dividers */
 
   /* ── Ink (text) ──────────────────────────────────────────────────────
-     Warmer neutrals than pure gray. Reads less "code editor", more "polished product". */
-  --color-ink-50:  #1A1A1F;
-  --color-ink-100: #25252B;
-  --color-ink-200: #34343C;
-  --color-ink-300: #54545E;
-  --color-ink-400: #6F6F7A;     /* secondary text */
-  --color-ink-500: #92929D;     /* tertiary text */
-  --color-ink-600: #B7B7C0;
-  --color-ink-700: #DCDCE0;     /* primary text */
-  --color-ink-900: #F5F5F7;     /* headings */
+     Spotify uses neutral grays (no warm tint). Pure white for primary,
+     #B3B3B3 for secondary — the signature secondary text color. */
+  --color-ink-50:  #1A1A1A;
+  --color-ink-100: #2A2A2A;
+  --color-ink-200: #404040;
+  --color-ink-300: #535353;
+  --color-ink-400: #727272;     /* tertiary text */
+  --color-ink-500: #A7A7A7;     /* secondary text (Spotify's "subtle" gray) */
+  --color-ink-600: #B3B3B3;     /* secondary headings */
+  --color-ink-700: #E5E5E5;     /* primary body */
+  --color-ink-900: #FFFFFF;     /* headings — pure white like Spotify */
 
-  /* ── Mint (signal accent) ────────────────────────────────────────────
-     Used SPARINGLY: primary buttons, active nav state, focus rings, AI
-     status pulse. Not for cards, dividers, or hover bgs. */
-  --color-mint-50:  #052A23;
-  --color-mint-100: #0A3D32;
-  --color-mint-200: #145045;
-  --color-mint-300: #1F7868;
-  --color-mint-400: #2DB59C;
-  --color-mint-500: #5EEAD4;
-  --color-mint-600: #2DD4BF;
-  --color-mint-700: #14B8A6;
+  /* ── Spotify Green (the brand) ───────────────────────────────────────
+     The token name stays "mint" so existing components cascade — but the
+     values are Spotify's iconic greens. */
+  --color-mint-50:  #052914;     /* deep tint */
+  --color-mint-100: #0A3A1E;
+  --color-mint-200: #0F4F2C;
+  --color-mint-300: #169C46;
+  --color-mint-400: #1DB954;     /* Spotify primary green */
+  --color-mint-500: #1ED760;     /* Spotify highlight green (hover/active) */
+  --color-mint-600: #1DB954;     /* iconic Spotify */
+  --color-mint-700: #169C46;     /* darker for active states */
 
   /* ── Status colors (only for actual status signals) ───────────────── */
-  --color-emerald-500: #22C55E;
-  --color-amber-500:   #F59E0B;
-  --color-rose-500:    #EF4444;
-  --color-blue-glow:   #60A5FA;  /* used for info badges only */
+  --color-emerald-500: #1ED760;  /* alias to Spotify green for "success" */
+  --color-amber-500:   #FFA42B;
+  --color-rose-500:    #F15E6C;
+  --color-blue-glow:   #4FA8E5;
 
   /* ── Legacy compat — keep old tokens mapped so unmigrated pages still render */
   --color-violet-50:  var(--color-mint-50);
@@ -77,7 +79,7 @@
   --shadow-card:    0 1px 0 0 rgba(255,255,255,0.02) inset, 0 1px 2px 0 rgba(0,0,0,0.4), 0 8px 24px -12px rgba(0,0,0,0.5);
   --shadow-elev:    0 1px 0 0 rgba(255,255,255,0.04) inset, 0 8px 32px -8px rgba(0,0,0,0.6), 0 24px 64px -16px rgba(0,0,0,0.7);
   --shadow-pop:     0 24px 64px -8px rgba(0,0,0,0.7), 0 1px 0 0 rgba(255,255,255,0.04) inset;
-  --shadow-mint:    0 0 0 3px rgba(94,234,212,0.18);
+  --shadow-mint:    0 0 0 3px rgba(30,215,96,0.22);   /* focus ring — Spotify green */
 
   /* ── Type ────────────────────────────────────────────────────────────
      Sans for everything. Mono only when explicitly invoked via .num/.tnum
@@ -156,12 +158,9 @@ body {
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: 'cv11', 'ss01', 'ss03';
 
-  /* Subtle ambient glow at the corners — gives the app depth without being decorative.
-     Single mint highlight, very low opacity, fixed so it doesn't scroll. */
-  background-image:
-    radial-gradient(900px 500px at 100% 0%, rgba(94,234,212,0.04), transparent 70%),
-    radial-gradient(700px 500px at 0% 100%, rgba(94,234,212,0.02), transparent 70%);
-  background-attachment: fixed;
+  /* Spotify-style: pure black canvas, no chromatic ambient glow. The green
+     accent is loud enough on its own; a green page-corner glow would feel
+     like a budget knock-off. Keep it black. */
 }
 
 /* ── Typography utilities ───────────────────────────────────────────────── */
@@ -223,7 +222,7 @@ body {
 
 /* ── Selection ─────────────────────────────────────────────────────────── */
 ::selection {
-  background: rgba(94,234,212,0.25);
+  background: rgba(30,215,96,0.28);
   color: var(--color-ink-900);
 }
 
@@ -284,7 +283,7 @@ body {
   position: absolute;
   inset: 0 0 auto 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(94,234,212,0.5), transparent);
+  background: linear-gradient(90deg, transparent, rgba(30,215,96,0.6), transparent);
   opacity: 0;
   transition: opacity 200ms ease;
 }
@@ -324,21 +323,21 @@ body {
    ═════════════════════════════════════════════════════════════════════════ */
 
 @keyframes pulse-mint {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(94,234,212,0.5); }
-  50%      { box-shadow: 0 0 0 6px rgba(94,234,212,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(30,215,96,0.55); }
+  50%      { box-shadow: 0 0 0 6px rgba(30,215,96,0); }
 }
 .pulse-dot { animation: pulse-mint 2s infinite; }
 
 @keyframes gps-ring {
-  0%   { box-shadow: 0 0 0 0 rgba(94,234,212,0.55); }
-  70%  { box-shadow: 0 0 0 14px rgba(94,234,212,0); }
-  100% { box-shadow: 0 0 0 0 rgba(94,234,212,0); }
+  0%   { box-shadow: 0 0 0 0 rgba(30,215,96,0.6); }
+  70%  { box-shadow: 0 0 0 14px rgba(30,215,96,0); }
+  100% { box-shadow: 0 0 0 0 rgba(30,215,96,0); }
 }
 .gps-dot { animation: gps-ring 1.8s infinite; }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(94,234,212,0.3); }
-  50%      { box-shadow: 0 0 0 6px rgba(94,234,212,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(30,215,96,0.35); }
+  50%      { box-shadow: 0 0 0 6px rgba(30,215,96,0); }
 }
 .pulse-glow { animation: pulse-glow 2s infinite; }
 
@@ -365,7 +364,7 @@ body {
 .anim-fade-in { animation: fade-in 180ms ease-out both; }
 
 /* ═════════════════════════════════════════════════════════════════════════
-   AI status pill — small, refined, never the centerpiece
+   AI status pill — Spotify green
    ═════════════════════════════════════════════════════════════════════════ */
 .ai-pill {
   display: inline-flex;
@@ -373,8 +372,8 @@ body {
   gap: 7px;
   padding: 4px 10px 4px 9px;
   border-radius: var(--radius-pill);
-  background: rgba(94,234,212,0.07);
-  border: 1px solid rgba(94,234,212,0.18);
+  background: rgba(30,215,96,0.08);
+  border: 1px solid rgba(30,215,96,0.22);
   color: var(--color-mint-500);
   font-size: 11.5px;
   font-weight: 500;
@@ -383,6 +382,6 @@ body {
 .ai-pill .pulse {
   width: 6px; height: 6px; border-radius: var(--radius-pill);
   background: var(--color-mint-500);
-  box-shadow: 0 0 8px rgba(94,234,212,0.6);
+  box-shadow: 0 0 8px rgba(30,215,96,0.7);
   animation: pulse-mint 2s infinite;
 }

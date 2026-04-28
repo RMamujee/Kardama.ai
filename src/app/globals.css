@@ -1,61 +1,57 @@
 @import "tailwindcss";
 
 /* ═════════════════════════════════════════════════════════════════════════
-   KARDAMA — Robinhood-inspired palette
-   Pure black canvas, electric Robinhood lime-green as the up-signal,
-   coral red as the down-signal. Borderless surfaces — cards are defined
-   purely by background color contrast, not by borders or shadows. Hero
-   numbers are huge. Layout is vertical-first, mobile-app-native feel.
-
-   Token variable names (--color-mint-*) are preserved so the rest of
-   the system cascades without per-component refactors; they now hold
-   Robinhood's lime green.
+   KARDAMA — Spotify green + visible card borders
+   Combines Robinhood's hero-number / sparkline patterns with Spotify's
+   darker, more grounded green and visible card borders so distinct
+   surfaces actually read as distinct.
    ═════════════════════════════════════════════════════════════════════════ */
 
 @theme {
   /* ── Surfaces ─────────────────────────────────────────────────────────
-     Robinhood is a black app. Almost no border lines anywhere — surface
-     hierarchy is a single step from #000 (page) to #1C1C1E (cards). */
+     Same near-black canvas — but now with VISIBLE borders so cards read
+     as distinct blocks instead of bleeding into each other. */
   --color-page:    #000000;
-  --color-rail:    #0A0A0A;     /* sidebar — slightly off pure black */
-  --color-card:    #1C1C1E;     /* primary card surface */
-  --color-soft:    #232326;     /* nested surface / hover row */
-  --color-hover:   #2C2C2E;     /* button / chip hover */
-  --color-elev:    #2C2C2E;     /* button background */
-  --color-line:    #232326;     /* very subtle divider when needed */
-  --color-line-strong: #303033;
+  --color-rail:    #0A0A0A;
+  --color-card:    #181818;     /* Spotify content surface */
+  --color-soft:    #1F1F22;     /* nested surface / hover row */
+  --color-hover:   #2A2A2D;     /* button / chip hover */
+  --color-elev:    #2A2A2D;     /* button background */
+  --color-line:    #2E2E32;     /* subtle but VISIBLE — bumped from #1F1F1F */
+  --color-line-strong: #3A3A3F; /* card borders — clearly visible */
 
   /* ── Ink (text) ──────────────────────────────────────────────────────
-     Robinhood uses pure white for primary and a single muted gray for
-     secondary. No warm tint. */
-  --color-ink-50:  #1C1C1E;
+     Pure-white primary, soft gray secondary. Slightly higher contrast
+     for better readability per "easier on the eyes". */
+  --color-ink-50:  #1A1A1D;
   --color-ink-100: #2A2A2D;
   --color-ink-200: #3A3A3D;
-  --color-ink-300: #4D4D52;
-  --color-ink-400: #6E6E73;     /* tertiary */
-  --color-ink-500: #8E8E93;     /* secondary — Robinhood's signature gray */
-  --color-ink-600: #C7C7CC;
-  --color-ink-700: #F2F2F2;
-  --color-ink-900: #FFFFFF;     /* primary — pure white */
+  --color-ink-300: #525258;
+  --color-ink-400: #797980;     /* tertiary */
+  --color-ink-500: #A0A0A8;     /* secondary — slightly brighter than Robinhood gray */
+  --color-ink-600: #C4C4CC;
+  --color-ink-700: #E8E8EC;
+  --color-ink-900: #FFFFFF;     /* primary */
 
-  /* ── Robinhood lime (the brand) ──────────────────────────────────────
-     Vivid, electric. Very different from Spotify green. The token name
-     stays "mint" so the cascade carries through the rest of the system. */
-  --color-mint-50:  #00210A;
-  --color-mint-100: #003A14;
-  --color-mint-200: #005C20;
-  --color-mint-300: #009630;
-  --color-mint-400: #00C805;     /* the iconic Robinhood lime */
-  --color-mint-500: #00D632;     /* slightly brighter for accents/hover */
-  --color-mint-600: #00C805;
-  --color-mint-700: #00A007;
+  /* ── Spotify green (the brand) ───────────────────────────────────────
+     Darker, more grounded than Robinhood's electric lime. The iconic
+     Spotify #1DB954. Variable names kept as --color-mint-* so the
+     cascade is undisturbed. */
+  --color-mint-50:  #052914;
+  --color-mint-100: #0A3A1E;
+  --color-mint-200: #0F4F2C;
+  --color-mint-300: #169C46;
+  --color-mint-400: #1DB954;     /* iconic Spotify primary */
+  --color-mint-500: #1ED760;     /* highlight / hover */
+  --color-mint-600: #1DB954;
+  --color-mint-700: #169C46;     /* darker for active states */
 
-  /* ── Status — Robinhood uses GREEN for up / RED for down only ──────── */
-  --color-emerald-500: #00D632;  /* up = brand green */
-  --color-amber-500:   #FFB020;  /* warning, used sparingly */
-  --color-rose-500:    #FF6260;  /* down — Robinhood's coral red */
-  --color-down:        #FF6260;  /* explicit semantic alias */
-  --color-up:          #00C805;  /* explicit semantic alias */
+  /* ── Status — green for up, coral for down (Robinhood signaling) ──── */
+  --color-emerald-500: #1ED760;  /* up = Spotify green */
+  --color-amber-500:   #FFB020;
+  --color-rose-500:    #FF6260;  /* down — coral red */
+  --color-down:        #FF6260;
+  --color-up:          #1DB954;  /* up = Spotify green */
   --color-blue-glow:   #4FA8E5;
 
   /* ── Legacy compat — keep old tokens mapped so unmigrated pages still render */
@@ -85,7 +81,7 @@
   --shadow-card:    none;
   --shadow-elev:    0 1px 0 0 rgba(255,255,255,0.04) inset;
   --shadow-pop:     0 32px 80px -8px rgba(0,0,0,0.85);
-  --shadow-mint:    0 0 0 3px rgba(0,200,5,0.32);     /* focus ring — Robinhood lime */
+  --shadow-mint:    0 0 0 3px rgba(29,185,84,0.32);   /* focus ring — Spotify green */
 
   /* ── Type ────────────────────────────────────────────────────────────
      Sans for everything. Mono only when explicitly invoked via .num/.tnum
@@ -228,7 +224,7 @@ body {
 
 /* ── Selection ─────────────────────────────────────────────────────────── */
 ::selection {
-  background: rgba(0,200,5,0.32);
+  background: rgba(29,185,84,0.35);
   color: var(--color-ink-900);
 }
 
@@ -264,64 +260,72 @@ body {
    Surface primitives
    ═════════════════════════════════════════════════════════════════════════ */
 
-/* Card — Robinhood-style: borderless, surface defined by background color
-   contrast against the pure-black canvas. No shadows. */
+/* Card — Spotify-style with VISIBLE border so it reads as a distinct block.
+   Border + soft background contrast = clear visual separation. */
 .card {
   background: var(--color-card);
+  border: 1px solid var(--color-line-strong);
   border-radius: var(--radius-card);
-  transition: background-color 200ms ease;
+  transition: border-color 200ms ease, background-color 200ms ease;
 }
-.card:hover { background: var(--color-soft); }
+.card:hover {
+  border-color: #4A4A4F;
+}
 
-/* Card variant that doesn't get the hover bg shift (for parent containers
-   where children handle their own hover) */
+/* Static card — no hover treatment (for parent containers) */
 .card-static {
   background: var(--color-card);
+  border: 1px solid var(--color-line-strong);
   border-radius: var(--radius-card);
 }
 
-/* Stat tile — the KPI primitive. Borderless, no top accent line. The hero
-   number is the visual anchor. */
+/* Stat tile — same as card, with the same border treatment */
 .stat-tile {
   background: var(--color-card);
+  border: 1px solid var(--color-line-strong);
   border-radius: var(--radius-card);
-  transition: background-color 200ms ease;
+  transition: border-color 200ms ease;
 }
-.stat-tile:hover { background: var(--color-soft); }
+.stat-tile:hover {
+  border-color: #4A4A4F;
+}
 
-/* Section header used inside cards — borderless variant */
+/* Section header — used inside cards */
 .section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 18px 20px 12px;
+  padding: 18px 22px 14px;
+  border-bottom: 1px solid var(--color-line);
 }
 
-/* Subtle data row in lists — Robinhood watchlist style */
+/* Data row — list item with subtle separator below + hover bg.
+   More vertical breathing room (16px) so dense lists don't feel cramped. */
 .data-row {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 20px;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--color-line);
   transition: background-color 100ms ease;
-  border-radius: 10px;
 }
+.data-row:last-child { border-bottom: none; }
 .data-row:hover { background: var(--color-soft); }
 
-/* Hero numeric — the giant portfolio-style number at the top of pages */
+/* Hero numeric — slightly tighter so it's bold without pushing the chart down */
 .hero-num {
-  font-size: 44px;
+  font-size: 40px;
   font-weight: 700;
-  letter-spacing: -0.04em;
-  line-height: 1;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
   color: var(--color-ink-900);
 }
 @media (min-width: 768px) {
-  .hero-num { font-size: 52px; }
+  .hero-num { font-size: 48px; }
 }
 
-/* Up/Down semantic colors — used liberally for change indicators */
+/* Up/Down semantic colors */
 .text-up   { color: var(--color-up); }
 .text-down { color: var(--color-down); }
 .bg-up     { background: var(--color-up); }
@@ -330,31 +334,32 @@ body {
 /* Legacy alias */
 .card-tile {
   background: var(--color-card);
+  border: 1px solid var(--color-line-strong);
   border-radius: var(--radius-card);
-  transition: background-color 200ms ease;
+  transition: border-color 200ms ease;
 }
-.card-tile:hover { background: var(--color-soft); }
+.card-tile:hover { border-color: #4A4A4F; }
 
 /* ═════════════════════════════════════════════════════════════════════════
    Animations
    ═════════════════════════════════════════════════════════════════════════ */
 
 @keyframes pulse-mint {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(0,200,5,0.55); }
-  50%      { box-shadow: 0 0 0 6px rgba(0,200,5,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(29,185,84,0.55); }
+  50%      { box-shadow: 0 0 0 6px rgba(29,185,84,0); }
 }
 .pulse-dot { animation: pulse-mint 2s infinite; }
 
 @keyframes gps-ring {
-  0%   { box-shadow: 0 0 0 0 rgba(0,200,5,0.6); }
-  70%  { box-shadow: 0 0 0 14px rgba(0,200,5,0); }
-  100% { box-shadow: 0 0 0 0 rgba(0,200,5,0); }
+  0%   { box-shadow: 0 0 0 0 rgba(29,185,84,0.6); }
+  70%  { box-shadow: 0 0 0 14px rgba(29,185,84,0); }
+  100% { box-shadow: 0 0 0 0 rgba(29,185,84,0); }
 }
 .gps-dot { animation: gps-ring 1.8s infinite; }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(0,200,5,0.35); }
-  50%      { box-shadow: 0 0 0 6px rgba(0,200,5,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(29,185,84,0.35); }
+  50%      { box-shadow: 0 0 0 6px rgba(29,185,84,0); }
 }
 .pulse-glow { animation: pulse-glow 2s infinite; }
 
@@ -381,7 +386,7 @@ body {
 .anim-fade-in { animation: fade-in 180ms ease-out both; }
 
 /* ═════════════════════════════════════════════════════════════════════════
-   AI status pill — Robinhood lime, borderless
+   AI status pill — Spotify green
    ═════════════════════════════════════════════════════════════════════════ */
 .ai-pill {
   display: inline-flex;
@@ -389,8 +394,9 @@ body {
   gap: 7px;
   padding: 5px 11px 5px 9px;
   border-radius: var(--radius-pill);
-  background: rgba(0,200,5,0.10);
-  color: var(--color-mint-400);
+  background: rgba(29,185,84,0.12);
+  border: 1px solid rgba(29,185,84,0.25);
+  color: var(--color-mint-500);
   font-size: 11.5px;
   font-weight: 600;
   letter-spacing: -0.005em;
@@ -398,6 +404,6 @@ body {
 .ai-pill .pulse {
   width: 6px; height: 6px; border-radius: var(--radius-pill);
   background: var(--color-mint-400);
-  box-shadow: 0 0 8px rgba(0,200,5,0.8);
+  box-shadow: 0 0 8px rgba(29,185,84,0.8);
   animation: pulse-mint 2s infinite;
 }

@@ -110,9 +110,9 @@ export function CommandPalette({ open, onClose }: Props) {
         onClick={onClose}
         aria-hidden
       />
-      <div className="relative w-full max-w-[560px] rounded-[16px] bg-card shadow-[var(--shadow-pop)] overflow-hidden">
+      <div className="relative w-full max-w-[560px] rounded-[14px] border border-line-strong bg-card shadow-[var(--shadow-pop)] overflow-hidden">
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-3">
+        <div className="flex items-center gap-3 border-b border-line px-4 py-3">
           <Search className="h-[16px] w-[16px] flex-shrink-0 text-ink-400" />
           <input
             ref={inputRef}
@@ -171,7 +171,7 @@ export function CommandPalette({ open, onClose }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between bg-soft/40 px-4 py-2">
+        <div className="flex items-center justify-between border-t border-line bg-soft/40 px-4 py-2">
           <span className="text-[11px] text-ink-400">
             <span className="kbd">↑↓</span> <span className="ml-1.5">navigate</span>
           </span>

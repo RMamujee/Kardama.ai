@@ -112,47 +112,49 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
 
   return (
     <div className="space-y-8 pb-12">
-      {/* ─── HERO: portfolio-style giant number with chart ─────────────────── */}
-      <motion.section variants={fadeUp} initial="hidden" animate="visible" className="space-y-6">
-        <HeroStat
-          label="Revenue this month"
-          value={formatCurrency(heroValue)}
-          change={`${isUp ? '+' : ''}${formatCurrency(Math.abs(heroDiff))}`}
-          changePercent={`${isUp ? '+' : '−'}${Math.abs(heroPct).toFixed(2)}%`}
-          changeSuffix={periodSuffix(period)}
-          direction={isUp ? 'up' : 'down'}
-        />
+      {/* ─── HERO: portfolio-style giant number with chart, in a bordered card */}
+      <motion.section variants={fadeUp} initial="hidden" animate="visible">
+        <div className="card px-6 py-7 sm:px-8 sm:py-8 space-y-7">
+          <HeroStat
+            label="Revenue this month"
+            value={formatCurrency(heroValue)}
+            change={`${isUp ? '+' : ''}${formatCurrency(Math.abs(heroDiff))}`}
+            changePercent={`${isUp ? '+' : '−'}${Math.abs(heroPct).toFixed(2)}%`}
+            changeSuffix={periodSuffix(period)}
+            direction={isUp ? 'up' : 'down'}
+          />
 
-        {/* Chart */}
-        <div className="-mx-2">
-          <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={series} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
-              <defs>
-                <linearGradient id="hero-area" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%"   stopColor={isUp ? '#00C805' : '#FF6260'} stopOpacity={0.32} />
-                  <stop offset="100%" stopColor={isUp ? '#00C805' : '#FF6260'} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <Tooltip
-                {...TOOLTIP_STYLE}
-                formatter={(v) => [formatCurrency(Number(v)), '']}
-                cursor={{ stroke: '#3A3A3D', strokeWidth: 1, strokeDasharray: '3 3' }}
-              />
-              <Area
-                type="monotone"
-                dataKey="y"
-                stroke={isUp ? '#00C805' : '#FF6260'}
-                strokeWidth={2}
-                fill="url(#hero-area)"
-                dot={false}
-                activeDot={{ r: 4, fill: isUp ? '#00C805' : '#FF6260', stroke: '#000', strokeWidth: 2 }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          {/* Chart */}
+          <div>
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={series} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="hero-area" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stopColor={isUp ? '#1DB954' : '#FF6260'} stopOpacity={0.32} />
+                    <stop offset="100%" stopColor={isUp ? '#1DB954' : '#FF6260'} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <Tooltip
+                  {...TOOLTIP_STYLE}
+                  formatter={(v) => [formatCurrency(Number(v)), '']}
+                  cursor={{ stroke: '#3A3A3D', strokeWidth: 1, strokeDasharray: '3 3' }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="y"
+                  stroke={isUp ? '#1DB954' : '#FF6260'}
+                  strokeWidth={2}
+                  fill="url(#hero-area)"
+                  dot={false}
+                  activeDot={{ r: 4, fill: isUp ? '#1DB954' : '#FF6260', stroke: '#000', strokeWidth: 2 }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Period tabs */}
+          <PeriodTabs value={period} onChange={setPeriod} />
         </div>
-
-        {/* Period tabs */}
-        <PeriodTabs value={period} onChange={setPeriod} />
       </motion.section>
 
       {/* ─── Secondary stats — row of borderless cards ─────────────────────── */}
@@ -199,7 +201,7 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
           </button>
         </div>
 
-        <div className="card -mx-2 px-2 py-2">
+        <div className="card overflow-hidden">
           {todayJobs.length === 0 && (
             <p className="px-4 py-12 text-center text-[13px] text-ink-500">No jobs scheduled today</p>
           )}

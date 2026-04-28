@@ -42,7 +42,7 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-[60px] flex-shrink-0 items-center gap-3 bg-page/95 backdrop-blur-md px-4 md:gap-4 md:px-6">
+      <header className="sticky top-0 z-30 flex h-[60px] flex-shrink-0 items-center gap-3 border-b border-line bg-page/95 backdrop-blur-md px-4 md:gap-4 md:px-6">
         {/* Mobile menu */}
         <button
           type="button"
@@ -104,7 +104,7 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
             <Popover.Trigger asChild>
               <button
                 type="button"
-                className="hidden sm:inline-flex h-9 items-center gap-1.5 rounded-full bg-mint-400 px-4 text-[13px] font-bold text-black transition-[transform,filter] hover:scale-[1.04] hover:bg-mint-500 active:scale-[0.98] shadow-[0_2px_12px_-2px_rgba(0,200,5,0.45)]"
+                className="hidden sm:inline-flex h-9 items-center gap-1.5 rounded-full bg-mint-400 px-4 text-[13px] font-bold text-black transition-[transform,filter] hover:scale-[1.04] hover:bg-mint-500 active:scale-[0.98] shadow-[0_2px_12px_-2px_rgba(29,185,84,0.45)]"
               >
                 <Plus className="h-[15px] w-[15px]" strokeWidth={2.75} />
                 New
@@ -114,7 +114,7 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
               <Popover.Content
                 align="end"
                 sideOffset={8}
-                className="z-50 w-[260px] rounded-[12px] bg-card p-1.5 shadow-[var(--shadow-pop)] anim-fade-in"
+                className="z-50 w-[260px] rounded-[12px] border border-line-strong bg-card p-1.5 shadow-[var(--shadow-pop)] anim-fade-in"
               >
                 <NewMenuItem
                   icon={UserPlus}

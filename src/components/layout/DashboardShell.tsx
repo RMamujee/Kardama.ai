@@ -36,7 +36,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Topbar onMenuToggle={() => setSidebarOpen((o) => !o)} />
-        <main className="anim-fade-in flex-1 overflow-y-auto bg-page px-5 py-7 md:px-8 md:py-8 lg:px-10 lg:py-9">
+        <main className="anim-fade-in flex-1 overflow-y-auto bg-page px-6 py-8 md:px-10 md:py-9 lg:px-14 lg:py-10 xl:px-16">
           {children}
         </main>
       </div>

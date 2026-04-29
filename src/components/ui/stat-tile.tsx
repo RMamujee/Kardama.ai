@@ -32,9 +32,9 @@ export function StatTile({
   label, value, sub, icon: Icon, tone = 'mint', trend, className, ...props
 }: StatTileProps) {
   return (
-    <div className={cn('stat-tile px-5 pt-5 pb-5', className)} {...props}>
+    <div className={cn('stat-tile px-6 py-6', className)} {...props}>
       <div className="flex items-center justify-between gap-3">
-        <span className="text-[12px] font-medium text-ink-500">{label}</span>
+        <span className="text-[11.5px] font-semibold uppercase tracking-[0.05em] text-ink-400">{label}</span>
         <div className="flex items-center gap-2">
           {trend}
           {Icon && (
@@ -45,7 +45,7 @@ export function StatTile({
         </div>
       </div>
 
-      <p className="num mt-3 text-[32px] font-bold text-ink-900 leading-none tracking-[-0.03em]">
+      <p className="num mt-4 text-[32px] font-bold text-ink-900 leading-none tracking-[-0.03em]">
         {value}
       </p>
 

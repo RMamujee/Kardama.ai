@@ -83,9 +83,9 @@ export function CustomersClient({ customers, jobs, cleaners }: CustomersData) {
   }).length
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* ─── KPI strip */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 xl:gap-5">
         <StatTile
           label="Customers"
           value={customers.length}
@@ -118,13 +118,13 @@ export function CustomersClient({ customers, jobs, cleaners }: CustomersData) {
 
       {/* ─── AI banner */}
       {inactiveCount > 0 && (
-        <div className="card flex items-center gap-4 px-5 py-4">
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[8px] bg-mint-500/12">
+        <div className="card flex items-center gap-5 px-6 py-5">
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[8px] bg-mint-500/12">
             <Sparkles className="h-[16px] w-[16px] text-mint-500" />
           </div>
           <div className="min-w-0 flex-1">
-            <span className="text-[12px] font-medium text-mint-500">AI Insight</span>
-            <p className="mt-1 text-[13px] text-ink-700 leading-[1.5]">
+            <span className="text-[11.5px] font-semibold uppercase tracking-[0.05em] text-mint-500">AI Insight</span>
+            <p className="mt-1.5 text-[13px] text-ink-700 leading-[1.6]">
               <span className="num font-semibold text-ink-900">{inactiveCount}</span> customers haven't booked in 30+ days. Send re-engagement texts in one click.
             </p>
           </div>
@@ -166,7 +166,7 @@ export function CustomersClient({ customers, jobs, cleaners }: CustomersData) {
       </div>
 
       {/* ─── Customer grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {filtered.map((customer, i) => {
           const color = AVATAR_COLORS[customers.indexOf(customer) % AVATAR_COLORS.length]
           const initials = customer.name.split(' ').map((n) => n[0]).join('')
@@ -184,7 +184,7 @@ export function CustomersClient({ customers, jobs, cleaners }: CustomersData) {
               <button
                 onClick={() => setSelected(isSelected ? null : customer)}
                 className={cn(
-                  'card flex w-full flex-col gap-4 p-5 text-left transition-all',
+                  'card flex w-full flex-col gap-5 p-6 text-left transition-all',
                   isSelected && '!border-mint-500/60 bg-soft/60',
                 )}
               >

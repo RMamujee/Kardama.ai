@@ -142,8 +142,8 @@ body {
   background: var(--color-page);
   color: var(--color-ink-700);
   font-size: 14px;
-  line-height: 1.5;
-  letter-spacing: -0.006em;
+  line-height: 1.6;
+  letter-spacing: -0.004em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: 'cv11', 'ss01', 'ss03';
@@ -306,15 +306,15 @@ body::after {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 18px 22px 14px;
+  padding: 22px 28px 18px;
   border-bottom: 1px solid var(--color-line);
 }
 
 .data-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 22px;
+  gap: 14px;
+  padding: 18px 24px;
   border-bottom: 1px solid var(--color-line);
   transition: background-color 100ms ease;
 }

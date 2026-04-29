@@ -111,10 +111,10 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
   ]
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-12 pb-16">
       {/* ─── HERO: portfolio-style giant number with chart, in a bordered card */}
       <motion.section variants={fadeUp} initial="hidden" animate="visible">
-        <div className="hero-card px-6 py-7 sm:px-8 sm:py-8 space-y-7">
+        <div className="hero-card px-8 py-8 sm:px-10 sm:py-10 space-y-8">
           <HeroStat
             label="Revenue this month"
             value={formatCurrency(heroValue)}
@@ -162,7 +162,7 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
         variants={fadeUp}
         initial="hidden"
         animate="visible"
-        className="grid grid-cols-1 gap-3 sm:grid-cols-3"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-3"
       >
         <SecondaryStat
           label="Today's revenue"
@@ -185,10 +185,10 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
 
       {/* ─── Today's Jobs — Robinhood watchlist style ──────────────────────── */}
       <motion.section variants={fadeUp} initial="hidden" animate="visible">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-5">
           <div>
             <h2 className="text-[18px] font-bold text-ink-900 tracking-[-0.015em]">Today's jobs</h2>
-            <p className="text-[12.5px] text-ink-500 font-medium mt-0.5">
+            <p className="text-[12.5px] text-ink-500 font-medium mt-1">
               {todayJobs.length} scheduled · {todayJobs.filter((j) => j.status === 'completed').length} done
             </p>
           </div>
@@ -203,7 +203,7 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
 
         <div className="card overflow-hidden">
           {todayJobs.length === 0 && (
-            <p className="px-4 py-12 text-center text-[13px] text-ink-500">No jobs scheduled today</p>
+            <p className="px-6 py-16 text-center text-[13px] text-ink-500">No jobs scheduled today</p>
           )}
           {todayJobs.map((job) => {
             const jobCleaners = cleaners.filter((c) => job.cleanerIds.includes(c.id))
@@ -254,10 +254,10 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
 
       {/* ─── Team status — compact strip ───────────────────────────────────── */}
       <motion.section variants={fadeUp} initial="hidden" animate="visible">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-5">
           <div>
             <h2 className="text-[18px] font-bold text-ink-900 tracking-[-0.015em]">Team</h2>
-            <p className="text-[12.5px] text-ink-500 font-medium mt-0.5">
+            <p className="text-[12.5px] text-ink-500 font-medium mt-1">
               {activeCleaners} of {cleaners.length} active across 4 teams
             </p>
           </div>
@@ -270,12 +270,12 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {cleaners.map((c) => (
             <button
               key={c.id}
               type="button"
-              className="card flex items-center gap-3 px-4 py-3 text-left"
+              className="card flex items-center gap-3 px-5 py-4 text-left"
             >
               <div className="relative flex-shrink-0">
                 <div
@@ -294,7 +294,7 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[13.5px] font-semibold text-ink-900">{c.name.split(' ')[0]}</p>
-                <p className="mt-0.5 truncate text-[11.5px] text-ink-500 font-medium capitalize">
+                <p className="mt-1 truncate text-[11.5px] text-ink-500 font-medium capitalize">
                   {c.status.replace('-', ' ')}
                 </p>
               </div>
@@ -305,8 +305,8 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
 
       {/* ─── AI Copilot ───────────────────────────────────────────────────── */}
       <motion.section variants={fadeUp} initial="hidden" animate="visible">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2.5">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
             <h2 className="text-[18px] font-bold text-ink-900 tracking-[-0.015em]">AI Copilot</h2>
             <span className="ai-pill">
               <span className="pulse" />
@@ -315,7 +315,7 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {aiInsights.map((insight, i) => {
             const Icon = insight.icon
             return (
@@ -323,16 +323,16 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
                 key={i}
                 type="button"
                 onClick={insight.action}
-                className="card group flex flex-col gap-3 px-5 py-5 text-left"
+                className="card group flex flex-col gap-4 px-6 py-7 text-left"
               >
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-mint-500/10">
-                    <Icon className="h-[14px] w-[14px] text-mint-500" strokeWidth={2.25} />
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[8px] bg-mint-500/10">
+                    <Icon className="h-[15px] w-[15px] text-mint-500" strokeWidth={2} />
                   </div>
                   <span className="text-[13.5px] font-bold text-ink-900">{insight.title}</span>
                 </div>
-                <p className="text-[13px] leading-[1.55] text-ink-500 font-medium">{insight.text}</p>
-                <span className="mt-auto inline-flex items-center gap-1 text-[12.5px] font-bold text-mint-500 group-hover:text-mint-500">
+                <p className="text-[13px] leading-[1.65] text-ink-500 font-medium">{insight.text}</p>
+                <span className="mt-auto inline-flex items-center gap-1 text-[12.5px] font-semibold text-mint-500">
                   Open
                   <ArrowUpRight className="h-3 w-3" strokeWidth={2.5} />
                 </span>
@@ -357,20 +357,20 @@ function SecondaryStat({
   warn?: boolean
 }) {
   return (
-    <div className="card flex items-end justify-between gap-4 px-5 py-5">
+    <div className="card flex items-end justify-between gap-4 px-7 py-6">
       <div className="min-w-0 flex-1">
-        <p className="text-[12px] font-semibold uppercase tracking-[0.04em] text-ink-500">{label}</p>
+        <p className="text-[11.5px] font-semibold uppercase tracking-[0.05em] text-ink-400">{label}</p>
         <p className={cn(
-          'mt-2 text-[26px] font-bold leading-none tracking-[-0.025em]',
+          'mt-3 text-[28px] font-bold leading-none tracking-[-0.03em]',
           warn ? 'text-amber-500' : 'text-ink-900',
         )}>
           {value}
         </p>
-        <p className="mt-2 text-[12px] text-ink-500 font-medium truncate">{sub}</p>
+        <p className="mt-2.5 text-[12px] text-ink-500 font-medium truncate">{sub}</p>
       </div>
       {spark && (
-        <div className="flex-shrink-0">
-          <SparkLine data={spark} width={64} height={36} area />
+        <div className="flex-shrink-0 pb-1">
+          <SparkLine data={spark} width={68} height={38} area />
         </div>
       )}
     </div>

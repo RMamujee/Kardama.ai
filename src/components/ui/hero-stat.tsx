@@ -44,14 +44,14 @@ export function HeroStat({
   const Arrow = inferred === 'down' ? ArrowDownRight : ArrowUpRight
 
   return (
-    <div className={cn('flex flex-col gap-2', className)}>
-      <span className="text-[12.5px] font-semibold uppercase tracking-[0.04em] text-ink-500">
+    <div className={cn('flex flex-col gap-3', className)}>
+      <span className="text-[11.5px] font-semibold uppercase tracking-[0.07em] text-ink-400">
         {label}
       </span>
       <p className="hero-num tnum">{value}</p>
       {(change || changePercent) && (
-        <div className={cn('flex items-center gap-1.5 text-[14px] font-semibold', colorClass)}>
-          {inferred !== 'neutral' && <Arrow className="h-4 w-4" strokeWidth={2.5} />}
+        <div className={cn('flex items-center gap-1.5 text-[13.5px] font-semibold', colorClass)}>
+          {inferred !== 'neutral' && <Arrow className="h-[15px] w-[15px]" strokeWidth={2.5} />}
           {change && <span>{change}</span>}
           {changePercent && (
             <span className={cn('font-medium', inferred === 'neutral' && 'text-ink-500')}>

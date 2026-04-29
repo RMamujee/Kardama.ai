@@ -5,6 +5,7 @@ import { Send } from 'lucide-react'
 import type { Cleaner } from '@/types'
 import { sendMessageToCleaner, getCleanerMessages } from './actions'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
+import { useChatStore } from '@/store/useChatStore'
 
 type Msg = { id: string; cleaner_id: string; sender_role: string; content: string; read_at: string | null; created_at: string }
 
@@ -17,18 +18,16 @@ export function ChatsClient({ cleaners }: { cleaners: Cleaner[] }) {
   const [messages, setMessages] = useState<Msg[]>([])
   const [text, setText] = useState('')
   const [isPending, startTransition] = useTransition()
-  const [unreadMap, setUnreadMap] = useState<Record<string, number>>({})
+  const { unreadMap, incrementUnread, clearUnread } = useChatStore()
   const bottomRef = useRef<HTMLDivElement>(null)
 
-  // Load messages when cleaner is selected
   useEffect(() => {
     if (!selected) return
     setMessages([])
     getCleanerMessages(selected.id).then(data => setMessages(data as Msg[]))
-    setUnreadMap(prev => ({ ...prev, [selected.id]: 0 }))
+    clearUnread(selected.id)
   }, [selected])
 
-  // Subscribe to all new cleaner messages
   useEffect(() => {
     const supabase = getSupabaseBrowserClient()
     const channel = supabase
@@ -38,7 +37,7 @@ export function ChatsClient({ cleaners }: { cleaners: Cleaner[] }) {
         if (selected && m.cleaner_id === selected.id) {
           setMessages(prev => [...prev, m])
         } else if (m.sender_role === 'cleaner') {
-          setUnreadMap(prev => ({ ...prev, [m.cleaner_id]: (prev[m.cleaner_id] ?? 0) + 1 }))
+          incrementUnread(m.cleaner_id)
         }
       })
       .subscribe()
@@ -57,10 +56,12 @@ export function ChatsClient({ cleaners }: { cleaners: Cleaner[] }) {
   }
 
   return (
-    <div className="flex h-full">
+    /* Flush layout: negate DashboardShell padding so chat fills edge-to-edge */
+    <div className="-mx-6 -my-8 md:-mx-10 md:-my-9 lg:-mx-14 lg:-my-10 xl:-mx-16 flex overflow-hidden h-[calc(100vh-62px)]">
+
       {/* Cleaner list */}
-      <div className="w-64 border-r border-line bg-rail flex-shrink-0 flex flex-col">
-        <div className="px-4 py-4 border-b border-line">
+      <div className="w-64 md:w-72 border-r border-line bg-rail flex-shrink-0 flex flex-col">
+        <div className="px-5 py-4 border-b border-line">
           <h2 className="text-[13px] font-bold text-ink-900">Cleaner Chats</h2>
         </div>
         <div className="flex-1 overflow-y-auto divide-y divide-line">
@@ -71,10 +72,10 @@ export function ChatsClient({ cleaners }: { cleaners: Cleaner[] }) {
               <button
                 key={c.id}
                 onClick={() => setSelected(c)}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-soft ${active ? 'bg-hover' : ''}`}
+                className={`w-full flex items-center gap-3 px-5 py-3.5 text-left transition-colors hover:bg-soft ${active ? 'bg-hover' : ''}`}
               >
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
                   style={{ background: c.color }}
                 >
                   {c.initials}
@@ -97,10 +98,11 @@ export function ChatsClient({ cleaners }: { cleaners: Cleaner[] }) {
       {/* Thread */}
       {selected ? (
         <div className="flex-1 flex flex-col min-w-0">
+
           {/* Thread header */}
-          <div className="px-6 py-4 border-b border-line flex items-center gap-3">
+          <div className="px-8 py-4 border-b border-line flex items-center gap-3 flex-shrink-0">
             <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
+              className="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
               style={{ background: selected.color }}
             >
               {selected.initials}
@@ -112,7 +114,7 @@ export function ChatsClient({ cleaners }: { cleaners: Cleaner[] }) {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-2">
+          <div className="flex-1 overflow-y-auto px-8 py-6 space-y-3">
             {messages.length === 0 && (
               <p className="text-center text-[13px] text-ink-400 mt-12">No messages yet. Say hi!</p>
             )}
@@ -121,7 +123,7 @@ export function ChatsClient({ cleaners }: { cleaners: Cleaner[] }) {
               return (
                 <div key={m.id} className={`flex ${isOwner ? 'justify-end' : 'justify-start'}`}>
                   <div
-                    className={`max-w-[70%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-snug ${
+                    className={`max-w-[70%] rounded-2xl px-4 py-2.5 text-[13.5px] leading-relaxed ${
                       isOwner
                         ? 'bg-mint-400 text-black rounded-br-sm'
                         : 'bg-elev text-ink-900 rounded-bl-sm'
@@ -137,23 +139,24 @@ export function ChatsClient({ cleaners }: { cleaners: Cleaner[] }) {
           </div>
 
           {/* Input */}
-          <div className="border-t border-line px-6 py-4 flex items-end gap-3">
+          <div className="border-t border-line px-8 py-5 flex items-end gap-3 flex-shrink-0">
             <textarea
               value={text}
               onChange={e => setText(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
               placeholder={`Message ${selected.name.split(' ')[0]}…`}
               rows={1}
-              className="flex-1 resize-none rounded-xl border border-line bg-rail px-4 py-2.5 text-[13px] text-ink-900 placeholder:text-ink-400 focus:outline-none focus:border-mint-400 transition-colors max-h-28"
+              className="flex-1 resize-none rounded-xl border border-line bg-rail px-4 py-3 text-[13px] text-ink-900 placeholder:text-ink-400 focus:outline-none focus:border-mint-400 transition-colors max-h-32"
             />
             <button
               onClick={handleSend}
               disabled={!text.trim() || isPending}
-              className="h-10 w-10 rounded-xl bg-mint-400 flex items-center justify-center transition-colors hover:bg-mint-300 disabled:opacity-40 shrink-0"
+              className="h-11 w-11 rounded-xl bg-mint-400 flex items-center justify-center transition-colors hover:bg-mint-300 disabled:opacity-40 shrink-0"
             >
-              <Send size={15} className="text-black translate-x-px" />
+              <Send size={16} className="text-black translate-x-px" />
             </button>
           </div>
+
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center text-ink-400 text-[14px]">

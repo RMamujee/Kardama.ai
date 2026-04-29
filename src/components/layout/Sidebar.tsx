@@ -7,6 +7,7 @@ import {
   MessagesSquare, LogOut, type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useChatStore } from '@/store/useChatStore'
 
 type NavItem = { label: string; href: string; icon: LucideIcon; badge?: number }
 type NavSection = { label: string; items: NavItem[] }
@@ -43,6 +44,7 @@ const NAV_SECTIONS: NavSection[] = [
 
 export function Sidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname()
+  const chatUnread = useChatStore(s => s.totalUnread)
 
   return (
     <div className="flex h-screen w-[240px] flex-col bg-rail border-r border-line">
@@ -74,6 +76,9 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
             <ul className="flex flex-col gap-0.5">
               {section.items.map(({ label, href, icon: Icon, badge }) => {
                 const active = pathname === href || pathname.startsWith(href + '/')
+                const displayBadge = href === '/chats'
+                  ? (chatUnread > 0 ? chatUnread : undefined)
+                  : badge
                 return (
                   <li key={href}>
                     <Link
@@ -109,17 +114,17 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
 
                       <span className="flex-1 truncate">{label}</span>
 
-                      {badge != null && (
+                      {displayBadge != null && (
                         <span
                           className={cn(
                             'inline-flex items-center justify-center min-w-[17px] h-[17px]',
                             'rounded-full px-1 text-[9.5px] font-semibold leading-none',
                             active
                               ? 'bg-mint-400 text-black'
-                              : 'bg-elev text-ink-500',
+                              : 'bg-red-500 text-white',
                           )}
                         >
-                          {badge}
+                          {displayBadge}
                         </span>
                       )}
                     </Link>

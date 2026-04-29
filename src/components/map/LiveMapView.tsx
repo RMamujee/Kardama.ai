@@ -7,7 +7,7 @@ import type { Cleaner, CleanerStatus, Job } from '@/types'
 import {
   buildOptimizedRoutes, TeamRoute, RouteStop, RealLegOverrides,
 } from '@/lib/routing-engine'
-import { fetchTeamRoute, RealRoute, CONGESTION_COLOR } from '@/lib/google-routing'
+import { RealRoute, CONGESTION_COLOR } from '@/lib/google-routing'
 import { RoutingPanel } from './RoutingPanel'
 import { Crosshair, WifiOff, AlertTriangle, X, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -145,8 +145,9 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
   const [trafficFailed, setTrafficFailed] = useState(false)
   const [overrides, setOverrides]       = useState<Record<string, RouteStop['status']>>({})
   const [unavailableTeamIds, setUnavailableTeamIds] = useState<Set<string>>(new Set())
-  const [realRoutes, setRealRoutes]     = useState<Record<string, RealRoute | null>>({})
+  const [realRoutes, setRealRoutes]       = useState<Record<string, RealRoute | null>>({})
   const [loadingRoutes, setLoadingRoutes] = useState(false)
+  const [routeSource, setRouteSource]     = useState<'cache' | 'computed' | null>(null)
   const [gpsPos, setGpsPos]             = useState<GpsPos | null>(null)
   const [gpsTrail, setGpsTrail]         = useState<[number,number][]>([])
   const [gpsTracking, setGpsTracking]   = useState(false)
@@ -154,7 +155,6 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
   const [gpsError, setGpsError]         = useState<string | null>(null)
   const [flyTarget, setFlyTarget]       = useState<{ lat: number; lng: number } | null>(null)
   const watchRef   = useRef<number | null>(null)
-  const fetchAbort = useRef<AbortController | null>(null)
 
   type LivePos = { id: string; initials: string; color: string; name: string; currentLat: number; currentLng: number; status: CleanerStatus; currentJobId: string | null }
   const [livePositions, setLivePositions] = useState<LivePos[]>(() =>
@@ -176,11 +176,13 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
     })))
   }, [cleaners])
 
-  // Supabase Realtime — live cleaner positions pushed from the mobile app
+  // Supabase Realtime — live cleaner positions (mobile GPS) + route updates (compute endpoint)
   useEffect(() => {
     if (!mounted) return
     const supabase = getSupabaseBrowserClient()
-    const channel = supabase
+
+    // Live cleaner positions pushed from the mobile app
+    const cleanerChannel = supabase
       .channel('cleaner-positions')
       .on(
         'postgres_changes',
@@ -197,7 +199,28 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
         },
       )
       .subscribe()
-    return () => { supabase.removeChannel(channel) }
+
+    // Route updates — any recompute (this tab or another) pushes to all open dashboards
+    const routeChannel = supabase
+      .channel('daily-routes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'daily_routes' },
+        (payload) => {
+          const r = payload.new as { team_id: string; segments: RealRoute['segments']; legs: RealRoute['legs'] }
+          if (!r?.team_id) return
+          setRealRoutes(prev => ({
+            ...prev,
+            [r.team_id]: { teamId: r.team_id, segments: r.segments, legs: r.legs },
+          }))
+        },
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(cleanerChannel)
+      supabase.removeChannel(routeChannel)
+    }
   }, [mounted])
 
   // Today's jobs with cancellation overrides applied. Memoised so referential
@@ -264,30 +287,22 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
       : haversineRoutes
   }, [haversineRoutes, redistributedJobs, availableCleaners, realRoutes])
 
-  // Fetch real road geometry from OSRM whenever the route shape changes.
+  // On mount: call /api/routes/compute (returns cached if < 30 min old, else calls Google + stores).
+  // Subsequent updates arrive via the daily_routes Realtime subscription above.
   useEffect(() => {
-    if (haversineRoutes.length === 0) return
-    fetchAbort.current?.abort()
-    fetchAbort.current = new AbortController()
+    if (!mounted) return
     setLoadingRoutes(true)
-
-    Promise.all(
-      haversineRoutes.map(route => {
-        const waypoints = [
-          { lat: route.startLat, lng: route.startLng },
-          ...route.stops.filter(s => s.status !== 'cancelled').map(s => ({ lat: s.job.lat, lng: s.job.lng })),
-        ]
-        return fetchTeamRoute(route.teamId, waypoints, '', fetchAbort.current?.signal)
+    fetch('/api/routes/compute', { method: 'POST' })
+      .then(r => r.ok ? r.json() : null)
+      .then((data: { routes: Array<{ teamId: string; segments: RealRoute['segments']; legs: RealRoute['legs'] }>; source: 'cache' | 'computed' } | null) => {
+        if (!data?.routes) return
+        const map: Record<string, RealRoute | null> = {}
+        data.routes.forEach(r => { map[r.teamId] = { teamId: r.teamId, segments: r.segments, legs: r.legs } })
+        setRealRoutes(map)
+        setRouteSource(data.source)
       })
-    ).then(results => {
-      const map: Record<string, RealRoute | null> = {}
-      results.forEach((r, i) => { map[haversineRoutes[i].teamId] = r })
-      setRealRoutes(map)
-      setLoadingRoutes(false)
-    }).catch(err => {
-      if ((err as { name?: string })?.name !== 'AbortError') setLoadingRoutes(false)
-    })
-  }, [haversineRoutes])
+      .finally(() => setLoadingRoutes(false))
+  }, [mounted])
 
   function setStopStatus(jobId: string, status: RouteStop['status'] | null) {
     setOverrides(prev => {
@@ -471,6 +486,26 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
             <div className="flex items-center gap-2 rounded-xl px-3 py-2 bg-card border border-ink-200 text-[12px] text-ink-400">
               <Loader2 className="h-3.5 w-3.5 animate-spin" /> Routing…
             </div>
+          )}
+          {!loadingRoutes && (
+            <button
+              onClick={() => {
+                setLoadingRoutes(true)
+                fetch('/api/routes/compute', { method: 'POST', headers: { 'x-force': '1' } })
+                  .then(r => r.ok ? r.json() : null)
+                  .then((data: { routes: Array<{ teamId: string; segments: RealRoute['segments']; legs: RealRoute['legs'] }> } | null) => {
+                    if (!data?.routes) return
+                    const map: Record<string, RealRoute | null> = {}
+                    data.routes.forEach(r => { map[r.teamId] = { teamId: r.teamId, segments: r.segments, legs: r.legs } })
+                    setRealRoutes(map)
+                  })
+                  .finally(() => setLoadingRoutes(false))
+              }}
+              className="px-[14px] py-[7px] text-[12px] font-semibold cursor-pointer rounded-xl border border-ink-200 bg-card text-ink-400 hover:text-ink-700 shadow-[0_4px_12px_rgba(0,0,0,0.4)] transition-colors"
+              title={routeSource ? `Routes from ${routeSource}` : 'Refresh routes'}
+            >
+              ↺ Routes
+            </button>
           )}
 
           {/* Map / Satellite toggle */}

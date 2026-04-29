@@ -144,6 +144,7 @@ export type BookingRequest = {
   status: 'pending' | 'accepted' | 'declined' | 'converted'
   source: string | null
   createdAt: string
+  assignedTeam: number | null
 }
 
 type BookingRequestRow = {
@@ -160,6 +161,7 @@ type BookingRequestRow = {
   status: BookingRequest['status']
   source: string | null
   created_at: string
+  assigned_team: number | null
 }
 
 function mapBookingRequest(r: BookingRequestRow): BookingRequest {
@@ -177,6 +179,7 @@ function mapBookingRequest(r: BookingRequestRow): BookingRequest {
     status: r.status,
     source: r.source,
     createdAt: r.created_at?.slice(0, 10) ?? '',
+    assignedTeam: r.assigned_team ?? null,
   }
 }
 
@@ -189,7 +192,20 @@ export const getBookingRequests = cache(async (): Promise<BookingRequest[]> => {
     .eq('status', 'pending')
     .order('created_at', { ascending: false })
   if (error || !data) return []
-  return (data as BookingRequestRow[]).map(mapBookingRequest)
+  return (data as unknown as BookingRequestRow[]).map(mapBookingRequest)
+})
+
+export const getAcceptedBookings = cache(async (): Promise<BookingRequest[]> => {
+  if (!isSupabaseConfigured()) return []
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('booking_requests')
+    .select('*')
+    .eq('status', 'accepted')
+    .order('preferred_date')
+    .order('assigned_team')
+  if (error || !data) return []
+  return (data as unknown as BookingRequestRow[]).map(mapBookingRequest)
 })
 
 // ─────────── derived helpers (mirror mock-data.ts API) ───────────

@@ -9,10 +9,10 @@ const LA_CRESCENTA = { lat: 34.2316, lng: -118.2342 }
 const CLEANERS_TO_SEED = [
   {
     id: 'c_jalen',
-    name: 'Jalen Guinn',
-    initials: 'JG',
+    name: 'Profane 2',
+    initials: 'P2',
     phone: '(747) 218-3437',
-    email: 'jaydawg.guinn@gmail.com',
+    email: 'profane2@kardama.ai',
     home_area_name: 'La Crescenta',
     home_area_lat: LA_CRESCENTA.lat,
     home_area_lng: LA_CRESCENTA.lng,

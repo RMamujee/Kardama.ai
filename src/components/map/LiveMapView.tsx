@@ -1,8 +1,6 @@
 'use client'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, useMap } from 'react-leaflet'
-import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
+import { APIProvider, Map, AdvancedMarker, InfoWindow, useMap } from '@vis.gl/react-google-maps'
 import type { Cleaner, CleanerStatus, Job } from '@/types'
 import {
   buildOptimizedRoutes, TeamRoute, RouteStop, RealLegOverrides,
@@ -13,101 +11,11 @@ import { Crosshair, WifiOff, AlertTriangle, X, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 
-// Free tile layers — no API key required
-const TILE_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-const TILE_SAT  = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-const ATTR_CARTO = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>'
-const ATTR_SAT   = '© Esri — Source: Esri, Maxar, GeoEye, Earthstar Geographics'
+const GMAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? ''
+const MAP_ID    = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID ?? 'DEMO_MAP_ID'
 
-// localStorage key — overrides are scoped to the day so they reset overnight.
 const OVERRIDES_KEY = 'kardama:dispatch:overrides'
-
-function fixLeafletIcons() {
-  // @ts-ignore
-  delete L.Icon.Default.prototype._getIconUrl
-  L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-    iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-    shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  })
-}
-
-function stopIcon(seq: number, color: string, status: RouteStop['status']): L.DivIcon {
-  const dim   = status === 'cancelled'
-  const done  = status === 'complete'
-  const bg    = dim ? '#9ca3af' : done ? '#6b7280' : color
-  const label = done ? '✓' : dim ? '×' : String(seq)
-  return L.divIcon({
-    className: '',
-    html: `<div style="
-      width:28px;height:28px;border-radius:50%;background:${bg};
-      border:2.5px solid rgba(255,255,255,0.85);
-      display:flex;align-items:center;justify-content:center;
-      font-weight:800;color:white;font-size:12px;
-      box-shadow:0 2px 8px rgba(0,0,0,0.5);
-      font-family:-apple-system,sans-serif;
-      opacity:${dim ? 0.45 : 1};
-    ">${label}</div>`,
-    iconSize: [28, 28], iconAnchor: [14, 14], popupAnchor: [0, -16],
-  })
-}
-
-function teamBaseIcon(initials: string, color: string): L.DivIcon {
-  return L.divIcon({
-    className: '',
-    html: `<div style="
-      width:34px;height:34px;border-radius:8px;background:${color};
-      border:2.5px solid rgba(255,255,255,0.85);
-      display:flex;align-items:center;justify-content:center;
-      font-weight:700;color:white;font-size:10px;
-      box-shadow:0 2px 10px rgba(0,0,0,0.4);
-      font-family:-apple-system,sans-serif;
-    ">${initials}</div>`,
-    iconSize: [34, 34], iconAnchor: [17, 17], popupAnchor: [0, -19],
-  })
-}
-
-function makeGpsIcon(): L.DivIcon {
-  return L.divIcon({
-    className: '',
-    html: `<div class="gps-dot" style="width:18px;height:18px;border-radius:50%;background:#8B85F2;border:3px solid white;box-shadow:0 2px 10px rgba(139,133,242,0.6);"></div>`,
-    iconSize: [18, 18], iconAnchor: [9, 9], popupAnchor: [0, -11],
-  })
-}
-
-function cleanerLiveIcon(initials: string, color: string, status: CleanerStatus): L.DivIcon {
-  const dotColor = status === 'en-route' ? '#f59e0b' : '#10b981'
-  return L.divIcon({
-    className: '',
-    html: `<div style="position:relative;width:38px;height:38px;">
-      <div style="
-        width:38px;height:38px;border-radius:50%;background:${color};
-        border:3px solid ${dotColor};
-        display:flex;align-items:center;justify-content:center;
-        font-weight:700;color:white;font-size:11px;
-        box-shadow:0 0 0 5px ${dotColor}35,0 2px 10px rgba(0,0,0,0.4);
-        font-family:-apple-system,sans-serif;
-      ">${initials}</div>
-      <span style="
-        position:absolute;bottom:0;right:0;
-        width:12px;height:12px;border-radius:50%;
-        background:${dotColor};border:2px solid #111827;
-      "></span>
-    </div>`,
-    iconSize: [38, 38], iconAnchor: [19, 19], popupAnchor: [0, -21],
-  })
-}
-
-function FlyTo({ lat, lng }: { lat: number; lng: number }) {
-  const map = useMap()
-  useEffect(() => { map.flyTo([lat, lng], 15, { animate: true, duration: 1.2 }) }, [map, lat, lng])
-  return null
-}
-
-interface GpsPos { lat: number; lng: number; accuracy: number; speed: number | null }
-
 function todayStr() { return new Date().toISOString().split('T')[0] }
-
 function loadOverrides(): Record<string, RouteStop['status']> {
   if (typeof window === 'undefined') return {}
   try {
@@ -116,58 +24,206 @@ function loadOverrides(): Record<string, RouteStop['status']> {
     const parsed = JSON.parse(raw) as { date?: string; overrides?: Record<string, RouteStop['status']> }
     if (parsed?.date !== todayStr()) return {}
     return parsed.overrides ?? {}
-  } catch {
-    return {}
-  }
+  } catch { return {} }
 }
-
-function saveOverrides(overrides: Record<string, RouteStop['status']>) {
+function saveOverrides(o: Record<string, RouteStop['status']>) {
   if (typeof window === 'undefined') return
-  try {
-    window.localStorage.setItem(OVERRIDES_KEY, JSON.stringify({
-      date: todayStr(),
-      overrides,
-    }))
-  } catch {
-    // quota / private mode — fail silently
-  }
+  try { window.localStorage.setItem(OVERRIDES_KEY, JSON.stringify({ date: todayStr(), overrides: o })) } catch {}
 }
 
-interface LiveMapViewProps {
-  cleaners: Cleaner[]
-  todayJobs: Job[]
+// ─── Map child components (must be inside <Map>) ─────────────────────────────
+
+function RoutePolylines({ routes, realRoutes }: {
+  routes: TeamRoute[]
+  realRoutes: Record<string, RealRoute | null>
+}) {
+  const map = useMap()
+  const polysRef = useRef<google.maps.Polyline[]>([])
+
+  useEffect(() => {
+    if (!map) return
+    polysRef.current.forEach(p => p.setMap(null))
+    polysRef.current = []
+
+    const DASH: google.maps.IconSequence = {
+      icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 4 },
+      offset: '0', repeat: '20px',
+    }
+
+    for (const route of routes) {
+      const real = realRoutes[route.teamId]
+      if (real && real.segments.length > 0) {
+        for (const seg of real.segments) {
+          polysRef.current.push(new google.maps.Polyline({
+            path: seg.positions.map(([lat, lng]) => ({ lat, lng })),
+            strokeColor: CONGESTION_COLOR[seg.congestion] ?? route.color,
+            strokeWeight: 5, strokeOpacity: 0.9, map,
+          }))
+        }
+      } else {
+        polysRef.current.push(new google.maps.Polyline({
+          path: route.polyline.map(([lat, lng]) => ({ lat, lng })),
+          strokeColor: route.color, strokeWeight: 4, strokeOpacity: 0,
+          icons: [DASH], map,
+        }))
+      }
+    }
+    return () => { polysRef.current.forEach(p => p.setMap(null)) }
+  }, [map, routes, realRoutes])
+
+  return null
 }
+
+function TrafficLayer({ show }: { show: boolean }) {
+  const map = useMap()
+  const ref = useRef<google.maps.TrafficLayer | null>(null)
+  useEffect(() => {
+    if (!map) return
+    if (!ref.current) ref.current = new google.maps.TrafficLayer()
+    ref.current.setMap(show ? map : null)
+    return () => { ref.current?.setMap(null) }
+  }, [map, show])
+  return null
+}
+
+function MapFitBounds({ routes }: { routes: TeamRoute[] }) {
+  const map = useMap()
+  const fitted = useRef(false)
+  useEffect(() => {
+    if (!map || routes.length === 0 || fitted.current) return
+    const bounds = new google.maps.LatLngBounds()
+    routes.forEach(r => {
+      bounds.extend({ lat: r.startLat, lng: r.startLng })
+      r.stops.forEach(s => bounds.extend({ lat: s.job.lat, lng: s.job.lng }))
+    })
+    if (!bounds.isEmpty()) { map.fitBounds(bounds, 60); fitted.current = true }
+  }, [map, routes])
+  return null
+}
+
+function FlyTo({ target }: { target: { lat: number; lng: number } | null }) {
+  const map = useMap()
+  useEffect(() => {
+    if (!map || !target) return
+    map.panTo(target); map.setZoom(15)
+  }, [map, target])
+  return null
+}
+
+function GpsTrail({ trail }: { trail: [number, number][] }) {
+  const map = useMap()
+  const ref = useRef<google.maps.Polyline | null>(null)
+  useEffect(() => {
+    if (!map) return
+    ref.current = new google.maps.Polyline({
+      strokeColor: '#8B85F2', strokeWeight: 3, strokeOpacity: 0,
+      icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 3 }, offset: '0', repeat: '15px' }],
+      map,
+    })
+    return () => { ref.current?.setMap(null); ref.current = null }
+  }, [map])
+  useEffect(() => { ref.current?.setPath(trail.map(([lat, lng]) => ({ lat, lng }))) }, [trail])
+  return null
+}
+
+// ─── Marker HTML helpers ──────────────────────────────────────────────────────
+
+function StopMarkerEl({ seq, color, status }: { seq: number; color: string; status: RouteStop['status'] }) {
+  const dim  = status === 'cancelled'
+  const done = status === 'complete'
+  const bg   = dim ? '#9ca3af' : done ? '#6b7280' : color
+  return (
+    <div style={{
+      width: 28, height: 28, borderRadius: '50%', background: bg,
+      border: '2.5px solid rgba(255,255,255,0.85)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontWeight: 800, color: 'white', fontSize: 12,
+      boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
+      fontFamily: '-apple-system,sans-serif',
+      opacity: dim ? 0.45 : 1, cursor: 'pointer',
+    }}>
+      {done ? '✓' : dim ? '×' : seq}
+    </div>
+  )
+}
+
+function TeamBaseEl({ initials, color }: { initials: string; color: string }) {
+  return (
+    <div style={{
+      width: 34, height: 34, borderRadius: 8, background: color,
+      border: '2.5px solid rgba(255,255,255,0.85)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontWeight: 700, color: 'white', fontSize: 10,
+      boxShadow: '0 2px 10px rgba(0,0,0,0.4)',
+      fontFamily: '-apple-system,sans-serif',
+    }}>
+      {initials}
+    </div>
+  )
+}
+
+function CleanerDotEl({ initials, color, status }: { initials: string; color: string; status: CleanerStatus }) {
+  const ring = status === 'en-route' ? '#f59e0b' : '#10b981'
+  return (
+    <div style={{ position: 'relative', width: 38, height: 38 }}>
+      <div style={{
+        width: 38, height: 38, borderRadius: '50%', background: color,
+        border: `3px solid ${ring}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontWeight: 700, color: 'white', fontSize: 11,
+        boxShadow: `0 0 0 5px ${ring}35, 0 2px 10px rgba(0,0,0,0.4)`,
+        fontFamily: '-apple-system,sans-serif',
+      }}>
+        {initials}
+      </div>
+      <span style={{
+        position: 'absolute', bottom: 0, right: 0,
+        width: 12, height: 12, borderRadius: '50%',
+        background: ring, border: '2px solid white',
+      }} />
+    </div>
+  )
+}
+
+function GpsDotEl() {
+  return (
+    <div style={{
+      width: 18, height: 18, borderRadius: '50%',
+      background: '#8B85F2', border: '3px solid white',
+      boxShadow: '0 2px 10px rgba(139,133,242,0.6)',
+    }} />
+  )
+}
+
+// ─── Props + component ────────────────────────────────────────────────────────
+
+interface LiveMapViewProps { cleaners: Cleaner[]; todayJobs: Job[] }
 
 export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
-  const [mounted, setMounted]           = useState(false)
-  const [satellite, setSatellite]       = useState(false)
-  const [showTraffic, setShowTraffic]   = useState(true)
-  const [trafficFailed, setTrafficFailed] = useState(false)
-  const [overrides, setOverrides]       = useState<Record<string, RouteStop['status']>>({})
+  const [mounted, setMounted]             = useState(false)
+  const [satellite, setSatellite]         = useState(false)
+  const [showTraffic, setShowTraffic]     = useState(true)
+  const [overrides, setOverrides]         = useState<Record<string, RouteStop['status']>>({})
   const [unavailableTeamIds, setUnavailableTeamIds] = useState<Set<string>>(new Set())
   const [realRoutes, setRealRoutes]       = useState<Record<string, RealRoute | null>>({})
   const [loadingRoutes, setLoadingRoutes] = useState(false)
   const [routeSource, setRouteSource]     = useState<'cache' | 'computed' | null>(null)
-  const [gpsPos, setGpsPos]             = useState<GpsPos | null>(null)
-  const [gpsTrail, setGpsTrail]         = useState<[number,number][]>([])
-  const [gpsTracking, setGpsTracking]   = useState(false)
-  const [trackedAs, setTrackedAs]       = useState<string | null>(null)
-  const [gpsError, setGpsError]         = useState<string | null>(null)
-  const [flyTarget, setFlyTarget]       = useState<{ lat: number; lng: number } | null>(null)
-  const watchRef   = useRef<number | null>(null)
+  const [flyTarget, setFlyTarget]         = useState<{ lat: number; lng: number } | null>(null)
+  const [gpsPos, setGpsPos]               = useState<{ lat: number; lng: number; accuracy: number; speed: number | null } | null>(null)
+  const [gpsTrail, setGpsTrail]           = useState<[number, number][]>([])
+  const [gpsTracking, setGpsTracking]     = useState(false)
+  const [trackedAs, setTrackedAs]         = useState<string | null>(null)
+  const [gpsError, setGpsError]           = useState<string | null>(null)
+  const [selectedStopKey, setSelectedStopKey] = useState<string | null>(null)
+  const watchRef = useRef<number | null>(null)
 
   type LivePos = { id: string; initials: string; color: string; name: string; currentLat: number; currentLng: number; status: CleanerStatus; currentJobId: string | null }
   const [livePositions, setLivePositions] = useState<LivePos[]>(() =>
     cleaners.map(c => ({ id: c.id, initials: c.initials, color: c.color, name: c.name, currentLat: c.currentLat, currentLng: c.currentLng, status: c.status, currentJobId: c.currentJobId }))
   )
 
-  useEffect(() => {
-    fixLeafletIcons()
-    setOverrides(loadOverrides())
-    setMounted(true)
-  }, [])
+  useEffect(() => { setOverrides(loadOverrides()); setMounted(true) }, [])
 
-  // Sync livePositions when cleaners prop changes (page refresh)
   useEffect(() => {
     setLivePositions(cleaners.map(c => ({
       id: c.id, initials: c.initials, color: c.color, name: c.name,
@@ -176,119 +232,30 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
     })))
   }, [cleaners])
 
-  // Supabase Realtime — live cleaner positions (mobile GPS) + route updates (compute endpoint)
+  // Realtime — live cleaner positions + route updates
   useEffect(() => {
     if (!mounted) return
     const supabase = getSupabaseBrowserClient()
 
-    // Live cleaner positions pushed from the mobile app
-    const cleanerChannel = supabase
-      .channel('cleaner-positions')
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'cleaners' },
-        (payload) => {
-          const r = payload.new as { id: string; current_lat: number; current_lng: number; status: CleanerStatus; current_job_id: string | null }
-          setLivePositions(prev =>
-            prev.map(c =>
-              c.id === r.id
-                ? { ...c, currentLat: Number(r.current_lat), currentLng: Number(r.current_lng), status: r.status, currentJobId: r.current_job_id }
-                : c,
-            ),
-          )
-        },
-      )
-      .subscribe()
+    const cleanerCh = supabase.channel('cleaner-positions')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'cleaners' }, payload => {
+        const r = payload.new as { id: string; current_lat: number; current_lng: number; status: CleanerStatus; current_job_id: string | null }
+        setLivePositions(prev => prev.map(c => c.id === r.id
+          ? { ...c, currentLat: Number(r.current_lat), currentLng: Number(r.current_lng), status: r.status, currentJobId: r.current_job_id }
+          : c))
+      }).subscribe()
 
-    // Route updates — any recompute (this tab or another) pushes to all open dashboards
-    const routeChannel = supabase
-      .channel('daily-routes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'daily_routes' },
-        (payload) => {
-          const r = payload.new as { team_id: string; segments: RealRoute['segments']; legs: RealRoute['legs'] }
-          if (!r?.team_id) return
-          setRealRoutes(prev => ({
-            ...prev,
-            [r.team_id]: { teamId: r.team_id, segments: r.segments, legs: r.legs },
-          }))
-        },
-      )
-      .subscribe()
+    const routeCh = supabase.channel('daily-routes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_routes' }, payload => {
+        const r = payload.new as { team_id: string; segments: RealRoute['segments']; legs: RealRoute['legs'] }
+        if (!r?.team_id) return
+        setRealRoutes(prev => ({ ...prev, [r.team_id]: { teamId: r.team_id, segments: r.segments, legs: r.legs } }))
+      }).subscribe()
 
-    return () => {
-      supabase.removeChannel(cleanerChannel)
-      supabase.removeChannel(routeChannel)
-    }
+    return () => { supabase.removeChannel(cleanerCh); supabase.removeChannel(routeCh) }
   }, [mounted])
 
-  // Today's jobs with cancellation overrides applied. Memoised so referential
-  // equality only changes when overrides change.
-  const todayJobs = useMemo(() => {
-    return jobs.map(j => overrides[j.id] === 'cancelled' ? { ...j, status: 'cancelled' as const } : j)
-  }, [jobs, overrides])
-
-  // Cleaners filtered to those whose team is still available.
-  const availableCleaners = useMemo(
-    () => cleaners.filter(c => !unavailableTeamIds.has(c.teamId)),
-    [cleaners, unavailableTeamIds],
-  )
-
-  // Available team IDs in stable order for round-robin redistribution.
-  const availableTeamIdList = useMemo(
-    () => [...new Set(availableCleaners.map(c => c.teamId))],
-    [availableCleaners],
-  )
-
-  // Redistribute jobs from unavailable teams across remaining available teams.
-  const redistributedJobs = useMemo(() => {
-    if (unavailableTeamIds.size === 0) return todayJobs
-    if (availableTeamIdList.length === 0) return todayJobs
-
-    let rrIdx = 0
-    return todayJobs.map(job => {
-      if (job.status === 'cancelled') return job
-      const lead = cleaners.find(c => c.id === job.cleanerIds[0])
-      if (!lead || !unavailableTeamIds.has(lead.teamId)) return job
-
-      // Round-robin to an available team's lead cleaner.
-      const newTeamId = availableTeamIdList[rrIdx % availableTeamIdList.length]
-      rrIdx++
-      const newLead = availableCleaners.find(c => c.teamId === newTeamId)
-      if (!newLead) return job
-      return { ...job, cleanerIds: [newLead.id, ...job.cleanerIds.slice(1)] }
-    })
-  }, [todayJobs, cleaners, unavailableTeamIds, availableTeamIdList, availableCleaners])
-
-  // First pass: build routes with haversine estimates so the UI shows
-  // something immediately. Then we ask OSRM for real geometry below.
-  const haversineRoutes = useMemo(
-    () => buildOptimizedRoutes(redistributedJobs, availableCleaners),
-    [redistributedJobs, availableCleaners],
-  )
-
-  // Re-build using Google real durations + traffic levels once they arrive.
-  const routes: TeamRoute[] = useMemo(() => {
-    const overridesByTeam: RealLegOverrides = {}
-    for (const r of haversineRoutes) {
-      const real = realRoutes[r.teamId]
-      // Google legs: start → stop1, stop1 → stop2, ... length equals stop count.
-      if (real && real.legs.length === r.stops.length) {
-        overridesByTeam[r.teamId] = real.legs.map(leg => ({
-          durationMin: leg.durationMin,
-          distanceKm: leg.distanceKm,
-          traffic: leg.traffic as 'clear' | 'moderate' | 'heavy' | undefined,
-        }))
-      }
-    }
-    return Object.keys(overridesByTeam).length > 0
-      ? buildOptimizedRoutes(redistributedJobs, availableCleaners, overridesByTeam)
-      : haversineRoutes
-  }, [haversineRoutes, redistributedJobs, availableCleaners, realRoutes])
-
-  // On mount: call /api/routes/compute (returns cached if < 30 min old, else calls Google + stores).
-  // Subsequent updates arrive via the daily_routes Realtime subscription above.
+  // Compute / load routes on mount
   useEffect(() => {
     if (!mounted) return
     setLoadingRoutes(true)
@@ -304,6 +271,53 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
       .finally(() => setLoadingRoutes(false))
   }, [mounted])
 
+  const todayJobs = useMemo(() =>
+    jobs.map(j => overrides[j.id] === 'cancelled' ? { ...j, status: 'cancelled' as const } : j),
+    [jobs, overrides])
+
+  const availableCleaners = useMemo(
+    () => cleaners.filter(c => !unavailableTeamIds.has(c.teamId)),
+    [cleaners, unavailableTeamIds])
+
+  const availableTeamIdList = useMemo(
+    () => [...new Set(availableCleaners.map(c => c.teamId))],
+    [availableCleaners])
+
+  const redistributedJobs = useMemo(() => {
+    if (unavailableTeamIds.size === 0) return todayJobs
+    if (availableTeamIdList.length === 0) return todayJobs
+    let rrIdx = 0
+    return todayJobs.map(job => {
+      if (job.status === 'cancelled') return job
+      const lead = cleaners.find(c => c.id === job.cleanerIds[0])
+      if (!lead || !unavailableTeamIds.has(lead.teamId)) return job
+      const newTeamId = availableTeamIdList[rrIdx++ % availableTeamIdList.length]
+      const newLead = availableCleaners.find(c => c.teamId === newTeamId)
+      if (!newLead) return job
+      return { ...job, cleanerIds: [newLead.id, ...job.cleanerIds.slice(1)] }
+    })
+  }, [todayJobs, cleaners, unavailableTeamIds, availableTeamIdList, availableCleaners])
+
+  const haversineRoutes = useMemo(
+    () => buildOptimizedRoutes(redistributedJobs, availableCleaners),
+    [redistributedJobs, availableCleaners])
+
+  const routes: TeamRoute[] = useMemo(() => {
+    const overridesByTeam: RealLegOverrides = {}
+    for (const r of haversineRoutes) {
+      const real = realRoutes[r.teamId]
+      if (real && real.legs.length === r.stops.length) {
+        overridesByTeam[r.teamId] = real.legs.map(leg => ({
+          durationMin: leg.durationMin, distanceKm: leg.distanceKm,
+          traffic: leg.traffic as 'clear' | 'moderate' | 'heavy' | undefined,
+        }))
+      }
+    }
+    return Object.keys(overridesByTeam).length > 0
+      ? buildOptimizedRoutes(redistributedJobs, availableCleaners, overridesByTeam)
+      : haversineRoutes
+  }, [haversineRoutes, redistributedJobs, availableCleaners, realRoutes])
+
   function setStopStatus(jobId: string, status: RouteStop['status'] | null) {
     setOverrides(prev => {
       const next = { ...prev }
@@ -314,17 +328,8 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
     })
   }
 
-  function toggleTeamAvailability(teamId: string) {
-    setUnavailableTeamIds(prev => {
-      const next = new Set(prev)
-      if (next.has(teamId)) next.delete(teamId)
-      else next.add(teamId)
-      return next
-    })
-  }
-
   function startGPS(cleanerId: string | null = null) {
-    if (!navigator.geolocation) { setGpsError('GPS not supported in this browser'); return }
+    if (!navigator.geolocation) { setGpsError('GPS not supported'); return }
     setGpsError(null); setGpsTrail([]); setTrackedAs(cleanerId); setGpsTracking(true)
     watchRef.current = navigator.geolocation.watchPosition(
       pos => {
@@ -333,11 +338,8 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
         setGpsTrail(prev => [...prev, [lat, lng]])
       },
       err => {
-        const msgs: Record<number, string> = {
-          1: 'Location permission denied', 2: 'Position unavailable', 3: 'GPS timed out',
-        }
-        setGpsError(msgs[err.code] ?? 'GPS error')
-        setGpsTracking(false)
+        const msgs: Record<number, string> = { 1: 'Location denied', 2: 'Position unavailable', 3: 'GPS timed out' }
+        setGpsError(msgs[err.code] ?? 'GPS error'); setGpsTracking(false)
       },
       { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
     )
@@ -348,10 +350,25 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
     setGpsTracking(false); setTrackedAs(null); setGpsPos(null); setGpsTrail([])
   }
 
+  function forceRecompute() {
+    setLoadingRoutes(true)
+    fetch('/api/routes/compute', { method: 'POST', headers: { 'x-force': '1' } })
+      .then(r => r.ok ? r.json() : null)
+      .then((data: { routes: Array<{ teamId: string; segments: RealRoute['segments']; legs: RealRoute['legs'] }> } | null) => {
+        if (!data?.routes) return
+        const map: Record<string, RealRoute | null> = {}
+        data.routes.forEach(r => { map[r.teamId] = { teamId: r.teamId, segments: r.segments, legs: r.legs } })
+        setRealRoutes(map)
+      })
+      .finally(() => setLoadingRoutes(false))
+  }
+
   if (!mounted) return null
 
-  const tileUrl  = satellite ? TILE_SAT : TILE_DARK
-  const tileAttr = satellite ? ATTR_SAT : ATTR_CARTO
+  // Find selected stop for InfoWindow
+  const selectedStop = selectedStopKey
+    ? routes.flatMap(r => r.stops.map(s => ({ stop: s, route: r }))).find(x => x.stop.job.id === selectedStopKey) ?? null
+    : null
 
   return (
     <div className="flex h-full">
@@ -359,7 +376,7 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
         routes={routes}
         cleaners={cleaners}
         unavailableTeamIds={unavailableTeamIds}
-        onToggleTeamAvailability={toggleTeamAvailability}
+        onToggleTeamAvailability={id => setUnavailableTeamIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })}
         overrides={overrides}
         onSetStopStatus={setStopStatus}
         gpsTracking={gpsTracking}
@@ -370,117 +387,87 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
       />
 
       <div className="relative flex-1 overflow-hidden">
-        <MapContainer center={[33.87, -118.26]} zoom={11}
-          style={{ height: '100%', width: '100%' }} zoomControl={false}>
+        <APIProvider apiKey={GMAPS_KEY} libraries={['marker']}>
+          <Map
+            defaultCenter={{ lat: 33.87, lng: -118.26 }}
+            defaultZoom={11}
+            mapId={MAP_ID}
+            mapTypeId={satellite ? 'satellite' : 'roadmap'}
+            gestureHandling="greedy"
+            mapTypeControl={false}
+            streetViewControl={false}
+            fullscreenControl={false}
+            zoomControl={true}
+            style={{ width: '100%', height: '100%' }}
+          >
+            <RoutePolylines routes={routes} realRoutes={realRoutes} />
+            <TrafficLayer show={showTraffic} />
+            <MapFitBounds routes={routes} />
+            <FlyTo target={flyTarget} />
+            {gpsTrail.length > 1 && <GpsTrail trail={gpsTrail} />}
 
-          <TileLayer key={satellite ? 'sat' : 'dark'} url={tileUrl} attribution={tileAttr} maxZoom={19} />
-          {showTraffic && (
-            <TileLayer
-              key="traffic"
-              url={`https://api.tomtom.com/traffic/map/4/tile/flow/rainbow/{z}/{x}/{y}.png?key=${process.env.NEXT_PUBLIC_TOMTOM_API_KEY}`}
-              attribution='© TomTom'
-              maxZoom={19}
-              opacity={0.8}
-              tileSize={256}
-              eventHandlers={{
-                tileerror: () => setTrafficFailed(true),
-                tileload:  () => setTrafficFailed(false),
-              }}
-            />
-          )}
+            {/* Team base markers */}
+            {routes.map(route => (
+              <AdvancedMarker key={`base-${route.teamId}`}
+                position={{ lat: route.startLat, lng: route.startLng }}>
+                <TeamBaseEl
+                  initials={route.cleanerNames.map(n => n[0]).join('')}
+                  color={route.color}
+                />
+              </AdvancedMarker>
+            ))}
 
-          {flyTarget && <FlyTo lat={flyTarget.lat} lng={flyTarget.lng} />}
+            {/* Stop markers */}
+            {routes.map(route =>
+              route.stops.map(stop => (
+                <AdvancedMarker
+                  key={stop.job.id}
+                  position={{ lat: stop.job.lat, lng: stop.job.lng }}
+                  onClick={() => setSelectedStopKey(stop.job.id)}
+                >
+                  <StopMarkerEl seq={stop.sequence} color={route.color} status={stop.status} />
+                </AdvancedMarker>
+              ))
+            )}
 
-          {routes.map(route => {
-            const real = realRoutes[route.teamId]
-            const hasSegments = real && real.segments.length > 0
-            return (
-              <span key={route.teamId}>
-                {hasSegments
-                  ? real.segments.map((seg, i) => (
-                      <Polyline key={i} positions={seg.positions}
-                        color={CONGESTION_COLOR[seg.congestion] ?? route.color}
-                        weight={5} opacity={0.88} />
-                    ))
-                  : <Polyline positions={route.polyline} color={route.color}
-                      weight={4} opacity={0.65} dashArray="10 6" />
-                }
-
-                <Marker position={[route.startLat, route.startLng]}
-                  icon={teamBaseIcon(route.cleanerNames.map(n => n[0]).join(''), route.color)}>
-                  <Popup>
-                    <div style={{ padding: 4 }}>
-                      <b>{route.cleanerNames.join(' + ')}</b>
-                      <p style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>
-                        Start · {route.stops.length} stops · {route.totalDriveMin} min drive
-                      </p>
-                    </div>
-                  </Popup>
-                </Marker>
-
-                {route.stops.map(stop => (
-                  <Marker key={stop.job.id}
-                    position={[stop.job.lat, stop.job.lng]}
-                    icon={stopIcon(stop.sequence, route.color, stop.status)}>
-                    <Popup>
-                      <div style={{ minWidth: 165, padding: 4 }}>
-                        <b style={{ fontSize: 13 }}>Stop {stop.sequence} · {route.cleanerNames.join(' + ')}</b>
-                        <p style={{ fontSize: 12, marginTop: 3 }}>{stop.job.address.split(',')[0]}</p>
-                        <p style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>
-                          {stop.startTime} · {stop.job.estimatedDuration} min
-                        </p>
-                        <p style={{ fontSize: 11, color: CONGESTION_COLOR[stop.drive.traffic] ?? '#aaa', marginTop: 2 }}>
-                          Drive: {stop.drive.minutes} min · {stop.drive.traffic}
-                        </p>
-                      </div>
-                    </Popup>
-                  </Marker>
-                ))}
-              </span>
-            )
-          })}
-
-          {/* Live cleaner positions from mobile GPS */}
-          {livePositions
-            .filter(c => (c.status === 'en-route' || c.status === 'cleaning') && c.currentLat !== 0 && c.currentLng !== 0)
-            .map(c => (
-              <Marker key={`live-${c.id}`}
-                position={[c.currentLat, c.currentLng]}
-                icon={cleanerLiveIcon(c.initials, c.color, c.status)}
+            {/* InfoWindow for selected stop */}
+            {selectedStop && (
+              <InfoWindow
+                position={{ lat: selectedStop.stop.job.lat, lng: selectedStop.stop.job.lng }}
+                onCloseClick={() => setSelectedStopKey(null)}
               >
-                <Popup>
-                  <div style={{ minWidth: 155, padding: 4 }}>
-                    <b style={{ fontSize: 13 }}>{c.name}</b>
-                    <p style={{ fontSize: 12, fontWeight: 600, marginTop: 3, color: c.status === 'en-route' ? '#f59e0b' : '#10b981' }}>
-                      {c.status === 'en-route' ? '↗ En Route' : '✦ Cleaning'}
-                    </p>
-                    {c.currentJobId && (
-                      <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>Job {c.currentJobId}</p>
-                    )}
-                  </div>
-                </Popup>
-              </Marker>
-            ))
-          }
-
-          {gpsTracking && gpsPos && (
-            <Circle center={[gpsPos.lat, gpsPos.lng]} radius={Math.max(gpsPos.accuracy, 10)}
-              pathOptions={{ color: '#8B85F2', fillColor: '#8B85F2', fillOpacity: 0.07, weight: 1.5 }} />
-          )}
-          {gpsTracking && gpsTrail.length > 1 && (
-            <Polyline positions={gpsTrail} color="#8B85F2" weight={3} opacity={0.5} dashArray="5 5" />
-          )}
-          {gpsTracking && gpsPos && (
-            <Marker position={[gpsPos.lat, gpsPos.lng]} icon={makeGpsIcon()}>
-              <Popup>
-                <div style={{ padding: 4 }}>
-                  <b>{trackedAs ? `Tracking ${cleaners.find(c => c.id === trackedAs)?.name.split(' ')[0]}` : 'Your Location'}</b>
-                  <p style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>±{Math.round(gpsPos.accuracy)}m</p>
+                <div style={{ minWidth: 165, fontFamily: 'system-ui', padding: 4 }}>
+                  <b style={{ fontSize: 13 }}>Stop {selectedStop.stop.sequence} · {selectedStop.route.cleanerNames.join(' + ')}</b>
+                  <p style={{ fontSize: 12, marginTop: 3 }}>{selectedStop.stop.job.address.split(',')[0]}</p>
+                  <p style={{ fontSize: 11, color: '#888', marginTop: 2 }}>
+                    {selectedStop.stop.startTime} · {selectedStop.stop.job.estimatedDuration}min
+                  </p>
+                  <p style={{ fontSize: 11, marginTop: 2, color: CONGESTION_COLOR[selectedStop.stop.drive.traffic] ?? '#888' }}>
+                    Drive: {selectedStop.stop.drive.minutes}min · {selectedStop.stop.drive.traffic}
+                  </p>
                 </div>
-              </Popup>
-            </Marker>
-          )}
-        </MapContainer>
+              </InfoWindow>
+            )}
+
+            {/* Live cleaner GPS dots */}
+            {livePositions
+              .filter(c => (c.status === 'en-route' || c.status === 'cleaning') && c.currentLat !== 0 && c.currentLng !== 0)
+              .map(c => (
+                <AdvancedMarker key={`live-${c.id}`}
+                  position={{ lat: c.currentLat, lng: c.currentLng }}>
+                  <CleanerDotEl initials={c.initials} color={c.color} status={c.status} />
+                </AdvancedMarker>
+              ))
+            }
+
+            {/* This-device GPS dot */}
+            {gpsTracking && gpsPos && (
+              <AdvancedMarker position={{ lat: gpsPos.lat, lng: gpsPos.lng }}>
+                <GpsDotEl />
+              </AdvancedMarker>
+            )}
+          </Map>
+        </APIProvider>
 
         {/* Map controls — bottom right */}
         <div className="absolute bottom-6 right-4 z-[1000] flex flex-col items-end gap-2">
@@ -490,98 +477,63 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
             </div>
           )}
           {!loadingRoutes && (
-            <button
-              onClick={() => {
-                setLoadingRoutes(true)
-                fetch('/api/routes/compute', { method: 'POST', headers: { 'x-force': '1' } })
-                  .then(r => r.ok ? r.json() : null)
-                  .then((data: { routes: Array<{ teamId: string; segments: RealRoute['segments']; legs: RealRoute['legs'] }> } | null) => {
-                    if (!data?.routes) return
-                    const map: Record<string, RealRoute | null> = {}
-                    data.routes.forEach(r => { map[r.teamId] = { teamId: r.teamId, segments: r.segments, legs: r.legs } })
-                    setRealRoutes(map)
-                  })
-                  .finally(() => setLoadingRoutes(false))
-              }}
-              className="px-[14px] py-[7px] text-[12px] font-semibold cursor-pointer rounded-xl border border-ink-200 bg-card text-ink-400 hover:text-ink-700 shadow-[0_4px_12px_rgba(0,0,0,0.4)] transition-colors"
-              title={routeSource ? `Routes from ${routeSource}` : 'Refresh routes'}
-            >
+            <button onClick={forceRecompute}
+              className="px-[14px] py-[7px] text-[12px] font-semibold cursor-pointer rounded-xl border border-ink-200 bg-card text-ink-400 hover:text-ink-700 shadow-[0_4px_12px_rgba(0,0,0,0.2)] transition-colors"
+              title={routeSource ? `Routes from ${routeSource}` : 'Refresh routes'}>
               ↺ Routes
             </button>
           )}
 
-          {/* Map / Satellite toggle */}
-          <div className="flex overflow-hidden rounded-xl border border-ink-200 shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
+          <div className="flex overflow-hidden rounded-xl border border-ink-200 shadow-[0_4px_12px_rgba(0,0,0,0.2)]">
             {(['Map', 'Satellite'] as const).map((label, i) => {
               const active = (label === 'Satellite') === satellite
               return (
-                <button
-                  key={label}
-                  onClick={() => setSatellite(label === 'Satellite')}
-                  className={cn(
-                    'px-[14px] py-[7px] text-[12px] font-semibold cursor-pointer transition-colors',
+                <button key={label} onClick={() => setSatellite(label === 'Satellite')}
+                  className={cn('px-[14px] py-[7px] text-[12px] font-semibold cursor-pointer transition-colors',
                     i > 0 && 'border-l border-ink-200',
-                    active ? 'bg-violet-500 text-white' : 'bg-card text-ink-400 hover:text-ink-700'
-                  )}
-                >{label}</button>
+                    active ? 'bg-violet-500 text-white' : 'bg-card text-ink-400 hover:text-ink-700')}>
+                  {label}
+                </button>
               )
             })}
           </div>
 
-          {/* Traffic toggle */}
-          <button
-            onClick={() => { setShowTraffic(v => !v); setTrafficFailed(false) }}
-            className={cn(
-              'px-[14px] py-[7px] text-[12px] font-semibold cursor-pointer rounded-xl border shadow-[0_4px_12px_rgba(0,0,0,0.4)] transition-colors',
-              showTraffic && trafficFailed ? 'bg-orange-500 text-white border-rose-400'
-                : showTraffic             ? 'bg-orange-500 text-white border-ink-200'
-                :                           'bg-card text-ink-400 border-ink-200 hover:text-ink-700'
-            )}
-          >
-            Traffic{showTraffic && trafficFailed ? ' ⚠' : ''}
+          <button onClick={() => setShowTraffic(v => !v)}
+            className={cn('px-[14px] py-[7px] text-[12px] font-semibold cursor-pointer rounded-xl border shadow-[0_4px_12px_rgba(0,0,0,0.2)] transition-colors',
+              showTraffic ? 'bg-orange-500 text-white border-ink-200' : 'bg-card text-ink-400 border-ink-200 hover:text-ink-700')}>
+            Traffic
           </button>
 
-          {/* Centre on GPS */}
-          <button
-            onClick={() => gpsPos && setFlyTarget({ lat: gpsPos.lat, lng: gpsPos.lng })}
+          <button onClick={() => gpsPos && setFlyTarget({ lat: gpsPos.lat, lng: gpsPos.lng })}
             disabled={!gpsPos}
-            className={cn(
-              'h-9 w-9 rounded-[10px] border border-ink-200 flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.4)] transition-colors',
-              gpsPos
-                ? 'bg-violet-500 text-white cursor-pointer'
-                : 'bg-card text-ink-300 cursor-not-allowed'
-            )}
-          >
+            className={cn('h-9 w-9 rounded-[10px] border border-ink-200 flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.2)] transition-colors',
+              gpsPos ? 'bg-violet-500 text-white cursor-pointer' : 'bg-card text-ink-300 cursor-not-allowed')}>
             <Crosshair className="h-4 w-4" />
           </button>
         </div>
 
-        {/* GPS error */}
+        {/* GPS error toast */}
         {gpsError && (
           <div className="absolute top-4 left-1/2 z-[1001] -translate-x-1/2">
-            <div className="flex items-center gap-2 rounded-xl px-4 py-2.5 bg-card border border-rose-500 shadow-[0_4px_16px_rgba(0,0,0,0.5)]">
-              <AlertTriangle className="h-4 w-4 flex-shrink-0 text-rose-500" />
+            <div className="flex items-center gap-2 rounded-xl px-4 py-2.5 bg-card border border-rose-500 shadow-lg">
+              <AlertTriangle className="h-4 w-4 text-rose-500" />
               <span className="text-[12px] text-ink-700">{gpsError}</span>
-              <button onClick={() => setGpsError(null)} className="ml-1 cursor-pointer">
-                <X className="h-3.5 w-3.5 text-ink-400" />
-              </button>
+              <button onClick={() => setGpsError(null)}><X className="h-3.5 w-3.5 text-ink-400" /></button>
             </div>
           </div>
         )}
 
-        {/* GPS live bar */}
+        {/* GPS active bar */}
         {gpsTracking && gpsPos && (
           <div className="absolute top-4 right-4 z-[1000]">
-            <div className="flex items-center gap-3 rounded-xl px-4 py-2.5 bg-card border border-violet-200 shadow-[0_4px_16px_rgba(0,0,0,0.5)]">
-              <span className="gps-dot inline-block h-2.5 w-2.5 rounded-full flex-shrink-0 bg-violet-500" />
+            <div className="flex items-center gap-3 rounded-xl px-4 py-2.5 bg-card border border-violet-200 shadow-lg">
+              <span className="inline-block h-2.5 w-2.5 rounded-full bg-violet-500" />
               <span className="text-[12px] font-semibold text-violet-400">
                 {trackedAs ? `${cleaners.find(c => c.id === trackedAs)?.name.split(' ')[0]} — Live` : 'GPS Active'}
               </span>
               <span className="text-[11px] text-ink-400">±{Math.round(gpsPos.accuracy)}m</span>
-              <button
-                onClick={stopGPS}
-                className="ml-1 flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold bg-rose-500/10 border border-rose-500 text-rose-500 cursor-pointer"
-              >
+              <button onClick={stopGPS}
+                className="ml-1 flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold bg-rose-500/10 border border-rose-500 text-rose-500 cursor-pointer">
                 <WifiOff className="h-2.5 w-2.5" /> Stop
               </button>
             </div>

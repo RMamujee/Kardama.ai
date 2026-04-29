@@ -232,8 +232,15 @@ export function CustomersClient({ customers, jobs, cleaners }: CustomersData) {
 
         {filtered.length === 0 && (
           <div className="col-span-full py-20 text-center">
-            <Users className="mx-auto mb-4 h-10 w-10 text-ink-300" />
-            <p className="text-[13.5px] text-ink-400">No customers match your filters</p>
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-soft">
+              <Users className="h-5 w-5 text-ink-400" />
+            </div>
+            <p className="text-[14px] font-medium text-ink-700">
+              {search || filterCity !== 'all' ? 'No customers match your filters' : 'No customers yet'}
+            </p>
+            <p className="mt-1.5 text-[12.5px] text-ink-400">
+              {search || filterCity !== 'all' ? 'Try adjusting your search or filter.' : 'Add your first customer to get started.'}
+            </p>
           </div>
         )}
       </div>
@@ -335,17 +342,17 @@ function DetailPanel({
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-5 space-y-6">
-          {/* Mini stats */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="card p-4 text-center">
-              <span className="text-[12px] text-ink-500">Total spent</span>
-              <p className="num mt-2 text-[22px] font-semibold text-ink-900 leading-none tracking-[-0.02em]">
+          {/* Mini stats — flat row, no nested cards */}
+          <div className="grid grid-cols-2 overflow-hidden rounded-[10px] border border-line-strong">
+            <div className="border-r border-line px-4 py-4">
+              <span className="eyebrow">Total spent</span>
+              <p className="num mt-2.5 text-[22px] font-semibold text-ink-900 leading-none tracking-[-0.02em]">
                 {formatCurrency(customer.totalSpent)}
               </p>
             </div>
-            <div className="card p-4 text-center">
-              <span className="text-[12px] text-ink-500">Jobs</span>
-              <p className="num mt-2 text-[22px] font-semibold text-ink-900 leading-none tracking-[-0.02em]">
+            <div className="px-4 py-4">
+              <span className="eyebrow">Jobs</span>
+              <p className="num mt-2.5 text-[22px] font-semibold text-ink-900 leading-none tracking-[-0.02em]">
                 {customer.jobHistory.length}
               </p>
             </div>
@@ -353,16 +360,18 @@ function DetailPanel({
 
           {/* Contact */}
           <div className="space-y-3">
-            <span className="text-[12px] font-medium text-ink-500">Contact</span>
-            <div className="space-y-2">
+            <span className="eyebrow">Contact</span>
+            <div className="space-y-2.5">
               {[
                 { Icon: Phone, label: customer.phone },
                 { Icon: Mail,  label: customer.email },
                 { Icon: MapPin, label: customer.address },
               ].map(({ Icon, label }) => (
-                <div key={label} className="flex items-start gap-2.5 text-[12.5px]">
-                  <Icon className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-ink-400" />
-                  <span className="text-ink-700 break-words">{label}</span>
+                <div key={label} className="flex items-start gap-3 text-[12.5px]">
+                  <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-[6px] bg-soft mt-0.5">
+                    <Icon className="h-3 w-3 text-ink-400" />
+                  </div>
+                  <span className="text-ink-700 break-words leading-[1.55]">{label}</span>
                 </div>
               ))}
             </div>
@@ -371,11 +380,11 @@ function DetailPanel({
           {/* Source + notes */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[12px] font-medium text-ink-500">Source</span>
+              <span className="eyebrow">Source</span>
               <Badge variant={SOURCE_BADGE[customer.source] ?? 'neutral'}>{customer.source}</Badge>
             </div>
             {customer.notes && (
-              <p className="rounded-[8px] border border-line bg-soft px-3 py-2.5 text-[12.5px] italic text-ink-500">
+              <p className="rounded-[8px] border border-line bg-soft/60 px-3.5 py-3 text-[12.5px] italic text-ink-500 leading-[1.6]">
                 "{customer.notes}"
               </p>
             )}
@@ -384,7 +393,7 @@ function DetailPanel({
           {/* Preferred cleaners */}
           {preferred.length > 0 && (
             <div className="space-y-3">
-              <span className="text-[12px] font-medium text-ink-500">Preferred cleaners</span>
+              <span className="eyebrow">Preferred cleaners</span>
               <div className="flex flex-wrap gap-2">
                 {preferred.map((c) => (
                   <div
@@ -410,7 +419,7 @@ function DetailPanel({
 
           {/* Recent jobs */}
           <div className="space-y-3">
-            <span className="text-[12px] font-medium text-ink-500">Recent jobs</span>
+            <span className="eyebrow">Recent jobs</span>
             {customerJobs.length === 0 ? (
               <p className="text-center text-[12.5px] italic text-ink-400 py-2">No jobs yet</p>
             ) : (
@@ -448,7 +457,7 @@ function DetailPanel({
         </div>
 
         {/* Footer actions */}
-        <div className="border-t border-line p-4 space-y-3">
+        <div className="border-t border-line p-5 space-y-3">
           {feedback && (
             <div
               className={cn(

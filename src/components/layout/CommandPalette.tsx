@@ -112,25 +112,26 @@ export function CommandPalette({ open, onClose }: Props) {
       />
       <div className="relative w-full max-w-[560px] rounded-[14px] border border-line-strong bg-card shadow-[var(--shadow-pop)] overflow-hidden">
         {/* Search input */}
-        <div className="flex items-center gap-3 border-b border-line px-4 py-3">
-          <Search className="h-[16px] w-[16px] flex-shrink-0 text-ink-400" />
+        <div className="flex items-center gap-3 border-b border-line px-5 py-3.5">
+          <Search className="h-[15px] w-[15px] flex-shrink-0 text-ink-400" />
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search pages, actions…"
-            className="flex-1 bg-transparent text-[14px] text-ink-900 placeholder:text-ink-400 focus:outline-none"
+            className="flex-1 bg-transparent text-[13.5px] text-ink-900 placeholder:text-ink-400 focus:outline-none"
           />
           <span className="kbd">esc</span>
         </div>
 
         {/* Results */}
-        <div className="max-h-[60vh] overflow-y-auto py-1.5">
+        <div className="max-h-[60vh] overflow-y-auto py-2">
           {filtered.length === 0 && (
-            <p className="px-4 py-8 text-center text-[13px] text-ink-400">
-              No matches for "{query}"
-            </p>
+            <div className="px-4 py-10 text-center">
+              <p className="text-[13px] font-medium text-ink-600">No results for "{query}"</p>
+              <p className="mt-1 text-[12px] text-ink-400">Try searching for a page or action name.</p>
+            </div>
           )}
 
           {(['Pages', 'Actions'] as const).map((group) => {
@@ -149,14 +150,19 @@ export function CommandPalette({ open, onClose }: Props) {
                       onClick={() => { cmd.perform(); onClose() }}
                       onMouseMove={() => setActiveIdx(idx)}
                       className={cn(
-                        'flex w-full items-center gap-3 rounded-[8px] px-2.5 py-2 text-left',
+                        'flex w-full items-center gap-3 rounded-[8px] px-3 py-2.5 text-left',
                         'transition-colors',
-                        active ? 'bg-soft' : 'hover:bg-soft/60',
+                        active ? 'bg-soft' : 'hover:bg-soft/50',
                       )}
                     >
-                      <Icon className={cn('h-[15px] w-[15px] flex-shrink-0', active ? 'text-mint-500' : 'text-ink-400')} strokeWidth={1.75} />
+                      <div className={cn(
+                        'flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[7px] transition-colors',
+                        active ? 'bg-mint-500/12 text-mint-500' : 'bg-soft text-ink-400',
+                      )}>
+                        <Icon className="h-[13px] w-[13px]" strokeWidth={1.75} />
+                      </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[13.5px] font-medium text-ink-900 leading-tight">{cmd.label}</p>
+                        <p className="text-[13px] font-medium text-ink-900 leading-tight">{cmd.label}</p>
                         {cmd.hint && (
                           <p className="truncate text-[11.5px] text-ink-400 mt-0.5">{cmd.hint}</p>
                         )}

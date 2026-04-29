@@ -113,7 +113,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
                         <span
                           className={cn(
                             'inline-flex items-center justify-center min-w-[17px] h-[17px]',
-                            'rounded-full px-1 text-[9.5px] font-bold leading-none',
+                            'rounded-full px-1 text-[9.5px] font-semibold leading-none',
                             active
                               ? 'bg-mint-400 text-black'
                               : 'bg-elev text-ink-500',
@@ -141,7 +141,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
           >
             {/* Avatar */}
             <div className="relative flex-shrink-0">
-              <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-mint-400 text-[11.5px] font-bold text-black">
+              <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-mint-400 text-[11px] font-semibold text-black">
                 DC
               </div>
               <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-mint-500 border-[2px] border-rail" />

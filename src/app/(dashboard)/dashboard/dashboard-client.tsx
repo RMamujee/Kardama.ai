@@ -58,18 +58,18 @@ function generateSeries(period: Period): { x: number; y: number }[] {
 
 const TOOLTIP_STYLE = {
   contentStyle: {
-    background: '#1C1C1E',
-    border: 'none',
+    background: '#131A14',
+    border: '1px solid #2D3C33',
     borderRadius: 8,
-    color: '#fff',
+    color: '#F2FDF5',
     fontFamily: 'var(--font-sans)',
     fontSize: 12,
     fontWeight: 600,
     padding: '6px 10px',
-    boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+    boxShadow: '0 8px 24px rgba(2,8,4,0.85)',
   },
   labelStyle: { display: 'none' },
-  itemStyle: { color: '#fff', padding: 0 },
+  itemStyle: { color: '#F2FDF5', padding: 0 },
 }
 
 export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingRevenue }: DashboardData) {
@@ -203,7 +203,20 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
 
         <div className="card overflow-hidden">
           {todayJobs.length === 0 && (
-            <p className="px-6 py-16 text-center text-[13px] text-ink-500">No jobs scheduled today</p>
+            <div className="px-6 py-14 text-center">
+              <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-mint-500/[0.08]">
+                <Calendar className="h-[18px] w-[18px] text-mint-500/70" />
+              </div>
+              <p className="text-[14px] font-medium text-ink-700">Clear schedule today</p>
+              <p className="mt-1.5 text-[12.5px] text-ink-400 leading-[1.55]">A great moment to reach out to customers or plan the week ahead.</p>
+              <button
+                type="button"
+                onClick={() => router.push('/scheduling')}
+                className="mt-5 inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-mint-500 transition-colors hover:text-mint-400"
+              >
+                Add a job <ArrowUpRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
           )}
           {todayJobs.map((job) => {
             const jobCleaners = cleaners.filter((c) => job.cleanerIds.includes(c.id))
@@ -215,10 +228,10 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
                 className="data-row group w-full text-left"
               >
                 <div className="flex w-12 flex-shrink-0 flex-col items-start">
-                  <span className="text-[15px] font-bold text-ink-900 leading-none">
+                  <span className="text-[15px] font-semibold text-ink-900 leading-none">
                     {formatTime(job.scheduledTime).split(' ')[0]}
                   </span>
-                  <span className="mt-1 text-[10.5px] font-bold uppercase text-ink-500 tracking-widest">
+                  <span className="mt-1 text-[10px] font-medium uppercase text-ink-400 tracking-[0.07em]">
                     {formatTime(job.scheduledTime).split(' ')[1]}
                   </span>
                 </div>
@@ -241,7 +254,7 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
                   <Badge variant={STATUS_VARIANT[job.status] ?? 'neutral'}>
                     {job.status}
                   </Badge>
-                  <span className="w-14 text-right text-[15px] font-bold text-ink-900">
+                  <span className="num w-14 text-right text-[14.5px] font-semibold text-ink-900">
                     ${job.price}
                   </span>
                   <ChevronRight className="h-4 w-4 text-ink-400 opacity-0 transition-opacity group-hover:opacity-100" />
@@ -279,7 +292,7 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
             >
               <div className="relative flex-shrink-0">
                 <div
-                  className="flex h-11 w-11 items-center justify-center rounded-full text-[12.5px] font-bold text-black"
+                  className="flex h-11 w-11 items-center justify-center rounded-full text-[12px] font-semibold text-black"
                   style={{ backgroundColor: c.color }}
                 >
                   {c.initials}
@@ -329,7 +342,7 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
                   <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[8px] bg-mint-500/10">
                     <Icon className="h-[15px] w-[15px] text-mint-500" strokeWidth={2} />
                   </div>
-                  <span className="text-[13.5px] font-bold text-ink-900">{insight.title}</span>
+                  <span className="text-[13.5px] font-semibold text-ink-900">{insight.title}</span>
                 </div>
                 <p className="text-[13px] leading-[1.65] text-ink-500 font-medium">{insight.text}</p>
                 <span className="mt-auto inline-flex items-center gap-1 text-[12.5px] font-semibold text-mint-500">
@@ -389,10 +402,10 @@ function PeriodTabs({ value, onChange }: { value: Period; onChange: (p: Period) 
             type="button"
             onClick={() => onChange(p)}
             className={cn(
-              'h-8 min-w-[42px] rounded-full px-3 text-[12.5px] font-bold transition-colors',
+              'h-8 min-w-[42px] rounded-full px-3 text-[12px] transition-colors',
               active
-                ? 'bg-mint-500/10 text-mint-500'
-                : 'text-ink-500 hover:bg-soft hover:text-ink-700',
+                ? 'bg-mint-500/10 font-semibold text-mint-500'
+                : 'font-medium text-ink-500 hover:bg-soft hover:text-ink-700',
             )}
           >
             {p}

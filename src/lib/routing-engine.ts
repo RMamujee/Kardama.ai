@@ -165,6 +165,9 @@ function twoOpt(jobs: Job[], startLat: number, startLng: number): Job[] {
 export interface RealLegMetrics {
   durationMin: number
   distanceKm: number
+  // Real traffic level from Google Directions API (congestion per leg).
+  // When present, overrides the haversine-based hardcoded estimate.
+  traffic?: TrafficLevel
 }
 
 // Optional per-team real-world drive metrics (e.g. from OSRM). When supplied,
@@ -219,10 +222,11 @@ export function buildOptimizedRoutes(
       const haversine = trafficDrive(lat, lng, job.lat, job.lng)
       const drive = overridesUsable
         ? {
-            // Round real OSRM minutes up + 2 min buffer for parking/last-100ft.
+            // Add 2 min buffer for parking / last-100ft walk from real Google duration.
             minutes: Math.max(1, Math.round(overrides![i].durationMin) + 2),
             km: Math.round(overrides![i].distanceKm * 10) / 10,
-            traffic: haversine.traffic,
+            // Use real Google traffic level when available; fall back to hardcoded zones.
+            traffic: (overrides![i].traffic as TrafficLevel | undefined) ?? haversine.traffic,
           }
         : haversine
       const arrivalMin = curMin + drive.minutes

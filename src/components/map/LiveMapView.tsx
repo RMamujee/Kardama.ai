@@ -7,7 +7,7 @@ import type { Cleaner, CleanerStatus, Job } from '@/types'
 import {
   buildOptimizedRoutes, TeamRoute, RouteStop, RealLegOverrides,
 } from '@/lib/routing-engine'
-import { fetchTeamRoute, RealRoute, CONGESTION_COLOR } from '@/lib/mapbox-routing'
+import { fetchTeamRoute, RealRoute, CONGESTION_COLOR } from '@/lib/google-routing'
 import { RoutingPanel } from './RoutingPanel'
 import { Crosshair, WifiOff, AlertTriangle, X, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -245,15 +245,18 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
     [redistributedJobs, availableCleaners],
   )
 
-  // Re-build using OSRM real durations once they arrive.
+  // Re-build using Google real durations + traffic levels once they arrive.
   const routes: TeamRoute[] = useMemo(() => {
     const overridesByTeam: RealLegOverrides = {}
     for (const r of haversineRoutes) {
       const real = realRoutes[r.teamId]
-      // OSRM legs are start → stop1, stop1 → stop2, ... so length should equal
-      // the number of stops on this route.
+      // Google legs: start → stop1, stop1 → stop2, ... length equals stop count.
       if (real && real.legs.length === r.stops.length) {
-        overridesByTeam[r.teamId] = real.legs
+        overridesByTeam[r.teamId] = real.legs.map(leg => ({
+          durationMin: leg.durationMin,
+          distanceKm: leg.distanceKm,
+          traffic: leg.traffic as 'clear' | 'moderate' | 'heavy' | undefined,
+        }))
       }
     }
     return Object.keys(overridesByTeam).length > 0

@@ -231,7 +231,7 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
                   <span className="text-[15px] font-semibold text-ink-900 leading-none">
                     {formatTime(job.scheduledTime).split(' ')[0]}
                   </span>
-                  <span className="mt-1 text-[10px] font-medium uppercase text-ink-400 tracking-[0.07em]">
+                  <span className="mt-1 text-[11px] font-medium uppercase text-ink-500 tracking-[0.07em]">
                     {formatTime(job.scheduledTime).split(' ')[1]}
                   </span>
                 </div>
@@ -372,7 +372,7 @@ function SecondaryStat({
   return (
     <div className="card flex items-end justify-between gap-4 px-7 py-6">
       <div className="min-w-0 flex-1">
-        <p className="text-[11.5px] font-semibold uppercase tracking-[0.05em] text-ink-400">{label}</p>
+        <p className="text-[11.5px] font-semibold uppercase tracking-[0.05em] text-ink-500">{label}</p>
         <p className={cn(
           'mt-3 text-[28px] font-bold leading-none tracking-[-0.03em]',
           warn ? 'text-amber-500' : 'text-ink-900',

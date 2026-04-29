@@ -197,7 +197,7 @@ export function CustomersClient({ customers, jobs, cleaners }: CustomersData) {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[13.5px] font-semibold text-ink-900">{customer.name}</p>
-                    <div className="mt-1 flex items-center gap-1.5 text-[11.5px] text-ink-400">
+                    <div className="mt-1 flex items-center gap-1.5 text-[12px] text-ink-500">
                       <MapPin className="h-3 w-3 flex-shrink-0" />
                       <span className="truncate">{customer.city}</span>
                       <span className="text-line-strong">·</span>
@@ -326,7 +326,7 @@ function DetailPanel({
             </div>
             <div className="min-w-0">
               <p className="truncate text-[14px] font-semibold text-ink-900">{customer.name}</p>
-              <p className="mt-0.5 truncate text-[11.5px] text-ink-400">
+              <p className="mt-0.5 truncate text-[12px] text-ink-500">
                 {customer.city} · <span className="num">{customer.jobHistory.length}</span> jobs
               </p>
             </div>
@@ -407,8 +407,8 @@ function DetailPanel({
                       {c.initials}
                     </div>
                     <span className="text-[12px] text-ink-700">{c.name.split(' ')[0]}</span>
-                    <span className="num text-[10.5px] text-amber-500">
-                      <Star className="mr-0.5 inline h-2.5 w-2.5 fill-amber-500" />
+                    <span className="num text-[12px] text-amber-500">
+                      <Star className="mr-0.5 inline h-3 w-3 fill-amber-500" />
                       {c.rating}
                     </span>
                   </div>
@@ -436,7 +436,7 @@ function DetailPanel({
                       <p className="text-[12.5px] font-medium text-ink-900 truncate">
                         {getServiceLabel(job.serviceType)}
                       </p>
-                      <p className="mt-0.5 flex items-center gap-1 text-[10.5px] text-ink-400">
+                      <p className="mt-0.5 flex items-center gap-1 text-[12px] text-ink-500">
                         <Clock className="h-2.5 w-2.5" />
                         <span className="num">{job.scheduledDate}</span>
                         <span>·</span>

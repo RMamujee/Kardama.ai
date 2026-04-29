@@ -34,7 +34,7 @@ export function StatTile({
   return (
     <div className={cn('stat-tile px-6 py-6', className)} {...props}>
       <div className="flex items-center justify-between gap-3">
-        <span className="text-[11.5px] font-semibold uppercase tracking-[0.05em] text-ink-400">{label}</span>
+        <span className="text-[11.5px] font-semibold uppercase tracking-[0.05em] text-ink-500">{label}</span>
         <div className="flex items-center gap-2">
           {trend}
           {Icon && (

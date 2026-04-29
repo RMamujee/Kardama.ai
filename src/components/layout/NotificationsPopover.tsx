@@ -92,7 +92,7 @@ export function NotificationsPopover({ children }: { children: React.ReactNode }
             </div>
             <button
               type="button"
-              className="text-[11.5px] font-medium text-ink-400 hover:text-ink-700 transition-colors"
+              className="text-[12.5px] font-medium text-ink-500 hover:text-ink-700 transition-colors"
             >
               Mark all read
             </button>
@@ -122,7 +122,7 @@ export function NotificationsPopover({ children }: { children: React.ReactNode }
                       )}>
                         {n.title}
                       </p>
-                      <span className="flex-shrink-0 text-[10.5px] text-ink-400">{n.time}</span>
+                      <span className="flex-shrink-0 text-[12px] text-ink-500">{n.time}</span>
                     </div>
                     <p className="mt-1 text-[12px] leading-[1.45] text-ink-500">{n.body}</p>
                   </div>

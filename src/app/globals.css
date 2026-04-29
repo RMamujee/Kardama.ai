@@ -161,6 +161,21 @@ body::after {
   background-size: 256px 256px;
 }
 
+/* ═════════════════════════════════════════════════════════════════════════
+   Type scale — use these sizes consistently. Nothing below 11px in UI.
+   ─────────────────────────────────────────────────────────────────────────
+   11px  →  eyebrow / kbd / tiny meta
+   12px  →  captions, badge text, section labels
+   13px  →  body text, list items, input values
+   14px  →  card titles, nav labels, topbar title
+   16px  →  section headings (h2)
+   18px  →  prominent section titles
+   22px  →  small stat numbers
+   28px  →  secondary stat tiles
+   36px  →  stat tile hero values
+   48–56px →  .hero-num (DM Serif Display)
+   ═════════════════════════════════════════════════════════════════════════ */
+
 /* ── Typography utilities ───────────────────────────────────────────────── */
 
 .tnum, .num {
@@ -169,11 +184,11 @@ body::after {
 }
 
 .eyebrow {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: var(--color-ink-400);
+  color: var(--color-ink-500);
 }
 
 .kbd {
@@ -181,7 +196,7 @@ body::after {
   align-items: center;
   gap: 2px;
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 500;
   padding: 2px 6px;
   border-radius: 4px;
@@ -191,11 +206,11 @@ body::after {
 }
 
 .grid-label {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--color-ink-400);
+  color: var(--color-ink-500);
 }
 
 /* ── Scrollbar ─────────────────────────────────────────────────────────── */

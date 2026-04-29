@@ -52,7 +52,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
         <BrandMark />
         <div className="leading-tight">
           <div className="text-[15px] font-bold text-ink-900 tracking-[-0.025em]">Kardama</div>
-          <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.09em] text-ink-400">
+          <div className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-500">
             Field Service
           </div>
         </div>
@@ -65,7 +65,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
 
             {/* Section header with line */}
             <div className="flex items-center gap-2 px-2 mb-1.5">
-              <span className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-ink-300">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-500">
                 {section.label}
               </span>
               <div className="flex-1 h-px bg-line" />

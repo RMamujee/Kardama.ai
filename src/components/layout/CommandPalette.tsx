@@ -164,7 +164,7 @@ export function CommandPalette({ open, onClose }: Props) {
                       <div className="min-w-0 flex-1">
                         <p className="text-[13px] font-medium text-ink-900 leading-tight">{cmd.label}</p>
                         {cmd.hint && (
-                          <p className="truncate text-[11.5px] text-ink-400 mt-0.5">{cmd.hint}</p>
+                          <p className="truncate text-[12px] text-ink-500 mt-0.5">{cmd.hint}</p>
                         )}
                       </div>
                       {active && <span className="kbd">↵</span>}

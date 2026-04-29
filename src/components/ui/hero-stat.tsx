@@ -45,7 +45,7 @@ export function HeroStat({
 
   return (
     <div className={cn('flex flex-col gap-3', className)}>
-      <span className="text-[11.5px] font-semibold uppercase tracking-[0.07em] text-ink-400">
+      <span className="text-[12px] font-semibold uppercase tracking-[0.07em] text-ink-500">
         {label}
       </span>
       <p className="hero-num tnum">{value}</p>

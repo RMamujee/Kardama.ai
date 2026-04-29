@@ -8,9 +8,9 @@ import { cn } from '@/lib/utils'
  */
 const badgeVariants = cva(
   [
-    'inline-flex items-center gap-1.5 px-2 py-[3px]',
-    'rounded-full font-medium tracking-[-0.005em]',
-    'text-[11px] leading-none whitespace-nowrap capitalize',
+    'inline-flex items-center gap-1.5 px-2.5 py-1',
+    'rounded-full font-medium tracking-[0.005em]',
+    'text-[11.5px] leading-none whitespace-nowrap capitalize',
   ].join(' '),
   {
     variants: {

@@ -59,7 +59,7 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
             {info.title}
           </h1>
           {info.sub && (
-            <p className="hidden md:block truncate text-[10.5px] text-ink-400 mt-0.5 leading-tight">
+            <p className="hidden md:block truncate text-[12px] text-ink-500 mt-0.5 leading-tight">
               {info.sub}
             </p>
           )}
@@ -70,11 +70,11 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
-            className="group flex h-[34px] w-full items-center gap-2.5 rounded-[8px] bg-soft border border-line px-3 text-left text-[12.5px] text-ink-400 font-medium transition-all duration-150 hover:bg-hover hover:border-line-strong"
+            className="group flex h-[34px] w-full items-center gap-2.5 rounded-[8px] bg-soft border border-line px-3.5 text-left text-[13px] text-ink-500 font-medium transition-all duration-150 hover:bg-hover hover:border-line-strong"
           >
             <Search className="h-[13px] w-[13px] flex-shrink-0" />
             <span className="flex-1 truncate">Search…</span>
-            <span className="kbd flex items-center gap-0.5 text-[9.5px]">
+            <span className="kbd flex items-center gap-0.5 text-[11px]">
               <Command className="h-[8px] w-[8px]" />K
             </span>
           </button>
@@ -181,7 +181,7 @@ function NewMenuItem({
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-[12.5px] font-semibold text-ink-900 leading-tight">{title}</p>
-          <p className="mt-0.5 text-[11px] text-ink-400 leading-tight">{hint}</p>
+          <p className="mt-0.5 text-[12px] text-ink-500 leading-tight">{hint}</p>
         </div>
       </button>
     </Popover.Close>

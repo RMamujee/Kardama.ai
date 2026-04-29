@@ -135,10 +135,10 @@ function Field({
 }) {
   return (
     <div>
-      <Label className="mb-1.5 block text-[11.5px] text-ink-400 font-medium">{label}</Label>
+      <Label className="mb-1.5 block">{label}</Label>
       {children}
-      {error && <p className="mt-1 text-[11.5px] text-rose-500">{error}</p>}
-      {!error && hint && <p className="mt-1 text-[11.5px] text-ink-400">{hint}</p>}
+      {error && <p className="mt-1.5 text-[12px] text-rose-500">{error}</p>}
+      {!error && hint && <p className="mt-1.5 text-[12px] text-ink-500">{hint}</p>}
     </div>
   )
 }

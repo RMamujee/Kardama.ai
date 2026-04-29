@@ -35,8 +35,8 @@ export function ChatsClient({ cleaners }: { cleaners: Cleaner[] }) {
     return () => { setSelectedCleaner(null) }
   }, [])
 
-  // Subscribe only to display messages in the active thread
-  // (unread counting + notifications are handled by the global ChatListener)
+  // Subscribe to display incoming cleaner messages in the active thread.
+  // Deduplicates by ID so messages added directly via handleSend are not doubled.
   useEffect(() => {
     const supabase = getSupabaseBrowserClient()
     const channel = supabase
@@ -44,7 +44,7 @@ export function ChatsClient({ cleaners }: { cleaners: Cleaner[] }) {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
         const m = payload.new as Msg
         if (selected && m.cleaner_id === selected.id) {
-          setMessages(prev => [...prev, m])
+          setMessages(prev => prev.some(x => x.id === m.id) ? prev : [...prev, m])
         }
       })
       .subscribe()
@@ -58,8 +58,12 @@ export function ChatsClient({ cleaners }: { cleaners: Cleaner[] }) {
   function handleSend() {
     const trimmed = text.trim()
     if (!selected || !trimmed || isPending) return
+    const forCleaner = selected
     setText('')
-    startTransition(async () => { await sendMessageToCleaner(selected.id, trimmed) })
+    startTransition(async () => {
+      const saved = await sendMessageToCleaner(forCleaner.id, trimmed)
+      if (saved) setMessages(prev => prev.some(x => x.id === (saved as Msg).id) ? prev : [...prev, saved as Msg])
+    })
   }
 
   return (

@@ -12,7 +12,7 @@ const CLEANERS_TO_SEED = [
     name: 'Profane 2',
     initials: 'P2',
     phone: '(747) 218-3437',
-    email: 'profane2@kardama.ai',
+    email: 'profane2.real@kardama.ai',
     home_area_name: 'La Crescenta',
     home_area_lat: LA_CRESCENTA.lat,
     home_area_lng: LA_CRESCENTA.lng,

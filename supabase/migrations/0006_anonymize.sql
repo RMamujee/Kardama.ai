@@ -14,7 +14,7 @@ UPDATE public.cleaners SET name='Gamma 1',   initials='GM1', email='gamma1@karda
 UPDATE public.cleaners SET name='Gamma 2',   initials='GM2', email='gamma2@kardama.ai'   WHERE id='c10';
 
 -- ── Real cleaner accounts ─────────────────────────────────────────────────────
-UPDATE public.cleaners SET name='Profane 2', initials='P2', email='profane2@kardama.ai' WHERE id='c_jalen';
+UPDATE public.cleaners SET name='Profane 2', initials='P2', email='profane2.real@kardama.ai' WHERE id='c_jalen';
 UPDATE public.cleaners SET name='Profane 1', initials='P1', email='profane1@kardama.ai'
   WHERE LOWER(name) LIKE '%dev%cleaner%' OR LOWER(name) = 'dev cleaner';
 

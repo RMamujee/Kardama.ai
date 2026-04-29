@@ -12,6 +12,11 @@ import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 const GMAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? ''
 const OVERRIDES_KEY = 'kardama:dispatch:overrides'
 
+const MAP_STYLES: google.maps.MapTypeStyle[] = [
+  { featureType: 'poi',            stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit.station', stylers: [{ visibility: 'off' }] },
+]
+
 function todayStr() { return new Date().toISOString().split('T')[0] }
 function loadOverrides(): Record<string, RouteStop['status']> {
   if (typeof window === 'undefined') return {}
@@ -90,27 +95,27 @@ function RoutePolylines({ routes, realRoutes, selectedTeamId }: {
     if (!map) return
     polysRef.current.forEach(p => p.setMap(null))
     polysRef.current = []
-    const DASH: google.maps.IconSequence = { icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 4 }, offset: '0', repeat: '20px' }
     for (const route of routes) {
       const highlighted = !selectedTeamId || route.teamId === selectedTeamId
-      const opacity = highlighted ? 0.9 : 0.18
+      const iconOpacity = highlighted ? 1 : 0.2
       const real = realRoutes[route.teamId]
       if (real && real.segments.length > 0) {
+        // Dashed lines following real road geometry from Google Directions
         for (const seg of real.segments) {
+          const color = CONGESTION_COLOR[seg.congestion] ?? route.color
           polysRef.current.push(new google.maps.Polyline({
             path: seg.positions.map(([lat, lng]) => ({ lat, lng })),
-            strokeColor: CONGESTION_COLOR[seg.congestion] ?? route.color,
-            strokeWeight: highlighted ? 5 : 3,
-            strokeOpacity: opacity, map,
+            strokeOpacity: 0,
+            icons: [{ icon: { path: 'M 0,-1 0,1', strokeColor: color, strokeOpacity: iconOpacity, scale: highlighted ? 4 : 3 }, offset: '0', repeat: '14px' }],
+            map,
           }))
         }
       } else {
+        // Straight-line fallback until Google data arrives
         polysRef.current.push(new google.maps.Polyline({
           path: route.polyline.map(([lat, lng]) => ({ lat, lng })),
-          strokeColor: route.color,
-          strokeWeight: highlighted ? 4 : 2,
           strokeOpacity: 0,
-          icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: highlighted ? 1 : 0.25, scale: 4 }, offset: '0', repeat: '20px' }],
+          icons: [{ icon: { path: 'M 0,-1 0,1', strokeColor: route.color, strokeOpacity: highlighted ? 0.35 : 0.1, scale: 3 }, offset: '0', repeat: '20px' }],
           map,
         }))
       }
@@ -398,6 +403,7 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
             mapTypeControl={false}
             streetViewControl={false}
             fullscreenControl={false}
+            styles={satellite ? [] : MAP_STYLES}
             style={{ width: '100%', height: '100%' }}
           >
             <RoutePolylines routes={routes} realRoutes={realRoutes} selectedTeamId={selectedTeamId} />

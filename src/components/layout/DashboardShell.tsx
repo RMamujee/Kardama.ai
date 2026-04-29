@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
  * No max-width on the main scroll area. Pages decide their own grid.
  * Padding scales with viewport so nothing feels cramped or marooned.
  */
-export function DashboardShell({ children }: { children: React.ReactNode }) {
+export function DashboardShell({ children, chatListener }: { children: React.ReactNode; chatListener?: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
@@ -40,6 +40,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+
+      {chatListener}
     </div>
   )
 }

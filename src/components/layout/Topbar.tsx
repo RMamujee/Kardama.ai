@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import * as Popover from '@radix-ui/react-popover'
 import { CommandPalette } from './CommandPalette'
 import { NotificationsPopover } from './NotificationsPopover'
+import { useChatStore } from '@/store/useChatStore'
 
 const PAGE_META: Record<string, { title: string; sub: string }> = {
   '/dashboard':  { title: 'Dashboard',     sub: 'Today\'s operations' },
@@ -27,6 +28,7 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
             ?? { title: 'Kardama', sub: '' }
 
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const hasUnread = useChatStore(s => s.notifications.some(n => !n.read))
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -149,7 +151,9 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
               className="relative flex h-9 w-9 items-center justify-center rounded-[7px] bg-soft text-ink-500 transition-colors hover:bg-hover hover:text-ink-700"
             >
               <Bell className="h-[14px] w-[14px]" strokeWidth={1.75} />
-              <span className="absolute top-1.5 right-1.5 h-[6px] w-[6px] rounded-full bg-mint-400 shadow-[0_0_0_2px_var(--color-page)]" />
+              {hasUnread && (
+                <span className="absolute top-1.5 right-1.5 h-[6px] w-[6px] rounded-full bg-red-500 shadow-[0_0_0_2px_var(--color-page)]" />
+              )}
             </button>
           </NotificationsPopover>
 

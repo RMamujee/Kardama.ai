@@ -18,26 +18,33 @@ export function ChatsClient({ cleaners }: { cleaners: Cleaner[] }) {
   const [messages, setMessages] = useState<Msg[]>([])
   const [text, setText] = useState('')
   const [isPending, startTransition] = useTransition()
-  const { unreadMap, incrementUnread, clearUnread } = useChatStore()
+  const { unreadMap, clearUnread, setSelectedCleaner } = useChatStore()
   const bottomRef = useRef<HTMLDivElement>(null)
 
+  // Keep store in sync with currently viewed conversation
   useEffect(() => {
+    setSelectedCleaner(selected?.id ?? null)
     if (!selected) return
     setMessages([])
     getCleanerMessages(selected.id).then(data => setMessages(data as Msg[]))
     clearUnread(selected.id)
   }, [selected])
 
+  // Clear selected cleaner from store when navigating away
+  useEffect(() => {
+    return () => { setSelectedCleaner(null) }
+  }, [])
+
+  // Subscribe only to display messages in the active thread
+  // (unread counting + notifications are handled by the global ChatListener)
   useEffect(() => {
     const supabase = getSupabaseBrowserClient()
     const channel = supabase
-      .channel('owner-chats')
+      .channel('owner-chats-thread')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
         const m = payload.new as Msg
         if (selected && m.cleaner_id === selected.id) {
           setMessages(prev => [...prev, m])
-        } else if (m.sender_role === 'cleaner') {
-          incrementUnread(m.cleaner_id)
         }
       })
       .subscribe()

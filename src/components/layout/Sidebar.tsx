@@ -59,10 +59,9 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
       </div>
 
       {/* Nav */}
-      <nav className="flex flex-1 flex-col overflow-y-auto px-3 pt-3 pb-2">
-        <div className="flex flex-1 flex-col justify-between">
-        {NAV_SECTIONS.map((section) => (
-          <div key={section.label}>
+      <nav className="flex-1 overflow-y-auto px-3 pt-3 pb-3">
+        {NAV_SECTIONS.map((section, si) => (
+          <div key={section.label} className={si > 0 ? 'mt-6' : ''}>
 
             {/* Section header with line */}
             <div className="flex items-center gap-2 px-2 mb-2">
@@ -130,7 +129,6 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
             </ul>
           </div>
         ))}
-        </div>
       </nav>
 
       {/* User block */}

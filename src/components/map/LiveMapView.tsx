@@ -78,7 +78,11 @@ function gpsDotIcon(): google.maps.Icon {
 
 // ─── Map layer components (must live inside <Map>) ────────────────────────────
 
-function RoutePolylines({ routes, realRoutes }: { routes: TeamRoute[]; realRoutes: Record<string, RealRoute | null> }) {
+function RoutePolylines({ routes, realRoutes, selectedTeamId }: {
+  routes: TeamRoute[]
+  realRoutes: Record<string, RealRoute | null>
+  selectedTeamId: string | null
+}) {
   const map = useMap()
   const polysRef = useRef<google.maps.Polyline[]>([])
 
@@ -88,25 +92,31 @@ function RoutePolylines({ routes, realRoutes }: { routes: TeamRoute[]; realRoute
     polysRef.current = []
     const DASH: google.maps.IconSequence = { icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 4 }, offset: '0', repeat: '20px' }
     for (const route of routes) {
+      const highlighted = !selectedTeamId || route.teamId === selectedTeamId
+      const opacity = highlighted ? 0.9 : 0.18
       const real = realRoutes[route.teamId]
       if (real && real.segments.length > 0) {
         for (const seg of real.segments) {
           polysRef.current.push(new google.maps.Polyline({
             path: seg.positions.map(([lat, lng]) => ({ lat, lng })),
             strokeColor: CONGESTION_COLOR[seg.congestion] ?? route.color,
-            strokeWeight: 5, strokeOpacity: 0.9, map,
+            strokeWeight: highlighted ? 5 : 3,
+            strokeOpacity: opacity, map,
           }))
         }
       } else {
         polysRef.current.push(new google.maps.Polyline({
           path: route.polyline.map(([lat, lng]) => ({ lat, lng })),
-          strokeColor: route.color, strokeWeight: 4, strokeOpacity: 0,
-          icons: [DASH], map,
+          strokeColor: route.color,
+          strokeWeight: highlighted ? 4 : 2,
+          strokeOpacity: 0,
+          icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: highlighted ? 1 : 0.25, scale: 4 }, offset: '0', repeat: '20px' }],
+          map,
         }))
       }
     }
     return () => { polysRef.current.forEach(p => p.setMap(null)) }
-  }, [map, routes, realRoutes])
+  }, [map, routes, realRoutes, selectedTeamId])
 
   return null
 }
@@ -126,11 +136,28 @@ function TrafficLayer({ show }: { show: boolean }) {
 type LivePos = { id: string; initials: string; color: string; name: string; currentLat: number; currentLng: number; status: CleanerStatus; currentJobId: string | null }
 type GpsPos = { lat: number; lng: number; accuracy: number; speed: number | null }
 
-function MarkersLayer({ routes, livePositions, gpsTracking, gpsPos }: {
+function FlyToTeam({ routes, teamId }: { routes: TeamRoute[]; teamId: string | null }) {
+  const map = useMap()
+  const prevId = useRef<string | null>(null)
+  useEffect(() => {
+    if (!map || !teamId || teamId === prevId.current) return
+    const route = routes.find(r => r.teamId === teamId)
+    if (!route) return
+    const b = new google.maps.LatLngBounds()
+    b.extend({ lat: route.startLat, lng: route.startLng })
+    route.stops.forEach(s => b.extend({ lat: s.job.lat, lng: s.job.lng }))
+    if (!b.isEmpty()) map.fitBounds(b, 80)
+    prevId.current = teamId
+  }, [map, teamId, routes])
+  return null
+}
+
+function MarkersLayer({ routes, livePositions, gpsTracking, gpsPos, selectedTeamId }: {
   routes: TeamRoute[]
   livePositions: LivePos[]
   gpsTracking: boolean
   gpsPos: GpsPos | null
+  selectedTeamId: string | null
 }) {
   const map = useMap()
   const markersRef = useRef<google.maps.Marker[]>([])
@@ -143,11 +170,15 @@ function MarkersLayer({ routes, livePositions, gpsTracking, gpsPos }: {
     infoRef.current ??= new google.maps.InfoWindow()
 
     for (const route of routes) {
+      const highlighted = !selectedTeamId || route.teamId === selectedTeamId
+      const markerOpacity = highlighted ? 1.0 : 0.2
+
       // Team start
       const base = new google.maps.Marker({
         position: { lat: route.startLat, lng: route.startLng },
         map, icon: baseIcon(route.cleanerNames.map(n => n[0]).join(''), route.color),
         title: route.cleanerNames.join(' & '),
+        opacity: markerOpacity,
       })
       markersRef.current.push(base)
 
@@ -157,6 +188,7 @@ function MarkersLayer({ routes, livePositions, gpsTracking, gpsPos }: {
           position: { lat: stop.job.lat, lng: stop.job.lng },
           map, icon: stopIcon(stop.sequence, route.color, stop.status),
           title: stop.job.address,
+          opacity: markerOpacity,
         })
         m.addListener('click', () => {
           const congColor = CONGESTION_COLOR[stop.drive.traffic] ?? '#888'
@@ -193,7 +225,7 @@ function MarkersLayer({ routes, livePositions, gpsTracking, gpsPos }: {
     }
 
     return () => { markersRef.current.forEach(m => m.setMap(null)); infoRef.current?.close() }
-  }, [map, routes, livePositions, gpsTracking, gpsPos])
+  }, [map, routes, livePositions, gpsTracking, gpsPos, selectedTeamId])
 
   return null
 }
@@ -245,6 +277,7 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
   const [loadingRoutes, setLoadingRoutes] = useState(false)
   const [routeSource, setRouteSource]     = useState<'cache' | 'computed' | null>(null)
   const [flyTarget, setFlyTarget]         = useState<{ lat: number; lng: number } | null>(null)
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null)
   const [gpsPos, setGpsPos]               = useState<GpsPos | null>(null)
   const [gpsTrail, setGpsTrail]           = useState<[number, number][]>([])
   const [gpsTracking, setGpsTracking]     = useState(false)
@@ -351,6 +384,8 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
         gpsTracking={gpsTracking} trackedCleaner={trackedAs}
         onStartGPS={startGPS} onStopGPS={stopGPS}
         onFlyTo={(lat, lng) => setFlyTarget({ lat, lng })}
+        selectedTeamId={selectedTeamId}
+        onFocusTeam={id => setSelectedTeamId(prev => prev === id ? null : id)}
       />
 
       <div className="relative flex-1 overflow-hidden">
@@ -365,12 +400,13 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
             fullscreenControl={false}
             style={{ width: '100%', height: '100%' }}
           >
-            <RoutePolylines routes={routes} realRoutes={realRoutes} />
+            <RoutePolylines routes={routes} realRoutes={realRoutes} selectedTeamId={selectedTeamId} />
             <TrafficLayer show={showTraffic} />
             <MapFitBounds routes={routes} />
             <FlyTo target={flyTarget} />
+            <FlyToTeam routes={routes} teamId={selectedTeamId} />
             {gpsTrail.length > 1 && <GpsTrail trail={gpsTrail} />}
-            <MarkersLayer routes={routes} livePositions={livePositions} gpsTracking={gpsTracking} gpsPos={gpsPos} />
+            <MarkersLayer routes={routes} livePositions={livePositions} gpsTracking={gpsTracking} gpsPos={gpsPos} selectedTeamId={selectedTeamId} />
           </Map>
         </APIProvider>
 

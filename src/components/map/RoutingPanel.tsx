@@ -274,12 +274,14 @@ function StopRow({ stop, teamColor, teamName, isCancelled, onCancel, onUncancel,
 }
 
 // ─── Team card ────────────────────────────────────────────────────────────────
-function TeamCard({ route, overrides, onSetStopStatus, onFlyTo, onMarkUnavailable }: {
+function TeamCard({ route, overrides, onSetStopStatus, onFlyTo, onMarkUnavailable, isSelected, onFocus }: {
   route: TeamRoute
   overrides: Record<string, RouteStop['status']>
   onSetStopStatus: (jobId: string, status: RouteStop['status'] | null) => void
   onFlyTo: (lat: number, lng: number) => void
   onMarkUnavailable: () => void
+  isSelected: boolean
+  onFocus: () => void
 }) {
   const [open, setOpen] = useState(false)
   const active = route.stops.filter(s => s.status !== 'cancelled')
@@ -288,11 +290,11 @@ function TeamCard({ route, overrides, onSetStopStatus, onFlyTo, onMarkUnavailabl
   const teamName = route.cleanerNames.join(' & ')
 
   return (
-    <div className="rounded-[14px] border border-ink-200 overflow-hidden">
+    <div className={cn('rounded-[14px] border overflow-hidden transition-colors', isSelected ? 'border-ink-400' : 'border-ink-200')}>
       {/* Header: team name + actions — split so buttons aren't nested */}
-      <div className="flex items-start gap-2.5 p-3 bg-card hover:bg-hover transition-colors">
+      <div className={cn('flex items-start gap-2.5 p-3 transition-colors', isSelected ? 'bg-hover' : 'bg-card hover:bg-hover')}>
         <div className="mt-1 h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ background: route.color }} />
-        <button onClick={() => setOpen(v => !v)} className="flex-1 min-w-0 text-left">
+        <button onClick={() => { setOpen(v => !v); onFocus() }} className="flex-1 min-w-0 text-left">
           <p className="text-[12px] font-semibold text-ink-900 truncate">{teamName}</p>
           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
             <span className="text-[11px] text-ink-500">{active.length} stops</span>
@@ -366,6 +368,8 @@ interface Props {
   onStartGPS: (cleanerId: string | null) => void
   onStopGPS: () => void
   onFlyTo: (lat: number, lng: number) => void
+  selectedTeamId: string | null
+  onFocusTeam: (teamId: string) => void
 }
 
 // ─── RoutingPanel ─────────────────────────────────────────────────────────────
@@ -373,6 +377,7 @@ export function RoutingPanel({
   routes, cleaners, unavailableTeamIds, onToggleTeamAvailability,
   overrides, onSetStopStatus,
   gpsTracking, trackedCleaner, onStartGPS, onStopGPS, onFlyTo,
+  selectedTeamId, onFocusTeam,
 }: Props) {
   const today = new Date()
   const dateLabel = today.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
@@ -478,7 +483,9 @@ export function RoutingPanel({
                 overrides={overrides}
                 onSetStopStatus={onSetStopStatus}
                 onFlyTo={onFlyTo}
-                onMarkUnavailable={() => onToggleTeamAvailability(route.teamId)} />
+                onMarkUnavailable={() => onToggleTeamAvailability(route.teamId)}
+                isSelected={selectedTeamId === route.teamId}
+                onFocus={() => onFocusTeam(route.teamId)} />
             ))}
 
             {unavailableTeamGroups.length > 0 && (

@@ -5,9 +5,14 @@ const GMAPS = [
   'https://maps.gstatic.com',
 ]
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
+const supabaseWss = supabaseUrl.replace(/^https:\/\//, 'wss://')
+
 const SUPABASE = [
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+  supabaseUrl,
+  supabaseWss,
   'https://*.supabase.co',
+  'wss://*.supabase.co',
 ]
 
 const CSP = [

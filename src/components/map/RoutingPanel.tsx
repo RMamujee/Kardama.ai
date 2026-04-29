@@ -4,9 +4,9 @@ import { Cleaner } from '@/types'
 import { TeamRoute, RouteStop, findRescheduleSlots } from '@/lib/routing-engine'
 import { cn } from '@/lib/utils'
 import {
-  Navigation, WifiOff, Wifi, Clock, ChevronDown, ChevronUp,
+  WifiOff, Wifi, Clock, ChevronDown, ChevronUp,
   MessageSquare, X, AlertTriangle, RotateCcw, Send, CheckCircle,
-  MapPin, DollarSign, ExternalLink, Undo2, UserX, UserCheck,
+  MapPin, DollarSign, Undo2, UserX, UserCheck,
 } from 'lucide-react'
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -34,38 +34,6 @@ function buildMsg(t: MsgTemplate, stop: RouteStop, teamName: string): string {
   if (t === 'almost')  return `Hi! ${teamName} is about 10 minutes away from ${a}. Please make sure access is ready!`
   if (t === 'arrived') return `${teamName} has arrived at ${a} and is starting your service now.`
   return `Your cleaning at ${a} is complete! Thank you for choosing Kardama. ✨`
-}
-
-// ─── Navigation helpers ───────────────────────────────────────────────────────
-// Google Maps directions URL with origin → waypoints → destination.
-// Works on iOS, Android, and desktop.
-function googleMapsRouteUrl(route: TeamRoute): string {
-  const active = route.stops.filter(s => s.status !== 'cancelled')
-  if (active.length === 0) return ''
-  const origin = `${route.startLat},${route.startLng}`
-  const destination = jobDestination(active[active.length - 1].job)
-  const waypoints = active.slice(0, -1).map(s => jobDestination(s.job)).join('|')
-  const params = new URLSearchParams({
-    api: '1',
-    origin,
-    destination,
-    travelmode: 'driving',
-  })
-  if (waypoints) params.set('waypoints', waypoints)
-  return `https://www.google.com/maps/dir/?${params.toString()}`
-}
-
-function jobDestination(job: { lat: number; lng: number; address: string }): string {
-  return job.lat !== 0 && job.lng !== 0 ? `${job.lat},${job.lng}` : job.address
-}
-
-function googleMapsStopUrl(stop: RouteStop): string {
-  const params = new URLSearchParams({
-    api: '1',
-    destination: jobDestination(stop.job),
-    travelmode: 'driving',
-  })
-  return `https://www.google.com/maps/dir/?${params.toString()}`
 }
 
 // ─── Timeline bar ─────────────────────────────────────────────────────────────
@@ -278,12 +246,6 @@ function StopRow({ stop, teamColor, teamName, isCancelled, onCancel, onUncancel,
         </div>
 
         <div className="flex items-center gap-0.5 flex-shrink-0 mt-0.5">
-          <a href={googleMapsStopUrl(stop)} target="_blank" rel="noopener noreferrer"
-            title="Navigate to this stop"
-            className="h-6 w-6 flex items-center justify-center rounded border border-ink-200 text-ink-400 hover:text-emerald-500 hover:border-emerald-500/30 transition-colors">
-            <Navigation className="h-2.5 w-2.5" />
-          </a>
-
           <button onClick={() => { setMsgOpen(v => !v); setConfirm(false) }}
             className={cn('h-6 w-6 flex items-center justify-center rounded border transition-colors',
               msgOpen ? 'border-violet-500/40 bg-violet-500/15 text-violet-400'
@@ -324,7 +286,6 @@ function TeamCard({ route, overrides, onSetStopStatus, onFlyTo, onMarkUnavailabl
   const revenue = active.reduce((s, x) => s + x.job.price, 0)
   const slots = findRescheduleSlots(route.stops)
   const teamName = route.cleanerNames.join(' & ')
-  const navUrl = googleMapsRouteUrl(route)
 
   return (
     <div className="rounded-[14px] border border-ink-200 overflow-hidden">
@@ -357,18 +318,6 @@ function TeamCard({ route, overrides, onSetStopStatus, onFlyTo, onMarkUnavailabl
           </button>
         </div>
       </div>
-
-      {navUrl && active.length > 0 && (
-        <div className="px-3 pb-2 pt-1">
-          <a href={navUrl} target="_blank" rel="noopener noreferrer"
-            className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold text-emerald-500 hover:bg-emerald-500/20 transition-colors"
-            onClick={e => e.stopPropagation()}>
-            <Navigation className="h-3 w-3" />
-            Open route in Google Maps
-            <ExternalLink className="h-2.5 w-2.5 opacity-60" />
-          </a>
-        </div>
-      )}
 
       <TimelineBar stops={route.stops} color={route.color} />
 

@@ -393,15 +393,17 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
 
           {routes.map(route => {
             const real = realRoutes[route.teamId]
+            const hasSegments = real && real.segments.length > 0
             return (
               <span key={route.teamId}>
-                {real
+                {hasSegments
                   ? real.segments.map((seg, i) => (
                       <Polyline key={i} positions={seg.positions}
-                        color={route.color} weight={5} opacity={0.85} />
+                        color={CONGESTION_COLOR[seg.congestion] ?? route.color}
+                        weight={5} opacity={0.88} />
                     ))
                   : <Polyline positions={route.polyline} color={route.color}
-                      weight={3.5} opacity={0.5} dashArray="8 6" />
+                      weight={4} opacity={0.65} dashArray="10 6" />
                 }
 
                 <Marker position={[route.startLat, route.startLng]}

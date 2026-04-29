@@ -59,19 +59,20 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-3 pb-3 pt-1">
-        {NAV_SECTIONS.map((section, si) => (
-          <div key={section.label} className={cn('last:mb-0', si > 0 ? 'mt-5' : 'mt-1')}>
+      <nav className="flex flex-1 flex-col overflow-y-auto px-3 pt-3 pb-2">
+        <div className="flex flex-1 flex-col justify-between">
+        {NAV_SECTIONS.map((section) => (
+          <div key={section.label}>
 
             {/* Section header with line */}
-            <div className="flex items-center gap-2 px-2 mb-1.5">
+            <div className="flex items-center gap-2 px-2 mb-2">
               <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-500">
                 {section.label}
               </span>
               <div className="flex-1 h-px bg-line" />
             </div>
 
-            <ul className="flex flex-col gap-px">
+            <ul className="flex flex-col gap-0.5">
               {section.items.map(({ label, href, icon: Icon, badge }) => {
                 const active = pathname === href || pathname.startsWith(href + '/')
                 return (
@@ -81,7 +82,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
                       onClick={onClose}
                       aria-current={active ? 'page' : undefined}
                       className={cn(
-                        'group relative flex items-center gap-2.5 rounded-[7px] px-3 py-[7px]',
+                        'group relative flex items-center gap-2.5 rounded-[7px] px-3 py-2.5',
                         'text-[13px] font-medium overflow-hidden select-none',
                         'transition-all duration-150',
                         active
@@ -129,6 +130,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
             </ul>
           </div>
         ))}
+        </div>
       </nav>
 
       {/* User block */}
@@ -149,7 +151,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
 
             <div className="min-w-0 flex-1">
               <p className="truncate text-[12.5px] font-semibold text-ink-900">David Chen</p>
-              <p className="truncate text-[10.5px] text-ink-400 mt-0.5">Owner · Long Beach</p>
+              <p className="truncate text-[12px] text-ink-500 mt-0.5">Owner · Long Beach</p>
             </div>
 
             <LogOut

@@ -7,17 +7,17 @@ import { CommandPalette } from './CommandPalette'
 import { NotificationsPopover } from './NotificationsPopover'
 
 const PAGE_META: Record<string, { title: string; sub: string }> = {
-  '/dashboard':  { title: 'Dashboard',     sub: 'Today\'s operations and KPIs' },
-  '/scheduling': { title: 'Scheduling',    sub: 'Calendar and team assignment' },
-  '/map':        { title: 'Live Map',      sub: 'Real-time crew & route view' },
-  '/customers':  { title: 'Customers',     sub: 'CRM and client management' },
-  '/team':       { title: 'Team',          sub: 'Cleaner roster and utilization' },
-  '/payments':   { title: 'Payments',      sub: 'Revenue and ledger' },
+  '/dashboard':  { title: 'Dashboard',     sub: 'Today\'s operations' },
+  '/scheduling': { title: 'Scheduling',    sub: 'Calendar & team assignment' },
+  '/map':        { title: 'Live Map',      sub: 'Real-time crew & routes' },
+  '/customers':  { title: 'Customers',     sub: 'CRM & client management' },
+  '/team':       { title: 'Team',          sub: 'Cleaner roster & utilization' },
+  '/payments':   { title: 'Payments',      sub: 'Revenue & ledger' },
   '/analytics':  { title: 'Analytics',     sub: 'Performance reports' },
-  '/marketing':  { title: 'Marketing',     sub: 'Posts and group reach' },
-  '/campaigns':  { title: 'Campaigns',     sub: 'Nurturing and booking links' },
+  '/marketing':  { title: 'Marketing',     sub: 'Posts & group reach' },
+  '/campaigns':  { title: 'Campaigns',     sub: 'Nurturing & booking links' },
   '/inbox':      { title: 'Inbox',         sub: 'Customer conversations' },
-  '/messages':   { title: 'Messages',      sub: 'On-the-way and update templates' },
+  '/messages':   { title: 'Messages',      sub: 'On-the-way & update templates' },
 }
 
 export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
@@ -41,48 +41,52 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-[60px] flex-shrink-0 items-center gap-3 border-b border-line bg-rail/95 backdrop-blur-md px-4 md:gap-4 md:px-6">
+      <header className="sticky top-0 z-30 flex h-[62px] flex-shrink-0 items-center gap-3 border-b border-line bg-rail/95 backdrop-blur-md px-4 md:gap-4 md:px-6">
+
         {/* Mobile menu */}
         <button
           type="button"
           onClick={onMenuToggle}
           aria-label="Toggle menu"
-          className="flex h-9 w-9 items-center justify-center rounded-[8px] text-ink-400 transition-colors hover:bg-soft hover:text-ink-700 md:hidden"
+          className="flex h-9 w-9 items-center justify-center rounded-[7px] text-ink-400 transition-colors hover:bg-soft hover:text-ink-700 md:hidden"
         >
-          <Menu className="h-[17px] w-[17px]" />
+          <Menu className="h-[16px] w-[16px]" />
         </button>
 
         {/* Page title */}
         <div className="min-w-0 flex-shrink-0">
-          <h1 className="truncate text-[15px] font-semibold text-ink-900 tracking-[-0.01em] leading-tight">
+          <h1 className="truncate text-[14.5px] font-semibold text-ink-900 tracking-[-0.015em] leading-tight">
             {info.title}
           </h1>
           {info.sub && (
-            <p className="hidden md:block truncate text-[11px] text-ink-400 mt-0.5 leading-tight">{info.sub}</p>
+            <p className="hidden md:block truncate text-[10.5px] text-ink-400 mt-0.5 leading-tight">
+              {info.sub}
+            </p>
           )}
         </div>
 
         {/* Search bar */}
-        <div className="hidden lg:flex flex-1 max-w-[400px] mx-2">
+        <div className="hidden lg:flex flex-1 max-w-[360px] mx-3">
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
-            className="group flex h-9 w-full items-center gap-2.5 rounded-[8px] bg-soft border border-line px-3.5 text-left text-[13px] text-ink-400 transition-colors hover:bg-hover hover:border-line-strong"
+            className="group flex h-[34px] w-full items-center gap-2.5 rounded-[8px] bg-soft border border-line px-3 text-left text-[12.5px] text-ink-400 font-medium transition-all duration-150 hover:bg-hover hover:border-line-strong"
           >
-            <Search className="h-[14px] w-[14px] flex-shrink-0" />
-            <span className="flex-1 truncate font-medium">Search…</span>
-            <span className="kbd flex items-center gap-0.5 text-[10px]">
-              <Command className="h-[9px] w-[9px]" />K
+            <Search className="h-[13px] w-[13px] flex-shrink-0" />
+            <span className="flex-1 truncate">Search…</span>
+            <span className="kbd flex items-center gap-0.5 text-[9.5px]">
+              <Command className="h-[8px] w-[8px]" />K
             </span>
           </button>
         </div>
 
-        {/* Spacer when search hidden */}
+        {/* Spacer */}
         <div className="lg:hidden flex-1" />
 
-        {/* Action cluster */}
+        {/* Right cluster */}
         <div className="flex flex-shrink-0 items-center gap-2">
-          {/* AI status pill */}
+
+          {/* AI pill */}
           <div className="ai-pill hidden md:inline-flex">
             <span className="pulse" />
             AI Online
@@ -93,19 +97,19 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
             type="button"
             aria-label="Search"
             onClick={() => setPaletteOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-[8px] bg-soft text-ink-500 transition-colors hover:bg-hover hover:text-ink-700 lg:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-[7px] bg-soft text-ink-500 transition-colors hover:bg-hover hover:text-ink-700 lg:hidden"
           >
-            <Search className="h-[15px] w-[15px]" />
+            <Search className="h-[14px] w-[14px]" />
           </button>
 
-          {/* + New popover */}
+          {/* + New */}
           <Popover.Root>
             <Popover.Trigger asChild>
               <button
                 type="button"
-                className="hidden sm:inline-flex h-9 items-center gap-1.5 rounded-[8px] bg-mint-400 px-3.5 text-[13px] font-semibold text-black transition-[transform,filter] hover:scale-[1.04] hover:bg-mint-500 active:scale-[0.98] shadow-[0_2px_12px_-2px_rgba(29,185,84,0.45)]"
+                className="hidden sm:inline-flex h-[34px] items-center gap-1.5 rounded-[7px] bg-mint-400 px-3.5 text-[12.5px] font-semibold text-black shadow-[0_2px_14px_-3px_rgba(29,185,84,0.5)] transition-all duration-150 hover:bg-mint-500 hover:scale-[1.03] active:scale-[0.97]"
               >
-                <Plus className="h-[14px] w-[14px]" strokeWidth={2.5} />
+                <Plus className="h-[13px] w-[13px]" strokeWidth={2.5} />
                 New
               </button>
             </Popover.Trigger>
@@ -113,7 +117,7 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
               <Popover.Content
                 align="end"
                 sideOffset={8}
-                className="z-50 w-[240px] rounded-[10px] border border-line-strong bg-card p-1.5 shadow-[var(--shadow-pop)] anim-fade-in"
+                className="z-50 w-[236px] rounded-[10px] border border-line-strong bg-card p-1.5 shadow-[var(--shadow-pop)] anim-fade-in"
               >
                 <NewMenuItem
                   icon={UserPlus}
@@ -142,12 +146,13 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
             <button
               type="button"
               aria-label="Notifications"
-              className="relative flex h-9 w-9 items-center justify-center rounded-[8px] bg-soft text-ink-500 transition-colors hover:bg-hover hover:text-ink-700"
+              className="relative flex h-9 w-9 items-center justify-center rounded-[7px] bg-soft text-ink-500 transition-colors hover:bg-hover hover:text-ink-700"
             >
-              <Bell className="h-[15px] w-[15px]" strokeWidth={1.75} />
-              <span className="absolute top-1.5 right-1.5 h-[7px] w-[7px] rounded-full bg-mint-400 ring-2 ring-page" />
+              <Bell className="h-[14px] w-[14px]" strokeWidth={1.75} />
+              <span className="absolute top-1.5 right-1.5 h-[6px] w-[6px] rounded-full bg-mint-400 shadow-[0_0_0_2px_var(--color-page)]" />
             </button>
           </NotificationsPopover>
+
         </div>
       </header>
 
@@ -171,12 +176,12 @@ function NewMenuItem({
         onClick={onSelect}
         className="group flex w-full items-start gap-3 rounded-[7px] px-2.5 py-2.5 text-left transition-colors hover:bg-soft"
       >
-        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[7px] bg-mint-500/10 text-mint-500">
-          <Icon className="h-[14px] w-[14px]" strokeWidth={1.75} />
+        <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[6px] bg-mint-500/10 text-mint-500">
+          <Icon className="h-[13px] w-[13px]" strokeWidth={1.75} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[13px] font-medium text-ink-900 leading-tight">{title}</p>
-          <p className="mt-0.5 text-[11.5px] text-ink-400 leading-tight">{hint}</p>
+          <p className="text-[12.5px] font-semibold text-ink-900 leading-tight">{title}</p>
+          <p className="mt-0.5 text-[11px] text-ink-400 leading-tight">{hint}</p>
         </div>
       </button>
     </Popover.Close>

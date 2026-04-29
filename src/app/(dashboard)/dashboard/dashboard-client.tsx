@@ -114,7 +114,7 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
     <div className="space-y-8 pb-12">
       {/* ─── HERO: portfolio-style giant number with chart, in a bordered card */}
       <motion.section variants={fadeUp} initial="hidden" animate="visible">
-        <div className="card px-6 py-7 sm:px-8 sm:py-8 space-y-7">
+        <div className="hero-card px-6 py-7 sm:px-8 sm:py-8 space-y-7">
           <HeroStat
             label="Revenue this month"
             value={formatCurrency(heroValue)}

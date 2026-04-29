@@ -48,7 +48,7 @@ export function HeroStat({
       <span className="text-[12.5px] font-semibold uppercase tracking-[0.04em] text-ink-500">
         {label}
       </span>
-      <p className="hero-num">{value}</p>
+      <p className="hero-num tnum">{value}</p>
       {(change || changePercent) && (
         <div className={cn('flex items-center gap-1.5 text-[14px] font-semibold', colorClass)}>
           {inferred !== 'neutral' && <Arrow className="h-4 w-4" strokeWidth={2.5} />}

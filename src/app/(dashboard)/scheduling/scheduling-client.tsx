@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo, useTransition } from 'react'
+import React, { useState, useMemo, useTransition } from 'react'
 import { ChevronLeft, ChevronRight, Plus, Sparkles, Inbox, CheckCircle2, XCircle, Clock, Pencil, Trash2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -17,14 +17,19 @@ type SchedulingData = {
   customers: Customer[]
   jobs: Job[]
   bookingRequests: BookingRequest[]
+  confirmedBookings: BookingRequest[]
 }
 
-const SERVICE_COLORS: Record<string, string> = {
-  standard:           'bg-mint-500/12 text-mint-500 border-mint-500/25',
-  deep:               'bg-mint-500/12 text-mint-500 border-mint-500/25',
-  'move-out':         'bg-amber-500/12 text-amber-500 border-amber-500/25',
-  'post-construction':'bg-rose-500/12 text-rose-500 border-rose-500/25',
-  airbnb:             'bg-emerald-500/12 text-emerald-500 border-emerald-500/25',
+const TEAM_COLORS: Record<number, { bg: string; text: string; border: string }> = {
+  1: { bg: 'bg-sky-500/12',     text: 'text-sky-600',     border: 'border-sky-500/30' },
+  2: { bg: 'bg-violet-500/12',  text: 'text-violet-600',  border: 'border-violet-500/30' },
+  3: { bg: 'bg-orange-500/12',  text: 'text-orange-600',  border: 'border-orange-500/30' },
+  4: { bg: 'bg-fuchsia-500/12', text: 'text-fuchsia-600', border: 'border-fuchsia-500/30' },
+  5: { bg: 'bg-teal-500/12',    text: 'text-teal-600',    border: 'border-teal-500/30' },
+}
+
+function teamBlockStyle(color: string): React.CSSProperties {
+  return { backgroundColor: `${color}22`, borderColor: `${color}55`, color }
 }
 
 const SERVICE_OPTIONS = [
@@ -104,10 +109,11 @@ type JobDraft = {
   notes: string
 }
 
-export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }: SchedulingData) {
+export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, confirmedBookings }: SchedulingData) {
   const { weekOffset, setWeekOffset, openBooking, bookingOpen } = useSchedulingStore()
   const weekDates = useMemo(() => getWeekDates(weekOffset), [weekOffset])
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
+  const [selectedBooking, setSelectedBooking] = useState<BookingRequest | null>(null)
   const [editMode, setEditMode] = useState(false)
   const [draft, setDraft] = useState<JobDraft | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -118,15 +124,55 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
   const [acceptError, setAcceptError] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [selectedTeams, setSelectedTeams] = useState<Set<string>>(new Set())
+
+  const teams = useMemo(() => {
+    const map = new Map<string, { teamId: string; color: string; names: string[] }>()
+    for (const c of cleaners) {
+      if (!map.has(c.teamId)) map.set(c.teamId, { teamId: c.teamId, color: c.color, names: [] })
+      map.get(c.teamId)!.names.push(c.name.split(' ')[0])
+    }
+    return [...map.values()]
+  }, [cleaners])
+
+  function toggleTeam(teamId: string) {
+    setSelectedTeams(prev => {
+      if (prev.size === 0) return new Set([teamId])
+      const next = new Set(prev)
+      if (next.has(teamId)) {
+        next.delete(teamId)
+        return next.size === 0 ? new Set() : next
+      }
+      next.add(teamId)
+      return next.size === teams.length ? new Set() : next
+    })
+  }
+
+  const filteredJobs = useMemo(() => {
+    if (selectedTeams.size === 0) return jobs
+    return jobs.filter(job => {
+      const lead = cleaners.find(c => job.cleanerIds.includes(c.id))
+      return lead && selectedTeams.has(lead.teamId)
+    })
+  }, [jobs, cleaners, selectedTeams])
 
   const jobsByDay = useMemo(() => {
     const map: Record<string, Job[]> = {}
     weekDates.forEach(d => { map[fmtDate(d)] = [] })
-    jobs.forEach(j => {
+    filteredJobs.forEach(j => {
       if (map[j.scheduledDate]) map[j.scheduledDate].push(j)
     })
     return map
-  }, [jobs, weekDates])
+  }, [filteredJobs, weekDates])
+
+  const confirmedByDay = useMemo(() => {
+    const map: Record<string, BookingRequest[]> = {}
+    weekDates.forEach(d => { map[fmtDate(d)] = [] })
+    confirmedBookings.forEach(b => {
+      if (b.preferredDate && map[b.preferredDate] !== undefined) map[b.preferredDate].push(b)
+    })
+    return map
+  }, [confirmedBookings, weekDates])
 
   const currentMonthDate = useMemo(() => {
     const now = new Date()
@@ -137,9 +183,18 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
   const monthJobsByDay = useMemo(() => {
     const map: Record<string, Job[]> = {}
     monthDates.forEach(d => { map[fmtDate(d)] = [] })
-    jobs.forEach(j => { if (map[j.scheduledDate] !== undefined) map[j.scheduledDate].push(j) })
+    filteredJobs.forEach(j => { if (map[j.scheduledDate] !== undefined) map[j.scheduledDate].push(j) })
     return map
-  }, [jobs, monthDates])
+  }, [filteredJobs, monthDates])
+
+  const monthConfirmedByDay = useMemo(() => {
+    const map: Record<string, BookingRequest[]> = {}
+    monthDates.forEach(d => { map[fmtDate(d)] = [] })
+    confirmedBookings.forEach(b => {
+      if (b.preferredDate && map[b.preferredDate] !== undefined) map[b.preferredDate].push(b)
+    })
+    return map
+  }, [confirmedBookings, monthDates])
 
   const today = fmtDate(new Date())
 
@@ -238,6 +293,14 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
 
   function selectJob(job: Job) {
     setSelectedJob(job)
+    setSelectedBooking(null)
+    setEditMode(false)
+    setDraft(null)
+  }
+
+  function selectBooking(booking: BookingRequest) {
+    setSelectedBooking(booking)
+    setSelectedJob(null)
     setEditMode(false)
     setDraft(null)
   }
@@ -295,6 +358,33 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
               Today
             </Button>
           )}
+        </div>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {selectedTeams.size > 0 && (
+            <button
+              onClick={() => setSelectedTeams(new Set())}
+              className="px-2.5 py-1 rounded-[7px] text-[11px] font-medium text-ink-400 border border-line hover:text-ink-700 transition-colors"
+            >
+              All
+            </button>
+          )}
+          {teams.map(team => {
+            const active = selectedTeams.size === 0 || selectedTeams.has(team.teamId)
+            return (
+              <button
+                key={team.teamId}
+                onClick={() => toggleTeam(team.teamId)}
+                className={cn(
+                  'flex items-center gap-1.5 px-2.5 py-1 rounded-[7px] text-[11px] font-semibold border transition-colors',
+                  active ? 'opacity-100' : 'opacity-35 hover:opacity-60',
+                )}
+                style={active ? teamBlockStyle(team.color) : { borderColor: team.color + '44', color: team.color }}
+              >
+                <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ background: team.color }} />
+                {team.names.join(' & ')}
+              </button>
+            )
+          })}
         </div>
         <Button onClick={openBooking}>
           <Plus className="h-[15px] w-[15px]" strokeWidth={2.5} /> New Job
@@ -408,24 +498,41 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
                       </span>
                     </div>
                     <div className="flex flex-col gap-0.5 min-w-0">
-                      {dayJobs.slice(0, 3).map(job => {
-                        const tone = SERVICE_COLORS[job.serviceType] ?? SERVICE_COLORS.standard
+                      {(monthConfirmedByDay[dateStr] ?? []).slice(0, 2).map(booking => {
+                        const tc = TEAM_COLORS[booking.assignedTeam ?? 0]
+                        if (!tc) return null
+                        return (
+                          <button
+                            key={booking.id}
+                            onClick={() => selectBooking(booking)}
+                            className={cn(
+                              'w-full text-left rounded-[4px] border px-1.5 py-[2px] text-[10.5px] font-semibold truncate leading-[1.4]',
+                              tc.bg, tc.text, tc.border,
+                              selectedBooking?.id === booking.id && 'ring-1 ring-current/60',
+                            )}
+                          >
+                            T{booking.assignedTeam} · {booking.address.split(',')[0]}
+                          </button>
+                        )
+                      })}
+                      {dayJobs.slice(0, 2).map(job => {
+                        const teamColor = cleaners.find(c => job.cleanerIds.includes(c.id))?.color
                         return (
                           <button
                             key={job.id}
                             onClick={() => selectJob(job)}
                             className={cn(
-                              'w-full text-left rounded-[4px] border px-1.5 py-[2px] text-[10.5px] font-medium truncate leading-[1.4]',
-                              tone,
-                              selectedJob?.id === job.id && 'ring-1 ring-mint-500',
+                              'w-full text-left rounded-[4px] border px-1.5 py-[2px] text-[10.5px] font-semibold truncate leading-[1.4]',
+                              selectedJob?.id === job.id && 'ring-1 ring-white/40',
                             )}
+                            style={teamColor ? teamBlockStyle(teamColor) : undefined}
                           >
                             {formatTime(job.scheduledTime)} · {job.address.split(',')[0]}
                           </button>
                         )
                       })}
-                      {dayJobs.length > 3 && (
-                        <p className="text-[10px] text-ink-400 pl-1">+{dayJobs.length - 3} more</p>
+                      {((monthConfirmedByDay[dateStr] ?? []).length + dayJobs.length > 4) && (
+                        <p className="text-[10px] text-ink-400 pl-1">+{(monthConfirmedByDay[dateStr] ?? []).length + dayJobs.length - 4} more</p>
                       )}
                     </div>
                   </div>
@@ -474,6 +581,45 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
                 })}
               </div>
 
+              {/* All-day row — confirmed bookings (8 AM–4 PM blocks) */}
+              <div className="grid grid-cols-8 border-b border-line">
+                <div className="px-3 py-2 border-r border-line text-[10.5px] font-medium text-ink-400 leading-tight flex items-center">
+                  all-day
+                </div>
+                {weekDates.map((d, di) => {
+                  const dateStr = fmtDate(d)
+                  const dayConfirmed = confirmedByDay[dateStr] ?? []
+                  return (
+                    <div
+                      key={di}
+                      className={cn(
+                        'p-1 space-y-0.5 min-h-[36px]',
+                        di < 6 && 'border-r border-line',
+                        dateStr === today && 'bg-mint-500/[0.03]',
+                      )}
+                    >
+                      {dayConfirmed.map(booking => {
+                        const tc = TEAM_COLORS[booking.assignedTeam ?? 0]
+                        if (!tc) return null
+                        return (
+                          <button
+                            key={booking.id}
+                            onClick={() => selectBooking(booking)}
+                            className={cn(
+                              'w-full rounded-[5px] border px-1.5 py-[2px] text-left text-[10px] font-semibold truncate leading-[1.4]',
+                              tc.bg, tc.text, tc.border,
+                              selectedBooking?.id === booking.id && 'ring-1 ring-offset-1 ring-current/60',
+                            )}
+                          >
+                            T{booking.assignedTeam} · {booking.address.split(',')[0]}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )
+                })}
+              </div>
+
               {/* Time rows */}
               <div className="max-h-[500px] overflow-y-auto">
                 {HOURS.map(hour => (
@@ -499,21 +645,21 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
                         >
                           {dayJobs.map(job => {
                             const jobCleaners = cleaners.filter(c => job.cleanerIds.includes(c.id))
-                            const tone = SERVICE_COLORS[job.serviceType] ?? SERVICE_COLORS.standard
+                            const teamColor = jobCleaners[0]?.color
                             return (
                               <button
                                 key={job.id}
                                 onClick={() => selectJob(job)}
                                 className={cn(
                                   'w-full rounded-[8px] border p-2 text-left text-[12px]',
-                                  tone,
-                                  selectedJob?.id === job.id && 'ring-2 ring-offset-1 ring-mint-500/50',
+                                  selectedJob?.id === job.id && 'ring-2 ring-offset-1 ring-white/30',
                                 )}
+                                style={teamColor ? teamBlockStyle(teamColor) : undefined}
                               >
-                                <p className="font-medium truncate">{job.address.split(',')[0]}</p>
-                                <p className="opacity-75 mt-0.5 text-[11px]">
+                                <p className="font-semibold truncate">{job.address.split(',')[0]}</p>
+                                <p className="opacity-70 mt-0.5 text-[11px]">
                                   {formatTime(job.scheduledTime)}
-                                  {jobCleaners.length > 0 && ` · ${jobCleaners.map(c => c.initials).join('+')}`}
+                                  {jobCleaners.length > 0 && ` · ${jobCleaners.map(c => c.initials).join('+')}` }
                                 </p>
                               </button>
                             )
@@ -787,6 +933,79 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests }:
                 </div>
               </div>
             )}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Confirmed Booking Detail Panel */}
+      {selectedBooking && (
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="card">
+            <div className="flex items-center justify-between border-b border-line px-5 py-4">
+              <div className="flex items-center gap-2.5">
+                <h2 className="text-[14.5px] font-semibold text-ink-900 tracking-[-0.01em]">Confirmed Booking</h2>
+                {selectedBooking.assignedTeam && (() => {
+                  const tc = TEAM_COLORS[selectedBooking.assignedTeam]
+                  return tc ? (
+                    <span className={cn('rounded-full border px-2.5 py-0.5 text-[11px] font-semibold', tc.bg, tc.text, tc.border)}>
+                      Team {selectedBooking.assignedTeam}
+                    </span>
+                  ) : null
+                })()}
+              </div>
+              <button
+                onClick={() => setSelectedBooking(null)}
+                className="text-[12px] text-ink-400 hover:text-ink-700 bg-transparent border-0 cursor-pointer transition-colors"
+              >
+                Close
+              </button>
+            </div>
+            <div className="p-5">
+              <div className="grid grid-cols-2 gap-5">
+                <div>
+                  <p className="text-[12px] font-medium text-ink-500 mb-1.5">Customer</p>
+                  <p className="text-[13px] font-semibold text-ink-900">{selectedBooking.customerName}</p>
+                </div>
+                <div>
+                  <p className="text-[12px] font-medium text-ink-500 mb-1.5">Phone</p>
+                  <a href={`tel:${selectedBooking.customerPhone}`} className="text-[13px] font-medium text-mint-500 hover:text-mint-600">
+                    {selectedBooking.customerPhone}
+                  </a>
+                </div>
+                <div>
+                  <p className="text-[12px] font-medium text-ink-500 mb-1.5">Address</p>
+                  <p className="text-[13px] font-medium text-ink-900">{selectedBooking.address}</p>
+                </div>
+                <div>
+                  <p className="text-[12px] font-medium text-ink-500 mb-1.5">Service</p>
+                  <p className="text-[13px] font-medium text-ink-900">{getServiceLabel(selectedBooking.serviceType)}</p>
+                </div>
+                <div>
+                  <p className="text-[12px] font-medium text-ink-500 mb-1.5">Date</p>
+                  <p className="text-[13px] font-medium text-ink-900">{fmtDisplayDate(selectedBooking.preferredDate ?? '')}</p>
+                </div>
+                <div>
+                  <p className="text-[12px] font-medium text-ink-500 mb-1.5">Time</p>
+                  <p className="text-[13px] font-medium text-ink-900">
+                    {selectedBooking.preferredTime ? fmtDisplayTime(selectedBooking.preferredTime) : '8:00 AM – 4:00 PM'}
+                  </p>
+                </div>
+                {selectedBooking.customerEmail && (
+                  <div className="col-span-2">
+                    <p className="text-[12px] font-medium text-ink-500 mb-1.5">Email</p>
+                    <a href={`mailto:${selectedBooking.customerEmail}`} className="text-[13px] font-medium text-mint-500 hover:text-mint-600">
+                      {selectedBooking.customerEmail}
+                    </a>
+                  </div>
+                )}
+                {selectedBooking.notes && (
+                  <div className="col-span-2">
+                    <p className="text-[12px] font-medium text-ink-500 mb-1.5">Notes</p>
+                    <p className="text-[13px] text-ink-700">{selectedBooking.notes}</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </motion.div>
       )}

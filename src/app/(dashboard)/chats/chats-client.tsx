@@ -63,8 +63,7 @@ export function ChatsClient({ cleaners }: { cleaners: Cleaner[] }) {
   }
 
   return (
-    /* Flush layout: negate DashboardShell padding so chat fills edge-to-edge */
-    <div className="-mx-6 -my-8 md:-mx-10 md:-my-9 lg:-mx-14 lg:-my-10 xl:-mx-16 flex overflow-hidden h-[calc(100vh-62px)]">
+    <div className="flex h-full overflow-hidden">
 
       {/* Cleaner list */}
       <div className="w-64 md:w-72 border-r border-line bg-rail flex-shrink-0 flex flex-col">

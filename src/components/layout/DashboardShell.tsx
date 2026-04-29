@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { cn } from '@/lib/utils'
@@ -11,6 +12,8 @@ import { cn } from '@/lib/utils'
  */
 export function DashboardShell({ children, chatListener }: { children: React.ReactNode; chatListener?: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const pathname = usePathname()
+  const isFullBleed = pathname.startsWith('/chats')
 
   return (
     <div className="flex h-screen overflow-hidden bg-page">
@@ -36,7 +39,12 @@ export function DashboardShell({ children, chatListener }: { children: React.Rea
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Topbar onMenuToggle={() => setSidebarOpen((o) => !o)} />
-        <main className="anim-fade-in flex-1 overflow-y-auto bg-page px-6 py-8 md:px-10 md:py-9 lg:px-14 lg:py-10 xl:px-16">
+        <main className={cn(
+          'anim-fade-in flex-1 bg-page',
+          isFullBleed
+            ? 'overflow-hidden'
+            : 'overflow-y-auto px-6 py-8 md:px-10 md:py-9 lg:px-14 lg:py-10 xl:px-16',
+        )}>
           {children}
         </main>
       </div>

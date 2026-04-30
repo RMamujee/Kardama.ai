@@ -236,7 +236,7 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
                     {job.address.split(',')[0]}
                   </p>
                   <p className="mt-0.5 truncate text-[12px] text-ink-500 font-medium">
-                    {getServiceLabel(job.serviceType)} · {jobCleaners.map((c) => c.name.split(' ')[0]).join(' + ')}
+                    {getServiceLabel(job.serviceType)} · {jobCleaners.map((c) => c.name).join(' + ')}
                   </p>
                 </div>
 
@@ -296,7 +296,7 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
                 />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[13.5px] font-semibold text-ink-900">{c.name.split(' ')[0]}</p>
+                <p className="truncate text-[13.5px] font-semibold text-ink-900">{c.name}</p>
                 <p className="mt-1 truncate text-[11.5px] text-ink-500 font-medium capitalize">
                   {c.status.replace('-', ' ')}
                 </p>

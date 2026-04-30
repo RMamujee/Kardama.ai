@@ -10,7 +10,7 @@ import { formatTime, getServiceLabel, cn, formatCurrency } from '@/lib/utils'
 import { SERVICE_DURATIONS } from '@/lib/services'
 import { BookingWizard } from '@/components/scheduling/BookingWizard'
 import { acceptBookingRequest, declineBookingRequest, updateJob, deleteJob } from '@/app/actions/scheduling'
-import type { Cleaner, Customer, Job } from '@/types'
+import type { Cleaner, Customer, Job, Team } from '@/types'
 import type { BookingRequest } from '@/lib/data'
 
 type SchedulingData = {
@@ -19,6 +19,7 @@ type SchedulingData = {
   jobs: Job[]
   bookingRequests: BookingRequest[]
   confirmedBookings: BookingRequest[]
+  teams: Team[]
 }
 
 const TEAM_COLORS: Record<number, { bg: string; text: string; border: string }> = {
@@ -116,7 +117,7 @@ type JobDraft = {
   notes: string
 }
 
-export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, confirmedBookings }: SchedulingData) {
+export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, confirmedBookings, teams: teamsList }: SchedulingData) {
   const { weekOffset, setWeekOffset, openBooking, bookingOpen } = useSchedulingStore()
   const weekDates = useMemo(() => getWeekDates(weekOffset), [weekOffset])
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
@@ -136,13 +137,21 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
   const [pickedTeamId, setPickedTeamId] = useState<string | null>(null)
 
   const teams = useMemo(() => {
-    const map = new Map<string, { teamId: string; color: string; names: string[] }>()
+    const teamNameById = new Map(teamsList.map(t => [t.id, t.name]))
+    const map = new Map<string, { teamId: string; color: string; names: string[]; teamName: string }>()
     for (const c of cleaners) {
-      if (!map.has(c.teamId)) map.set(c.teamId, { teamId: c.teamId, color: c.color, names: [] })
-      map.get(c.teamId)!.names.push(c.name.split(' ')[0])
+      if (!map.has(c.teamId)) {
+        map.set(c.teamId, {
+          teamId: c.teamId,
+          color: c.color,
+          names: [],
+          teamName: teamNameById.get(c.teamId) ?? c.teamId,
+        })
+      }
+      map.get(c.teamId)!.names.push(c.name)
     }
     return [...map.values()]
-  }, [cleaners])
+  }, [cleaners, teamsList])
 
   function toggleTeam(teamId: string) {
     setSelectedTeams(prev => {
@@ -417,7 +426,7 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
                 style={active ? teamBlockStyle(team.color) : { borderColor: team.color + '44', color: team.color }}
               >
                 <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ background: team.color }} />
-                {team.names.join(' & ')}
+                {team.teamName}
               </button>
             )
           })}
@@ -564,7 +573,7 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
                                     'text-[13px] font-semibold tracking-[-0.01em] truncate',
                                     picked && !conflict ? '' : 'text-ink-900',
                                   )}>
-                                    {team.names.join(' & ')}
+                                    {team.teamName}
                                   </p>
                                 </div>
                                 {conflict ? (
@@ -592,7 +601,7 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
                       <div className="flex items-center justify-between gap-3 pt-1">
                         <p className="text-[11.5px] text-ink-400">
                           {pickedTeamId
-                            ? <>Selected: <span className="font-medium text-ink-700">{teams.find(t => t.teamId === pickedTeamId)?.names.join(' & ')}</span></>
+                            ? <>Selected: <span className="font-medium text-ink-700">{teams.find(t => t.teamId === pickedTeamId)?.teamName}</span></>
                             : 'No team selected yet'
                           }
                         </p>
@@ -947,17 +956,29 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
                   </div>
                   <div className="col-span-2">
                     <p className="text-[12px] font-medium text-ink-500 mb-2">Team</p>
-                    <div className="flex gap-3 flex-wrap">
-                      {cleaners.filter(c => selectedJob.cleanerIds.includes(c.id)).length > 0
-                        ? cleaners.filter(c => selectedJob.cleanerIds.includes(c.id)).map(c => (
-                            <div key={c.id} className="flex items-center gap-2">
-                              <Avatar initials={c.initials} color={c.color} size="sm" />
-                              <span className="text-[13px] font-medium text-ink-900">{c.name.split(' ')[0]}</span>
+                    {(() => {
+                      const jobCleaners = cleaners.filter(c => selectedJob.cleanerIds.includes(c.id))
+                      if (jobCleaners.length === 0) return <p className="text-[12px] text-ink-400">Unassigned</p>
+                      const teamObj = jobCleaners[0]?.teamId ? teams.find(t => t.teamId === jobCleaners[0].teamId) : null
+                      return (
+                        <div>
+                          {teamObj && (
+                            <div className="flex items-center gap-1.5 mb-2">
+                              <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: teamObj.color }} />
+                              <span className="text-[12px] font-semibold" style={{ color: teamObj.color }}>{teamObj.teamName}</span>
                             </div>
-                          ))
-                        : <p className="text-[12px] text-ink-400">Unassigned</p>
-                      }
-                    </div>
+                          )}
+                          <div className="flex gap-3 flex-wrap">
+                            {jobCleaners.map(c => (
+                              <div key={c.id} className="flex items-center gap-2">
+                                <Avatar initials={c.initials} color={c.color} size="sm" />
+                                <span className="text-[13px] font-medium text-ink-900">{c.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })()}
                   </div>
                   {selectedJob.notes && (
                     <div className="col-span-2">
@@ -1066,7 +1087,7 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
                             )}
                           >
                             <Avatar initials={c.initials} color={c.color} size="xs" />
-                            {c.name.split(' ')[0]}
+                            {c.name}
                             {selected && <CheckCircle2 className="h-3 w-3 ml-0.5" />}
                           </button>
                         )

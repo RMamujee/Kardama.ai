@@ -141,7 +141,7 @@ function Thread({ cleaner, messages }: { cleaner: Cleaner; messages: Message[] }
         <div className="text-center">
           <p className="text-[15px] font-bold text-white">{cleaner.name}</p>
           <p className="text-[13px] text-[#616061] mt-1 max-w-[260px] leading-relaxed">
-            This is the beginning of your direct message history with <strong className="text-[#d1d2d3]">{cleaner.name.split(' ')[0]}</strong>.
+            This is the beginning of your direct message history with <strong className="text-[#d1d2d3]">{cleaner.name}</strong>.
           </p>
         </div>
       </div>

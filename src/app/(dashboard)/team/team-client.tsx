@@ -193,7 +193,7 @@ export function TeamClient({ cleaners, jobs, teams: teamsProp }: TeamData) {
                               </div>
                               <div className="min-w-0">
                                 <p className="truncate text-[13px] font-semibold text-ink-900">
-                                  {cleaner.name.split(' ')[0]}
+                                  {cleaner.name}
                                 </p>
                                 <span className={cn('text-[11px] font-medium', sp.text)}>
                                   {sp.label}

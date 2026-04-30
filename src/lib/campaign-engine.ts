@@ -1,4 +1,3 @@
-import { CUSTOMERS, JOBS, CLEANERS } from './mock-data'
 import { computeInsertionCost } from './route-optimizer'
 import { NurturingCampaign, BookingSlot, BookingLink, CampaignStatus, Job, Customer, Cleaner } from '@/types'
 import { differenceInDays, addDays, format, parseISO } from 'date-fns'
@@ -34,14 +33,9 @@ function buildMessage(customerName: string, daysSince: number, serviceType: stri
 
 // ─── Nurturing detection ──────────────────────────────────────────────────────
 
-/**
- * Find customers due for re-engagement.
- * Pass live data from the Supabase data layer; falls back to mock when called
- * with no arguments so existing demo paths keep working.
- */
 export function detectNurturingCandidates(
-  customers: Customer[] = CUSTOMERS,
-  jobs: Job[] = JOBS,
+  customers: Customer[] = [],
+  jobs: Job[] = [],
 ): NurturingCampaign[] {
   const campaigns: NurturingCampaign[] = []
 
@@ -102,9 +96,9 @@ function hasConflict(cleanerId: string, date: string, time: string, allJobs: Job
 export function getAvailableSlots(
   customerId: string,
   extraJobs: Job[] = [],
-  customers: Customer[] = CUSTOMERS,
-  cleaners: Cleaner[] = CLEANERS,
-  jobs: Job[] = JOBS,
+  customers: Customer[] = [],
+  cleaners: Cleaner[] = [],
+  jobs: Job[] = [],
 ): BookingSlot[] {
   const customer = customers.find(c => c.id === customerId)
   if (!customer) return []

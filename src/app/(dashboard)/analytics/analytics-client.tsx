@@ -198,10 +198,6 @@ export function AnalyticsClient({ jobs, customers, cleaners }: AnalyticsData) {
   // ── Team performance in period
   const teamData = useMemo(() => {
     const teamIds = Array.from(new Set(cleaners.map((c) => c.teamId).filter(Boolean) as string[])).sort()
-    const greekify: Record<string, string> = {
-      'team-a': 'Alpha', 'team-b': 'Beta', 'team-c': 'Gamma',
-      'team-d': 'Delta', 'team-e': 'Epsilon',
-    }
     return teamIds.map((teamId) => {
       const teamCleaners = cleaners.filter((c) => c.teamId === teamId)
       const teamJobs = periodJobs.filter((j) => teamCleaners.some((c) => j.cleanerIds.includes(c.id)))
@@ -211,7 +207,7 @@ export function AnalyticsClient({ jobs, customers, cleaners }: AnalyticsData) {
         ? teamCleaners.reduce((s, c) => s + c.rating, 0) / teamCleaners.length
         : 0
       return {
-        team: greekify[teamId] ?? teamId,
+        team: teamId.replace(/^team-/, '').toUpperCase(),
         cleaners: teamCleaners.map((c) => c.name.split(' ')[0]).join(' + '),
         jobs: teamJobs.length,
         completed: completed.length,

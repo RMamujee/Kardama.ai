@@ -2,20 +2,6 @@ import 'server-only'
 import { cache } from 'react'
 import type { Cleaner, Customer, Job, Payment, Team } from '@/types'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import * as mock from '@/lib/mock-data'
-
-// ─────────────────────────────────────────────────────────────────
-// Server-side data layer.
-// Returns data in the existing camelCase Type shape so the UI is unchanged.
-// Falls back to mock data when Supabase env vars aren't configured yet —
-// keeps the app bootable before the user finishes the Marketplace setup.
-// ─────────────────────────────────────────────────────────────────
-
-function isSupabaseConfigured() {
-  return Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  )
-}
 
 // ─────────── row → domain mappers ───────────
 type CleanerRow = {
@@ -105,46 +91,41 @@ function mapPayment(r: PaymentRow): Payment {
 
 // ─────────── public fetchers (cached per request) ───────────
 export const getTeams = cache(async (): Promise<Team[]> => {
-  if (!isSupabaseConfigured()) return mock.TEAMS
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('teams')
     .select('*')
     .eq('archived', false)
     .order('name')
-  if (error || !data || data.length === 0) return mock.TEAMS
+  if (error || !data) return []
   return (data as TeamRow[]).map(mapTeam)
 })
 
 export const getCleaners = cache(async (): Promise<Cleaner[]> => {
-  if (!isSupabaseConfigured()) return mock.CLEANERS
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.from('cleaners').select('*').order('name')
-  if (error || !data || data.length === 0) return mock.CLEANERS
+  if (error || !data) return []
   return (data as CleanerRow[]).map(mapCleaner)
 })
 
 export const getCustomers = cache(async (): Promise<Customer[]> => {
-  if (!isSupabaseConfigured()) return mock.CUSTOMERS
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.from('customers').select('*').order('created_at', { ascending: false })
-  if (error || !data) return mock.CUSTOMERS
+  if (error || !data) return []
   return (data as CustomerRow[]).map(mapCustomer)
 })
 
 export const getJobs = cache(async (): Promise<Job[]> => {
-  if (!isSupabaseConfigured()) return mock.JOBS
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.from('jobs').select('*').order('scheduled_date').order('scheduled_time')
-  if (error || !data || data.length === 0) return mock.JOBS
+  if (error || !data) return []
   return (data as JobRow[]).map(mapJob)
 })
 
 export const getPayments = cache(async (): Promise<Payment[]> => {
-  if (!isSupabaseConfigured()) return mock.PAYMENTS
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.from('payments').select('*').order('received_at', { ascending: false })
-  if (error || !data) return mock.PAYMENTS
+  if (error || !data) return []
   return (data as PaymentRow[]).map(mapPayment)
 })
 
@@ -204,7 +185,6 @@ function mapBookingRequest(r: BookingRequestRow): BookingRequest {
 }
 
 export const getBookingRequests = cache(async (): Promise<BookingRequest[]> => {
-  if (!isSupabaseConfigured()) return []
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('booking_requests')
@@ -216,7 +196,6 @@ export const getBookingRequests = cache(async (): Promise<BookingRequest[]> => {
 })
 
 export const getAcceptedBookings = cache(async (): Promise<BookingRequest[]> => {
-  if (!isSupabaseConfigured()) return []
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('booking_requests')
@@ -253,7 +232,6 @@ function mapMessage(r: MessageRow): Message {
 }
 
 export const getAllMessages = cache(async (): Promise<Message[]> => {
-  if (!isSupabaseConfigured()) return []
   const supabase = await createSupabaseServerClient()
   const { data } = await supabase
     .from('messages')
@@ -290,25 +268,11 @@ export async function getPendingRevenue(): Promise<number> {
   return all.filter(j => !j.paid && j.status === 'completed').reduce((sum, j) => sum + j.price, 0)
 }
 
-// Returns appointments for a single team in a date range, ordered by date+time.
-// Falls back to in-memory filtering against the mock jobs when Supabase isn't configured.
 export async function getTeamSchedule(
   teamId: string,
   fromDate: string,
   toDate: string,
 ): Promise<Job[]> {
-  if (!isSupabaseConfigured()) {
-    return mock.JOBS
-      .filter(j => j.scheduledDate >= fromDate && j.scheduledDate <= toDate)
-      .filter(j => {
-        const lead = mock.CLEANERS.find(c => c.id === j.cleanerIds[0])
-        return lead?.teamId === teamId
-      })
-      .sort((a, b) =>
-        a.scheduledDate.localeCompare(b.scheduledDate) ||
-        a.scheduledTime.localeCompare(b.scheduledTime),
-      )
-  }
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('jobs')

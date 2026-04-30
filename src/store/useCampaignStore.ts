@@ -34,14 +34,14 @@ async function fetchSignedToken(customerId: string): Promise<string | null> {
 }
 
 export const useCampaignStore = create<CampaignStore>((set, get) => ({
-  campaigns: detectNurturingCandidates(),
+  campaigns: [],
   bookingLinks: [],
   selectedCustomerId: null,
   availableSlots: [],
   loadingSlots: false,
   sending: null,
 
-  loadCampaigns: () => set({ campaigns: detectNurturingCandidates() }),
+  loadCampaigns: () => {},
 
   markSent: async (campaignId) => {
     const { sending, campaigns } = get()

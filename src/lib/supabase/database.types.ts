@@ -90,11 +90,12 @@ type JobUpdate = Partial<JobInsert>
 
 type PaymentRow = {
   id: string
-  job_id: string
+  job_id: string | null
+  booking_ref: string | null
   customer_id: string
   cleaner_ids: string[]
   amount: number
-  method: 'zelle' | 'venmo' | 'cash'
+  method: 'zelle' | 'venmo' | 'cash' | null
   status: 'pending' | 'received' | 'confirmed'
   confirmation_note: string
   received_at: string
@@ -178,10 +179,11 @@ type MessageRow = {
   cleaner_id: string
   sender_role: 'owner' | 'cleaner'
   content: string
+  read_at: string | null
   created_at: string
 }
-type MessageInsert = Omit<MessageRow, 'id' | 'created_at'>
-type MessageUpdate = Partial<MessageInsert>
+type MessageInsert = Omit<MessageRow, 'id' | 'created_at' | 'read_at'>
+type MessageUpdate = Partial<Omit<MessageRow, 'id'>>
 
 type PushSubscriptionRow = {
   id: string

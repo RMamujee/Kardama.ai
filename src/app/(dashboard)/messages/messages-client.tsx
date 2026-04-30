@@ -133,13 +133,13 @@ function buildMessage(template: TemplateKey, item: EnrichedJob): string {
 
   switch (template) {
     case 'on-way':
-      return `Hi ${name}! Your David's Cleaning team (${team}) is on their way to you now 🚗 Estimated arrival: ${item.etaTime}. Please make sure we can access ${address}. Reply anytime if you have questions!`
+      return `Hi ${name}! Your Kardama team (${team}) is on their way to you now 🚗 Estimated arrival: ${item.etaTime}. Please make sure we can access ${address}. Reply anytime if you have questions!`
     case 'running-late': {
       const delay = item.isOnSchedule ? 15 : item.etaMinutes - parseMin(item.job.scheduledTime)
       return `Hi ${name}! Quick update — your team is running about ${delay} minutes behind schedule. New estimated arrival: ${item.etaTime}. We apologize for the delay and appreciate your patience! 🙏`
     }
     case 'arrived':
-      return `Hi ${name}! Your cleaning team just arrived at ${address} ✅ We'll get started right away. Estimated completion: ${minToTime(parseMin(item.job.scheduledTime) + item.job.estimatedDuration)}. Thank you for choosing David's Cleaning!`
+      return `Hi ${name}! Your cleaning team just arrived at ${address} ✅ We'll get started right away. Estimated completion: ${minToTime(parseMin(item.job.scheduledTime) + item.job.estimatedDuration)}. Thank you for choosing Kardama!`
     case 'complete':
       return `Hi ${name}! Your home is sparkling clean 🌟 Our team just finished at ${address}. Total: ${price}. Please send payment via Zelle/Venmo at your convenience. Thank you — see you next time! 🏠`
   }

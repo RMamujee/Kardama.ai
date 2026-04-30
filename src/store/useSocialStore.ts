@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { SocialLead, LeadStatus, ScheduledPost, ComposerPlatform, ResponseTemplate } from '@/types'
-import { SOCIAL_LEADS, RESPONSE_TEMPLATES, SCHEDULED_POSTS_MOCK } from '@/lib/social-leads-data'
+import { RESPONSE_TEMPLATES } from '@/lib/social-leads-data'
 
 interface NewLead {
   platform: SocialLead['platform']
@@ -44,10 +44,9 @@ async function patchLead(id: string, update: Record<string, unknown>): Promise<v
 }
 
 export const useSocialStore = create<SocialStore>((set, get) => ({
-  // Start with mock data so the UI renders immediately before the API call completes
-  leads: SOCIAL_LEADS,
+  leads: [],
   templates: RESPONSE_TEMPLATES,
-  scheduledPosts: SCHEDULED_POSTS_MOCK as ScheduledPost[],
+  scheduledPosts: [],
   leadsLoading: false,
   leadsError: null,
 
@@ -77,21 +76,13 @@ export const useSocialStore = create<SocialStore>((set, get) => ({
     try {
       const res = await fetch('/api/leads')
       if (!res.ok) {
-        // API returned an error (e.g. not logged in, Supabase not configured)
-        // Fall back to mock data silently so the page still works
-        set({ leadsLoading: false })
+        set({ leadsLoading: false, leadsError: 'Failed to load leads' })
         return
       }
       const data = await res.json() as { leads?: SocialLead[] }
-      if (Array.isArray(data.leads) && data.leads.length > 0) {
-        set({ leads: data.leads, leadsLoading: false })
-      } else {
-        // No real leads yet — keep showing mock data so the UI isn't empty
-        set({ leadsLoading: false })
-      }
+      set({ leads: Array.isArray(data.leads) ? data.leads : [], leadsLoading: false })
     } catch {
-      // Network error or JSON parse failure — keep mock data
-      set({ leadsLoading: false })
+      set({ leadsLoading: false, leadsError: 'Network error' })
     }
   },
 

@@ -3,14 +3,8 @@ import { revalidatePath } from 'next/cache'
 import { requireOwner } from '@/lib/supabase/dal'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { sendSms } from '@/lib/twilio'
+import { SERVICE_PRICES, SERVICE_DURATIONS } from '@/lib/services'
 import type { SupabaseClient } from '@supabase/supabase-js'
-
-const SERVICE_PRICES: Record<string, number> = {
-  standard: 165, deep: 245, 'move-out': 380, 'post-construction': 450, airbnb: 195,
-}
-const SERVICE_DURATIONS: Record<string, number> = {
-  standard: 180, deep: 240, 'move-out': 300, 'post-construction': 360, airbnb: 120,
-}
 
 function genId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`

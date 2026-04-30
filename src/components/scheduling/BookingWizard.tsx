@@ -13,15 +13,10 @@ import { Progress } from '@/components/ui/progress'
 import { useSchedulingStore } from '@/store/useSchedulingStore'
 import { createJob } from '@/app/actions/scheduling'
 import { formatCurrency, cn } from '@/lib/utils'
+import { SERVICE_PRICES, SERVICE_DURATIONS } from '@/lib/services'
 import type { Cleaner, Customer, Job, SchedulingRequest } from '@/types'
 
 const STEPS = ['Customer', 'Service Details', 'AI Assignment', 'Confirm']
-const SERVICE_PRICES: Record<string, number> = {
-  standard: 165, deep: 245, 'move-out': 380, 'post-construction': 450, airbnb: 195,
-}
-const SERVICE_DURATIONS: Record<string, number> = {
-  standard: 180, deep: 240, 'move-out': 300, 'post-construction': 360, airbnb: 120,
-}
 
 interface Props {
   cleaners: Cleaner[]

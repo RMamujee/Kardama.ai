@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar } from '@/components/ui/avatar'
 import { useSchedulingStore } from '@/store/useSchedulingStore'
 import { formatTime, getServiceLabel, cn, formatCurrency } from '@/lib/utils'
+import { SERVICE_DURATIONS } from '@/lib/services'
 import { BookingWizard } from '@/components/scheduling/BookingWizard'
 import { acceptBookingRequest, declineBookingRequest, updateJob, deleteJob } from '@/app/actions/scheduling'
 import type { Cleaner, Customer, Job } from '@/types'
@@ -40,9 +41,6 @@ const SERVICE_OPTIONS = [
   { value: 'airbnb', label: 'Airbnb' },
 ]
 
-const SERVICE_DURATIONS: Record<string, number> = {
-  standard: 180, deep: 240, 'move-out': 300, 'post-construction': 360, airbnb: 120,
-}
 
 function timeToMinutes(t: string): number {
   const [h, m] = t.split(':').map(Number)

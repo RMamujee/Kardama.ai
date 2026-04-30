@@ -1,15 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseAnonClient } from '@/lib/supabase/server'
 import { autoAssignBookingRequest } from '@/lib/auto-assign'
+import { SERVICE_PRICES, VALID_SERVICE_TYPES, VALID_TIMES } from '@/lib/services'
 
-const VALID_SERVICE_TYPES = new Set(['standard', 'deep', 'move-out', 'post-construction', 'airbnb'])
-const VALID_TIMES = new Set([
-  '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
-])
-
-const PRICE_BY_SERVICE: Record<string, number> = {
-  standard: 175, deep: 275, 'move-out': 325, 'post-construction': 325, airbnb: 200,
-}
+const VALID_TIMES_SET = new Set(VALID_TIMES)
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null)
@@ -29,7 +23,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid service type' }, { status: 400 })
   }
 
-  if (!VALID_TIMES.has(preferred_time)) {
+  if (!VALID_TIMES_SET.has(preferred_time)) {
     return NextResponse.json({ error: 'Invalid time slot' }, { status: 400 })
   }
 
@@ -106,7 +100,7 @@ export async function POST(request: Request) {
         booking_ref: data.id,
         customer_id: assignment?.customerId ?? null,
         cleaner_ids: assignment?.cleanerIds ?? [],
-        amount: PRICE_BY_SERVICE[service_type] ?? 175,
+        amount: SERVICE_PRICES[service_type] ?? 165,
         status: 'pending',
         confirmation_note: `Intake: ${sanitized.customer_name} — ${service_type}`,
         received_at: now.toISOString(),

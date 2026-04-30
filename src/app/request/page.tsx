@@ -4,26 +4,22 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle2, Sparkles, Calendar, Phone } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const SERVICE_OPTIONS = [
-  { value: 'standard', label: 'Standard Clean', price: '$165' },
-  { value: 'deep', label: 'Deep Clean', price: '$245' },
-  { value: 'move-out', label: 'Move-Out Clean', price: '$380' },
-  { value: 'post-construction', label: 'Post-Construction', price: '$450' },
-  { value: 'airbnb', label: 'Airbnb Turnover', price: '$195' },
-]
+import { SERVICE_PRICES, VALID_TIMES } from '@/lib/services'
 
-const ALL_TIMES = [
-  { value: '08:00', label: '8:00 AM' },
-  { value: '09:00', label: '9:00 AM' },
-  { value: '10:00', label: '10:00 AM' },
-  { value: '11:00', label: '11:00 AM' },
-  { value: '12:00', label: '12:00 PM' },
-  { value: '13:00', label: '1:00 PM' },
-  { value: '14:00', label: '2:00 PM' },
-  { value: '15:00', label: '3:00 PM' },
-  { value: '16:00', label: '4:00 PM' },
-  { value: '17:00', label: '5:00 PM' },
-]
+const SERVICE_LABELS: Record<string, string> = {
+  standard: 'Standard Clean', deep: 'Deep Clean', 'move-out': 'Move-Out Clean',
+  'post-construction': 'Post-Construction', airbnb: 'Airbnb Turnover',
+}
+const SERVICE_OPTIONS = Object.entries(SERVICE_PRICES).map(([value, price]) => ({
+  value, label: SERVICE_LABELS[value] ?? value, price: `$${price}`,
+}))
+
+const TIME_LABELS: Record<string, string> = {
+  '08:00': '8:00 AM', '09:00': '9:00 AM', '10:00': '10:00 AM', '11:00': '11:00 AM',
+  '12:00': '12:00 PM', '13:00': '1:00 PM', '14:00': '2:00 PM', '15:00': '3:00 PM',
+  '16:00': '4:00 PM', '17:00': '5:00 PM',
+}
+const ALL_TIMES = VALID_TIMES.map(v => ({ value: v, label: TIME_LABELS[v] ?? v }))
 
 function tomorrow() {
   const d = new Date()

@@ -18,6 +18,7 @@ interface PaymentStore {
   addPayment: (p: Payment) => void
   markReceived: (id: string) => Promise<void>
   confirmPayment: (id: string) => Promise<void>
+  deletePayment: (id: string) => Promise<void>
 
   getFiltered: () => Payment[]
 }
@@ -59,6 +60,12 @@ export const usePaymentStore = create<PaymentStore>((set, get) => ({
     set(s => ({
       payments: s.payments.map(p => p.id === id ? { ...p, status: 'confirmed' as const } : p),
     }))
+  },
+
+  deletePayment: async (id) => {
+    const res = await fetch(`/api/payments/${id}`, { method: 'DELETE' })
+    if (!res.ok) return
+    set(s => ({ payments: s.payments.filter(p => p.id !== id) }))
   },
 
   getFiltered: () => {

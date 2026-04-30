@@ -165,3 +165,30 @@ export async function createTeamAction(
   revalidatePath('/team')
   return { ok: true }
 }
+
+// ─────────────── Delete cleaner ───────────────
+
+export async function deleteCleanerAction(cleanerId: string): Promise<{ error?: string }> {
+  await requireOwner()
+
+  const admin = getSupabaseAdminClient()
+
+  // Look up the auth user via the profile row
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('user_id')
+    .eq('cleaner_id', cleanerId)
+    .maybeSingle()
+
+  // Delete auth user (cascades to profile row)
+  if (profile?.user_id) {
+    await admin.auth.admin.deleteUser(profile.user_id)
+  }
+
+  // Delete cleaner row
+  const { error } = await admin.from('cleaners').delete().eq('id', cleanerId)
+  if (error) return { error: error.message }
+
+  revalidatePath('/team')
+  return {}
+}

@@ -1,13 +1,14 @@
 'use client'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { DollarSign, TrendingUp, AlertCircle, Plus, Search } from 'lucide-react'
+import { DollarSign, TrendingUp, AlertCircle, Plus, Search, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Select } from '@/components/ui/select'
 import { StatTile } from '@/components/ui/stat-tile'
+import { Dialog, DialogBody, DialogFooter } from '@/components/ui/dialog'
 import { usePaymentStore } from '@/store/usePaymentStore'
 import { LogPaymentModal } from '@/components/payments/LogPaymentModal'
 import { RevenueChart } from '@/components/payments/RevenueChart'
@@ -36,11 +37,14 @@ const STATUS_VARIANT: Record<string, 'warning' | 'default' | 'success' | 'neutra
 }
 
 export function PaymentsClient({ customers, jobs, payments: serverPayments }: PaymentsData) {
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
   const {
     payments, setPayments,
     filterMethod, filterStatus, searchQuery, logModalOpen,
     setFilterMethod, setFilterStatus, setSearchQuery,
-    openLogModal, markReceived, confirmPayment, getFiltered,
+    openLogModal, markReceived, confirmPayment, deletePayment, getFiltered,
   } = usePaymentStore()
 
   // Hydrate store from server-fetched data on mount
@@ -164,26 +168,37 @@ export function PaymentsClient({ customers, jobs, payments: serverPayments }: Pa
                         </td>
                         <td className="px-4 py-3.5 max-w-[180px] truncate text-[12px] text-ink-400">{p.confirmationNote}</td>
                         <td className="px-4 py-3.5">
-                          {p.status === 'pending' && (
+                          <div className="flex items-center gap-1">
+                            {p.status === 'pending' && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => markReceived(p.id)}
+                                className="text-blue-500 hover:text-blue-500"
+                              >
+                                Mark Received
+                              </Button>
+                            )}
+                            {p.status === 'received' && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => confirmPayment(p.id)}
+                                className="text-emerald-500 hover:text-emerald-500"
+                              >
+                                Confirm
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
-                              size="sm"
-                              onClick={() => markReceived(p.id)}
-                              className="text-blue-500 hover:text-blue-500"
+                              size="icon-sm"
+                              onClick={() => setDeleteId(p.id)}
+                              className="text-ink-400 hover:text-red-400 hover:bg-red-500/8"
+                              aria-label="Delete payment"
                             >
-                              Mark Received
+                              <Trash2 className="h-3.5 w-3.5" />
                             </Button>
-                          )}
-                          {p.status === 'received' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => confirmPayment(p.id)}
-                              className="text-emerald-500 hover:text-emerald-500"
-                            >
-                              Confirm
-                            </Button>
-                          )}
+                          </div>
                         </td>
                       </tr>
                     )
@@ -202,6 +217,46 @@ export function PaymentsClient({ customers, jobs, payments: serverPayments }: Pa
       </div>
 
       {logModalOpen && <LogPaymentModal customers={customers} jobs={jobs} />}
+
+      <Dialog
+        open={!!deleteId}
+        onClose={() => { if (!isDeleting) setDeleteId(null) }}
+        title="Delete payment?"
+        description="This will permanently remove the payment record. This cannot be undone."
+      >
+        <DialogBody className="pt-2">
+          {deleteId && (() => {
+            const p = payments.find(x => x.id === deleteId)
+            const cust = customers.find(c => c.id === p?.customerId)
+            const name = cust?.name ?? nameFromPaymentNote(p?.confirmationNote ?? '') ?? 'Unknown'
+            return (
+              <div className="rounded-[10px] border border-line bg-soft px-4 py-3 text-[13px] text-ink-700">
+                <span className="font-semibold">{name}</span>
+                {p && <span className="ml-2 text-ink-400">· {formatCurrency(p.amount)} · {p.receivedAt.split('T')[0]}</span>}
+              </div>
+            )
+          })()}
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="ghost" size="sm" onClick={() => setDeleteId(null)} disabled={isDeleting}>
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            className="bg-red-500 text-white hover:bg-red-600 shadow-none"
+            disabled={isDeleting}
+            onClick={async () => {
+              if (!deleteId) return
+              setIsDeleting(true)
+              await deletePayment(deleteId)
+              setIsDeleting(false)
+              setDeleteId(null)
+            }}
+          >
+            {isDeleting ? 'Deleting…' : 'Delete'}
+          </Button>
+        </DialogFooter>
+      </Dialog>
     </div>
   )
 }

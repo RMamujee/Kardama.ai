@@ -1,16 +1,19 @@
 'use client'
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Star, CheckCircle, Shield, MapPin, TrendingUp, Sparkles } from 'lucide-react'
+import { Users, Star, CheckCircle, Shield, MapPin, TrendingUp, Sparkles, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Avatar } from '@/components/ui/avatar'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { StatTile } from '@/components/ui/stat-tile'
+import { Dialog, DialogBody, DialogFooter } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import { formatCurrency, cn } from '@/lib/utils'
 import type { Cleaner, Job, Team } from '@/types'
 import { InviteCleanerForm } from './invite-form'
 import { CreateTeamForm } from './create-team-form'
+import { deleteCleanerAction } from './actions'
 
 type TeamData = { cleaners: Cleaner[]; jobs: Job[]; teams: Team[] }
 
@@ -59,6 +62,9 @@ function deriveInsights(cleaners: Cleaner[], jobs: Job[], teams: { id: string; n
 
 export function TeamClient({ cleaners, jobs, teams: teamsProp }: TeamData) {
   const [_selectedCleaner, setSelectedCleaner] = useState<string | null>(null)
+  const [deleteCleanerId, setDeleteCleanerId] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
 
   const avgRating = cleaners.length
     ? (cleaners.reduce((s, c) => s + c.rating, 0) / cleaners.length).toFixed(1)
@@ -260,9 +266,20 @@ export function TeamClient({ cleaners, jobs, teams: teamsProp }: TeamData) {
                           <p className="text-[11.5px] text-ink-400 mt-0.5">{teamNameById[cleaner.teamId] ?? '—'}</p>
                         </div>
                       </div>
-                      <span className={cn('text-[10.5px] font-medium px-2 py-[3px] rounded-full', sp.pill)}>
-                        {sp.label}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className={cn('text-[10.5px] font-medium px-2 py-[3px] rounded-full', sp.pill)}>
+                          {sp.label}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => { setDeleteError(null); setDeleteCleanerId(cleaner.id) }}
+                          className="text-ink-400 hover:text-red-400 hover:bg-red-500/8"
+                          aria-label="Remove cleaner"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
 
                     <div className="space-y-2.5">
@@ -386,6 +403,57 @@ export function TeamClient({ cleaners, jobs, teams: teamsProp }: TeamData) {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Delete cleaner confirmation */}
+      {(() => {
+        const cleaner = cleaners.find(c => c.id === deleteCleanerId)
+        return (
+          <Dialog
+            open={!!deleteCleanerId}
+            onClose={() => { if (!isPending) { setDeleteCleanerId(null); setDeleteError(null) } }}
+            title="Remove cleaner?"
+            description="Their account, profile, and access will be permanently deleted. Jobs they completed will remain."
+          >
+            <DialogBody className="pt-2 space-y-3">
+              {cleaner && (
+                <div className="flex items-center gap-3 rounded-[10px] border border-line bg-soft px-4 py-3">
+                  <Avatar initials={cleaner.initials} color={cleaner.color} size="sm" />
+                  <div>
+                    <p className="text-[13px] font-semibold text-ink-900">{cleaner.name}</p>
+                    <p className="text-[11.5px] text-ink-400">{teamNameById[cleaner.teamId] ?? 'No team'}</p>
+                  </div>
+                </div>
+              )}
+              {deleteError && (
+                <p className="text-[12.5px] text-red-400">{deleteError}</p>
+              )}
+            </DialogBody>
+            <DialogFooter>
+              <Button variant="ghost" size="sm" onClick={() => { setDeleteCleanerId(null); setDeleteError(null) }} disabled={isPending}>
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                className="bg-red-500 text-white hover:bg-red-600 shadow-none"
+                disabled={isPending}
+                onClick={() => {
+                  if (!deleteCleanerId) return
+                  startTransition(async () => {
+                    const result = await deleteCleanerAction(deleteCleanerId)
+                    if (result.error) {
+                      setDeleteError(result.error)
+                    } else {
+                      setDeleteCleanerId(null)
+                    }
+                  })
+                }}
+              >
+                {isPending ? 'Removing…' : 'Remove Cleaner'}
+              </Button>
+            </DialogFooter>
+          </Dialog>
+        )
+      })()}
     </div>
   )
 }

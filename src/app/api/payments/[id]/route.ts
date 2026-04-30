@@ -85,3 +85,26 @@ export async function PATCH(
 
   return NextResponse.json({ ok: true })
 }
+
+// DELETE /api/payments/[id] — owner deletes a payment record
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+
+  const user = await getSessionUser()
+  if (!user || user.role !== 'owner_operator') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase.from('payments').delete().eq('id', id)
+
+  if (error) {
+    console.error('[DELETE /api/payments/:id]', error.message)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json({ ok: true })
+}

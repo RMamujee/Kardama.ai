@@ -15,7 +15,7 @@ export async function PATCH(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  let body: { status: 'confirmed' | 'cancelled'; method?: PaymentMethod; note?: string }
+  let body: { status: 'received' | 'confirmed' | 'cancelled'; method?: PaymentMethod; note?: string }
   try {
     body = await request.json()
   } catch {
@@ -24,8 +24,8 @@ export async function PATCH(
 
   const { status, method, note } = body
 
-  if (status !== 'confirmed' && status !== 'cancelled') {
-    return NextResponse.json({ error: 'status must be "confirmed" or "cancelled"' }, { status: 400 })
+  if (status !== 'received' && status !== 'confirmed' && status !== 'cancelled') {
+    return NextResponse.json({ error: 'status must be "received", "confirmed" or "cancelled"' }, { status: 400 })
   }
 
   const supabase = await createSupabaseServerClient()

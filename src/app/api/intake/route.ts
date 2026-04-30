@@ -83,6 +83,44 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to submit request' }, { status: 500, headers: CORS })
   }
 
+  // Always upsert the customer immediately so they appear in the customers list
+  // even if no team is available for auto-assignment.
+  let preCustomerId: string | null = null
+  try {
+    const { data: existing } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('email', sanitized.customer_email)
+      .maybeSingle()
+    if (existing) {
+      preCustomerId = existing.id
+    } else {
+      preCustomerId = `cust-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+      await supabase.from('customers').insert({
+        id: preCustomerId,
+        name: sanitized.customer_name,
+        phone: sanitized.customer_phone,
+        email: sanitized.customer_email,
+        address: sanitized.address,
+        city: sanitized.city ?? '',
+        lat: 0,
+        lng: 0,
+        source: 'referral',
+        preferred_cleaner_ids: [],
+        job_history: [],
+        notes: sanitized.notes,
+        total_spent: 0,
+      })
+    }
+    // Link booking request → customer even before auto-assign runs
+    await supabase
+      .from('booking_requests')
+      .update({ converted_customer_id: preCustomerId })
+      .eq('id', data.id)
+  } catch (e) {
+    console.error('intake: customer pre-creation failed:', e)
+  }
+
   // Auto-assign — find best available team, create customer + job records
   let assignment: { jobId: string; customerId: string; cleanerIds: string[]; cleanerNames: string[] } | null = null
   if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -122,7 +160,7 @@ export async function POST(request: Request) {
         id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         job_id: assignment?.jobId ?? null,
         booking_ref: data.id,
-        customer_id: assignment?.customerId ?? null,
+        customer_id: assignment?.customerId ?? preCustomerId ?? null,
         cleaner_ids: assignment?.cleanerIds ?? [],
         amount: SERVICE_PRICES[service_type] ?? 165,
         status: 'pending',

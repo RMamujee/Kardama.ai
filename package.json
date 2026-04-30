@@ -10,7 +10,6 @@
     "build": "next build",
     "start": "next start",
     "db:migrate": "tsx scripts/apply-migration.ts",
-    "db:seed": "tsx scripts/seed.ts",
     "db:create-owner": "tsx scripts/create-owner.ts",
     "db:reset-owner": "tsx scripts/reset-owner.ts"
   },

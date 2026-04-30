@@ -36,8 +36,7 @@ export async function GET(request: Request) {
 
   const slots = getAvailableSlots(decoded.customerId, confirmedJobs as never[], customers, cleaners, jobs)
 
-  // Enrich each slot with cleaner first names so the public booking page
-  // doesn't need to import the cleaner roster from mock-data.
+  // Enrich each slot with cleaner first names for the public booking page.
   const cleanerName = new Map(cleaners.map(c => [c.id, c.name]))
   const slotsWithNames = slots.map(s => ({
     ...s,

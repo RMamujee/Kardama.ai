@@ -241,7 +241,7 @@ export const getAllMessages = cache(async (): Promise<Message[]> => {
   return (data ?? []).map(r => mapMessage(r as MessageRow))
 })
 
-// ─────────── derived helpers (mirror mock-data.ts API) ───────────
+// ─────────── derived helpers ───────────
 const fmt = (d: Date) => d.toISOString().split('T')[0]
 const today = () => fmt(new Date())
 

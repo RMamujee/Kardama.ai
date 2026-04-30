@@ -23,39 +23,19 @@ Auth enforced in three places:
 3. Postgres RLS policies in `supabase/migrations/0001_init.sql` — defence-in-depth.
 
 ## Data layer
-- `src/lib/data/index.ts` is the server-side data layer. It returns the existing camelCase domain types (`Cleaner`, `Customer`, `Job`, `Payment`).
-- Falls back to `src/lib/mock-data.ts` when Supabase env vars are missing — keeps the app bootable before Marketplace setup is complete.
+- `src/lib/data/index.ts` is the server-side data layer. It returns camelCase domain types (`Cleaner`, `Customer`, `Job`, `Payment`) from Supabase.
+- All fetchers return `[]` on error — the app shows empty states until real data exists in the DB.
 - Pages that need data should be Server Components that call the data layer and pass props to a `*-client.tsx` Client Component.
-
-## Pages migrated to Supabase
-- `(dashboard)/dashboard` — KPIs, today's jobs, team status
-- `(dashboard)/customers` — customer list + detail panel
-- `(dashboard)/team` — team management + invite-cleaner action
-- `(cleaner)/me` — cleaner's personal job list
-
-## Pages still on mock data (TODO)
-The following still import from `@/lib/mock-data`. The mechanical migration: rename `page.tsx` → `*-client.tsx`, accept data as props, write a thin Server Component `page.tsx` that calls `getCleaners()` / `getJobs()` / etc. from `@/lib/data`.
-- `(dashboard)/scheduling`
-- `(dashboard)/payments`
-- `(dashboard)/messages`
-- `(dashboard)/campaigns`
-- `(dashboard)/analytics`
-- `components/map/LiveMapView.tsx`
-- `components/scheduling/BookingWizard.tsx`
-- `components/payments/LogPaymentModal.tsx`
-- `store/use*Store.ts` — Zustand stores still hydrate from mock data
-- `app/api/bookings/*` — token-based rebooking flow uses file-based `booking-store.ts`; replace with a `bookings` table when ready
-- `app/api/sms/*`, `app/api/campaigns/*`, `app/api/marketing/*` — campaign engines still simulate; needs separate design
+- There is no mock-data fallback. `src/lib/mock-data.ts` has been deleted.
 
 ## Booking_requests table
 A `booking_requests` table exists for public new-customer signups, but no public form is wired yet. When you build a "Get a quote" form, post it to a new route that inserts into `booking_requests` (anonymous insert is allowed by RLS).
 
 ## Local dev workflow
 1. Provision Supabase via Vercel Marketplace; pull env vars: `vercel env pull .env.local`
-2. Apply migrations: paste `supabase/migrations/0001_init.sql` into the Supabase SQL editor (or use the Supabase CLI: `supabase db push`)
-3. Seed: `npm run db:seed`
-4. Create the first owner: see "Bootstrapping the first owner" below
-5. `npm run dev`
+2. Apply schema: paste `supabase/apply.sql` into the Supabase SQL editor, then hit `POST /api/admin/apply-schema` to finish setup.
+3. Create the first owner: see "Bootstrapping the first owner" below
+4. `npm run dev`
 
 ## Bootstrapping the first owner
 RLS prevents an anonymous user from making themselves an owner. Use the Supabase dashboard:
@@ -72,5 +52,5 @@ After that, the owner can invite cleaners from the `/team` page.
 ## Required env vars
 - `NEXT_PUBLIC_SUPABASE_URL` — auto-set by Vercel Marketplace
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — auto-set by Vercel Marketplace
-- `SUPABASE_SERVICE_ROLE_KEY` — auto-set by Vercel Marketplace; service-role client uses this for inviting cleaners and seeding
+- `SUPABASE_SERVICE_ROLE_KEY` — auto-set by Vercel Marketplace; service-role client uses this for inviting cleaners and admin setup
 - `NEXT_PUBLIC_SITE_URL` — set to `https://your-domain.com` in production so invite emails redirect correctly

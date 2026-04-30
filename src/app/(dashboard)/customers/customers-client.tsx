@@ -4,15 +4,16 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search, Plus, Users, DollarSign, TrendingUp, Star,
-  MapPin, Phone, Mail, Calendar, Sparkles, X, Clock, Send, Loader2, Check,
+  MapPin, Phone, Mail, Calendar, Sparkles, X, Clock, Send, Loader2, Check, Trash2,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { StatTile } from '@/components/ui/stat-tile'
+import { Dialog, DialogBody, DialogFooter } from '@/components/ui/dialog'
 import { AddCustomerDialog } from '@/components/customers/AddCustomerDialog'
-import { sendBookingLink } from '@/app/actions/customers'
+import { sendBookingLink, deleteCustomer } from '@/app/actions/customers'
 import { formatCurrency, getServiceLabel, customerCode, cn } from '@/lib/utils'
 import type { Customer, Cleaner, Job, Payment } from '@/types'
 
@@ -42,6 +43,8 @@ export function CustomersClient({ customers, jobs, cleaners, payments }: Custome
   const [sortBy, setSortBy] = useState('revenue')
   const [selected, setSelected] = useState<Customer | null>(null)
   const [addOpen, setAddOpen] = useState(false)
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [isDeleting, startDeleteTransition] = useTransition()
 
   useEffect(() => {
     if (params.get('new')) {
@@ -187,7 +190,7 @@ export function CustomersClient({ customers, jobs, cleaners, payments }: Custome
           <table className="w-full">
             <thead>
               <tr className="border-b border-line bg-soft/40">
-                {['Customer', 'Contact', 'Next Cleaning', 'Revenue', 'Jobs', 'Source'].map(h => (
+                {['Customer', 'Contact', 'Next Cleaning', 'Revenue', 'Jobs', 'Source', ''].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-500">{h}</th>
                 ))}
               </tr>
@@ -195,7 +198,7 @@ export function CustomersClient({ customers, jobs, cleaners, payments }: Custome
             <tbody>
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-16 text-center">
+                  <td colSpan={7} className="py-16 text-center">
                     <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-soft">
                       <Users className="h-4.5 w-4.5 text-ink-400" />
                     </div>
@@ -294,6 +297,19 @@ export function CustomersClient({ customers, jobs, cleaners, payments }: Custome
                     <td className="px-4 py-3.5">
                       <Badge variant={SOURCE_BADGE[customer.source] ?? 'neutral'}>{customer.source}</Badge>
                     </td>
+
+                    {/* Delete */}
+                    <td className="px-3 py-3.5">
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={e => { e.stopPropagation(); setDeleteId(customer.id) }}
+                        className="text-ink-400 hover:text-red-400 hover:bg-red-500/8"
+                        aria-label="Delete customer"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </td>
                   </motion.tr>
                 )
               })}
@@ -317,6 +333,54 @@ export function CustomersClient({ customers, jobs, cleaners, payments }: Custome
       </AnimatePresence>
 
       <AddCustomerDialog open={addOpen} onClose={() => setAddOpen(false)} />
+
+      <Dialog
+        open={!!deleteId}
+        onClose={() => { if (!isDeleting) setDeleteId(null) }}
+        title="Delete customer?"
+        description="Their profile will be permanently removed. Jobs and payments linked to them will remain in history."
+      >
+        <DialogBody className="pt-2">
+          {deleteId && (() => {
+            const c = customers.find(x => x.id === deleteId)
+            if (!c) return null
+            const color = AVATAR_COLORS[customers.indexOf(c) % AVATAR_COLORS.length]
+            const initials = c.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+            const jobCount = jobsByCustomer.get(c.id)?.length ?? 0
+            return (
+              <div className="flex items-center gap-3 rounded-[10px] border border-line bg-soft px-4 py-3">
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[7px] text-[11px] font-semibold text-page" style={{ backgroundColor: color }}>
+                  {initials}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[13px] font-semibold text-ink-900">{c.name}</p>
+                  <p className="text-[11.5px] text-ink-400">{c.city} · <span className="num">{jobCount}</span> job{jobCount !== 1 ? 's' : ''}</p>
+                </div>
+              </div>
+            )
+          })()}
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="ghost" size="sm" onClick={() => setDeleteId(null)} disabled={isDeleting}>
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            className="bg-red-500 text-white hover:bg-red-600 shadow-none"
+            disabled={isDeleting}
+            onClick={() => {
+              if (!deleteId) return
+              startDeleteTransition(async () => {
+                await deleteCustomer(deleteId)
+                setDeleteId(null)
+                setSelected(null)
+              })
+            }}
+          >
+            {isDeleting ? 'Deleting…' : 'Delete'}
+          </Button>
+        </DialogFooter>
+      </Dialog>
     </div>
   )
 }

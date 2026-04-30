@@ -75,6 +75,24 @@ export async function addCustomer(input: AddCustomerInput): Promise<ActionResult
   return { ok: true, data: { id } }
 }
 
+// ─── Delete customer ──────────────────────────────────────────────────────
+
+export async function deleteCustomer(customerId: string): Promise<ActionResult<null>> {
+  await requireOwner()
+
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase.from('customers').delete().eq('id', customerId)
+
+  if (error) {
+    console.error('[deleteCustomer]', error)
+    return { ok: false, error: error.message }
+  }
+
+  revalidatePath('/customers')
+  revalidatePath('/dashboard')
+  return { ok: true, data: null }
+}
+
 // ─── Send booking link via SMS ────────────────────────────────────────────
 
 const SendLinkSchema = z.object({

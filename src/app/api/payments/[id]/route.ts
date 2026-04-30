@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { getSessionUser } from '@/lib/supabase/dal'
 import type { PaymentMethod } from '@/types/payment'
 
@@ -41,6 +42,45 @@ export async function PATCH(
   if (error) {
     console.error('[PATCH /api/payments/:id]', error.message)
     return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  // Fire receipt email when owner confirms payment
+  const n8nReceiptWebhook = process.env.N8N_PAYMENT_RECEIPT_WEBHOOK_URL
+  if (n8nReceiptWebhook && status === 'confirmed') {
+    try {
+      const admin = getSupabaseAdminClient()
+      const { data: payment } = await admin
+        .from('payments')
+        .select('customer_id, job_id, amount, method')
+        .eq('id', id)
+        .single()
+      if (payment?.customer_id) {
+        const [{ data: customer }, { data: job }] = await Promise.all([
+          admin.from('customers').select('name, email').eq('id', payment.customer_id).single(),
+          payment.job_id
+            ? admin.from('jobs').select('service_type, scheduled_date, address').eq('id', payment.job_id).single()
+            : Promise.resolve({ data: null }),
+        ])
+        if (customer?.email) {
+          fetch(n8nReceiptWebhook, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              paymentId: id,
+              customerName: customer.name,
+              customerEmail: customer.email,
+              serviceType: job?.service_type ?? 'cleaning',
+              scheduledDate: job?.scheduled_date ?? '',
+              address: job?.address ?? '',
+              amount: payment.amount,
+              method: method ?? payment.method ?? 'cash',
+            }),
+          }).catch(e => console.error('n8n receipt webhook failed:', e))
+        }
+      }
+    } catch (e) {
+      console.error('receipt webhook lookup failed:', e)
+    }
   }
 
   return NextResponse.json({ ok: true })

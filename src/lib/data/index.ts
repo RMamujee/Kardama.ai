@@ -293,7 +293,7 @@ export async function getUpcomingJobs(): Promise<Job[]> {
 export async function getMonthRevenue(): Promise<number> {
   const all = await getPayments()
   const month = today().slice(0, 7)
-  return all.filter(p => p.month === month).reduce((sum, p) => sum + p.amount, 0)
+  return all.filter(p => p.status === 'confirmed' && p.month === month).reduce((sum, p) => sum + p.amount, 0)
 }
 
 export async function getPendingRevenue(): Promise<number> {
@@ -309,7 +309,7 @@ export async function getRevenueHistory(months = 6): Promise<{ month: string; to
     d.setDate(1)
     d.setMonth(d.getMonth() - i)
     const month = d.toISOString().slice(0, 7)
-    const total = all.filter(p => p.month === month).reduce((sum, p) => sum + p.amount, 0)
+    const total = all.filter(p => p.status === 'confirmed' && p.month === month).reduce((sum, p) => sum + p.amount, 0)
     result.push({ month, total })
   }
   return result

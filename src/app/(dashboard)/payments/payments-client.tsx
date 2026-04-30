@@ -40,7 +40,7 @@ export function PaymentsClient({ customers, jobs, payments: serverPayments }: Pa
     payments, setPayments,
     filterMethod, filterStatus, searchQuery, logModalOpen,
     setFilterMethod, setFilterStatus, setSearchQuery,
-    openLogModal, confirmPayment, getFiltered,
+    openLogModal, markReceived, confirmPayment, getFiltered,
   } = usePaymentStore()
 
   // Hydrate store from server-fetched data on mount
@@ -113,6 +113,7 @@ export function PaymentsClient({ customers, jobs, payments: serverPayments }: Pa
               <Select value={filterStatus} onChange={e => setFilterStatus(e.target.value as typeof filterStatus)} className="w-36">
                 <option value="all">All statuses</option>
                 <option value="pending">Pending</option>
+                <option value="received">Received</option>
                 <option value="confirmed">Confirmed</option>
                 <option value="cancelled">Cancelled</option>
               </Select>
@@ -161,10 +162,20 @@ export function PaymentsClient({ customers, jobs, payments: serverPayments }: Pa
                             <Button
                               variant="ghost"
                               size="sm"
+                              onClick={() => markReceived(p.id)}
+                              className="text-blue-500 hover:text-blue-500"
+                            >
+                              Mark Received
+                            </Button>
+                          )}
+                          {p.status === 'received' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={() => confirmPayment(p.id)}
                               className="text-emerald-500 hover:text-emerald-500"
                             >
-                              Mark Received
+                              Confirm
                             </Button>
                           )}
                         </td>

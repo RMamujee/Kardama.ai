@@ -147,8 +147,7 @@ export async function POST(req: Request) {
         computed_at:     new Date().toISOString(),
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (admin.from('daily_routes') as any).upsert(row, { onConflict: 'team_id,route_date' })
+      await admin.from('daily_routes').upsert(row, { onConflict: 'team_id,route_date' })
 
       return { teamId: route.teamId, segments: row.segments, legs: row.legs }
     }),

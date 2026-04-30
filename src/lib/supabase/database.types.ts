@@ -228,6 +228,20 @@ type TeamInsert = {
 }
 type TeamUpdate = Partial<TeamInsert>
 
+type DailyRouteRow = {
+  id: string
+  team_id: string
+  route_date: string
+  stop_order: object
+  segments: object
+  legs: object
+  total_drive_min: number
+  total_km: number
+  computed_at: string
+}
+type DailyRouteInsert = Omit<DailyRouteRow, 'id'>
+type DailyRouteUpdate = Partial<DailyRouteInsert>
+
 export type Database = {
   public: {
     Tables: {
@@ -241,6 +255,7 @@ export type Database = {
       messages: { Row: MessageRow; Insert: MessageInsert; Update: MessageUpdate; Relationships: [] }
       push_subscriptions: { Row: PushSubscriptionRow; Insert: PushSubscriptionInsert; Update: PushSubscriptionUpdate; Relationships: [] }
       teams: { Row: TeamRow; Insert: TeamInsert; Update: TeamUpdate; Relationships: [] }
+      daily_routes: { Row: DailyRouteRow; Insert: DailyRouteInsert; Update: DailyRouteUpdate; Relationships: [] }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

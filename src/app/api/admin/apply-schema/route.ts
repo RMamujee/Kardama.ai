@@ -271,7 +271,7 @@ const DDL_STEPS: Array<{ label: string; sql: string }> = [
 
 export async function POST(request: Request) {
   const secret = process.env.SETUP_SECRET
-  if (secret && request.headers.get('x-setup-secret') !== secret) {
+  if (!secret || request.headers.get('x-setup-secret') !== secret) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 

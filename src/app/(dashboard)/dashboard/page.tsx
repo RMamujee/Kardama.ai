@@ -1,14 +1,15 @@
 import { requireOwner } from '@/lib/supabase/dal'
-import { getCleaners, getTodayJobs, getMonthRevenue, getPendingRevenue } from '@/lib/data'
+import { getCleaners, getTodayJobs, getMonthRevenue, getPendingRevenue, getRevenueHistory } from '@/lib/data'
 import { DashboardClient } from './dashboard-client'
 
 export default async function DashboardPage() {
   await requireOwner()
-  const [cleaners, todayJobs, monthRevenue, pendingRevenue] = await Promise.all([
+  const [cleaners, todayJobs, monthRevenue, pendingRevenue, revenueHistory] = await Promise.all([
     getCleaners(),
     getTodayJobs(),
     getMonthRevenue(),
     getPendingRevenue(),
+    getRevenueHistory(),
   ])
   return (
     <DashboardClient
@@ -16,6 +17,7 @@ export default async function DashboardPage() {
       todayJobs={todayJobs}
       monthRevenue={monthRevenue}
       pendingRevenue={pendingRevenue}
+      revenueHistory={revenueHistory}
     />
   )
 }

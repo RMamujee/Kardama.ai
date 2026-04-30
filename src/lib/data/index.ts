@@ -268,6 +268,20 @@ export async function getPendingRevenue(): Promise<number> {
   return all.filter(j => !j.paid && j.status === 'completed').reduce((sum, j) => sum + j.price, 0)
 }
 
+export async function getRevenueHistory(months = 6): Promise<{ month: string; total: number }[]> {
+  const all = await getPayments()
+  const result: { month: string; total: number }[] = []
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date()
+    d.setDate(1)
+    d.setMonth(d.getMonth() - i)
+    const month = d.toISOString().slice(0, 7)
+    const total = all.filter(p => p.month === month).reduce((sum, p) => sum + p.amount, 0)
+    result.push({ month, total })
+  }
+  return result
+}
+
 export async function getTeamSchedule(
   teamId: string,
   fromDate: string,

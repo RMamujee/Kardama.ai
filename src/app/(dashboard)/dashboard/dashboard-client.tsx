@@ -1,12 +1,12 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   AreaChart, Area, ResponsiveContainer, Tooltip,
 } from 'recharts'
 import {
-  Users, AlertCircle, Sparkles, ArrowUpRight, Route, Receipt, Calendar, ChevronRight,
+  Users, ArrowUpRight, Route, Receipt, Calendar, ChevronRight,
 } from 'lucide-react'
 import { HeroStat } from '@/components/ui/hero-stat'
 import { SparkLine } from '@/components/ui/spark-line'
@@ -19,9 +19,8 @@ type DashboardData = {
   todayJobs: Job[]
   monthRevenue: number
   pendingRevenue: number
+  revenueHistory: { month: string; total: number }[]
 }
-
-type Period = '1D' | '1W' | '1M' | '3M' | '1Y'
 
 const fadeUp = { hidden: { opacity: 0, y: 6 }, visible: { opacity: 1, y: 0, transition: { duration: 0.28 } } }
 
@@ -40,22 +39,6 @@ const STATUS_VARIANT: Record<Job['status'], 'default' | 'success' | 'warning' | 
   cancelled:    'danger',
 }
 
-// Revenue sparkline series — visualizes period trend, always upward
-function generateSeries(period: Period): { x: number; y: number }[] {
-  const points: Record<Period, number> = { '1D': 24, '1W': 7, '1M': 30, '3M': 90, '1Y': 52 }
-  const n = points[period]
-  const out: { x: number; y: number }[] = []
-  // Start low, drift upward — amounts represent daily/weekly revenue buckets
-  let val = period === '1D' ? 1800 : period === '1W' ? 3800 : period === '1M' ? 4200 : period === '3M' ? 28000 : 32000
-  const drift = period === '1M' ? 72 : period === '1Y' ? 60 : 14
-  for (let i = 0; i < n; i++) {
-    const noise = (Math.sin(i * 1.7) + Math.cos(i * 0.9)) * (val * 0.04)
-    val += drift + noise
-    out.push({ x: i, y: Math.max(0, Math.round(val)) })
-  }
-  return out
-}
-
 const TOOLTIP_STYLE = {
   contentStyle: {
     background: '#131A14',
@@ -72,41 +55,58 @@ const TOOLTIP_STYLE = {
   itemStyle: { color: '#F2FDF5', padding: 0 },
 }
 
-export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingRevenue }: DashboardData) {
+export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingRevenue, revenueHistory }: DashboardData) {
   const router = useRouter()
-  const [period, setPeriod] = useState<Period>('1M')
 
-  const series = useMemo(() => generateSeries(period), [period])
-  const seriesValues = useMemo(() => series.map((p) => p.y), [series])
+  const series = useMemo(
+    () => revenueHistory.map((h, i) => ({ x: i, y: h.total })),
+    [revenueHistory],
+  )
 
-  // Hero metric: month-to-date revenue vs prior period (always shows growth)
-  const heroValue = monthRevenue || series[series.length - 1].y
-  const heroPrev = Math.round(heroValue * 0.818)
+  const heroValue = monthRevenue
+  const heroPrev = revenueHistory.length >= 2 ? revenueHistory[revenueHistory.length - 2].total : 0
   const heroDiff = heroValue - heroPrev
   const heroPct = heroPrev > 0 ? (heroDiff / heroPrev) * 100 : 0
   const isUp = heroDiff >= 0
 
   const activeCleaners = cleaners.filter((c) => c.status !== 'off-duty').length
+  const availableCleaners = cleaners.filter((c) => c.status === 'available').length
   const todayRevenue = todayJobs.reduce((s, j) => s + j.price, 0)
+  const teamCount = new Set(cleaners.map((c) => c.teamId).filter(Boolean)).size
 
   const aiInsights = [
+    pendingRevenue > 0
+      ? {
+          icon: Receipt,
+          title: 'Pending payment',
+          text: `${formatCurrency(pendingRevenue)} in completed jobs awaiting payment confirmation.`,
+          action: () => router.push('/payments'),
+        }
+      : {
+          icon: Calendar,
+          title: 'Schedule',
+          text: todayJobs.length === 0
+            ? 'No jobs scheduled today — a good time to confirm upcoming bookings or follow up with leads.'
+            : `${todayJobs.length} job${todayJobs.length !== 1 ? 's' : ''} on the schedule today.`,
+          action: () => router.push('/scheduling'),
+        },
     {
       icon: Route,
-      title: 'Route optimization',
-      text: 'Team A is nearest to 3 Long Beach jobs this week — optimal routing saves ~45 min',
+      title: 'Team status',
+      text: activeCleaners > 0
+        ? `${activeCleaners} of ${cleaners.length} cleaners currently active across ${teamCount} team${teamCount !== 1 ? 's' : ''}.`
+        : cleaners.length > 0
+          ? `All ${cleaners.length} cleaners are off-duty.`
+          : 'No cleaners added yet — invite your team.',
       action: () => router.push('/map'),
     },
     {
-      icon: Receipt,
-      title: 'Pending payment',
-      text: "William Foster's $380 payment has been pending 2 days. Send a reminder?",
-      action: () => router.push('/payments'),
-    },
-    {
-      icon: Calendar,
+      icon: Users,
       title: 'Open capacity',
-      text: 'Next Friday has 0 jobs scheduled — historically your highest-demand day.',
-      action: () => router.push('/scheduling'),
+      text: availableCleaners > 0
+        ? `${availableCleaners} cleaner${availableCleaners !== 1 ? 's' : ''} available for new bookings.`
+        : 'No cleaners available right now — check the team page.',
+      action: () => router.push('/team'),
     },
   ]
 
@@ -120,11 +120,11 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
             value={formatCurrency(heroValue)}
             change={`${isUp ? '+' : ''}${formatCurrency(Math.abs(heroDiff))}`}
             changePercent={`${isUp ? '+' : '−'}${Math.abs(heroPct).toFixed(2)}%`}
-            changeSuffix={periodSuffix(period)}
+            changeSuffix="vs last month"
             direction={isUp ? 'up' : 'down'}
           />
 
-          {/* Chart */}
+          {/* Chart — real 6-month history */}
           <div>
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={series} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
@@ -151,9 +151,6 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
               </AreaChart>
             </ResponsiveContainer>
           </div>
-
-          {/* Period tabs */}
-          <PeriodTabs value={period} onChange={setPeriod} />
         </div>
       </motion.section>
 
@@ -167,13 +164,12 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
         <SecondaryStat
           label="Today's revenue"
           value={formatCurrency(todayRevenue)}
-          sub={`${todayJobs.length} jobs`}
-          spark={generateSeries('1W').map((p) => p.y)}
+          sub={`${todayJobs.length} job${todayJobs.length !== 1 ? 's' : ''}`}
         />
         <SecondaryStat
           label="Active cleaners"
           value={`${activeCleaners}/${cleaners.length}`}
-          sub="5 teams deployed"
+          sub={`${teamCount} team${teamCount !== 1 ? 's' : ''} deployed`}
         />
         <SecondaryStat
           label="Pending payments"
@@ -220,7 +216,6 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
           )}
           {todayJobs.map((job) => {
             const jobCleaners = cleaners.filter((c) => job.cleanerIds.includes(c.id))
-            const teamSparkline = generateSeries('1W').map((p) => p.y * 0.4 + Math.random() * 50)
             return (
               <button
                 key={job.id}
@@ -245,11 +240,6 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
                   </p>
                 </div>
 
-                {/* Sparkline */}
-                <div className="hidden sm:block flex-shrink-0">
-                  <SparkLine data={teamSparkline} width={70} height={26} area />
-                </div>
-
                 <div className="flex flex-shrink-0 items-center gap-3">
                   <Badge variant={STATUS_VARIANT[job.status] ?? 'neutral'}>
                     {job.status}
@@ -271,7 +261,7 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
           <div>
             <h2 className="text-[18px] font-bold text-ink-900 tracking-[-0.015em]">Team</h2>
             <p className="text-[12.5px] text-ink-500 font-medium mt-1">
-              {activeCleaners} of {cleaners.length} active across 4 teams
+              {activeCleaners} of {cleaners.length} active across {teamCount} team{teamCount !== 1 ? 's' : ''}
             </p>
           </div>
           <button
@@ -323,7 +313,7 @@ export function DashboardClient({ cleaners, todayJobs, monthRevenue, pendingReve
             <h2 className="text-[18px] font-bold text-ink-900 tracking-[-0.015em]">AI Copilot</h2>
             <span className="ai-pill">
               <span className="pulse" />
-              {aiInsights.length} new
+              {aiInsights.length} insights
             </span>
           </div>
         </div>
@@ -390,38 +380,3 @@ function SecondaryStat({
   )
 }
 
-function PeriodTabs({ value, onChange }: { value: Period; onChange: (p: Period) => void }) {
-  const periods: Period[] = ['1D', '1W', '1M', '3M', '1Y']
-  return (
-    <div className="flex items-center gap-1">
-      {periods.map((p) => {
-        const active = p === value
-        return (
-          <button
-            key={p}
-            type="button"
-            onClick={() => onChange(p)}
-            className={cn(
-              'h-8 min-w-[42px] rounded-full px-3 text-[12px] transition-colors',
-              active
-                ? 'bg-mint-500/10 font-semibold text-mint-500'
-                : 'font-medium text-ink-500 hover:bg-soft hover:text-ink-700',
-            )}
-          >
-            {p}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
-function periodSuffix(p: Period): string {
-  switch (p) {
-    case '1D': return 'today'
-    case '1W': return 'this week'
-    case '1M': return 'this month'
-    case '3M': return 'past 3 months'
-    case '1Y': return 'this year'
-  }
-}

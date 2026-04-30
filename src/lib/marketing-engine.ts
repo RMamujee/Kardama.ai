@@ -48,17 +48,17 @@ function getSeason(month: number): string {
 const POST_TEMPLATES: Record<MarketingTheme, PostTemplate[]> = {
   'social-proof': [
     {
-      content: `⭐⭐⭐⭐⭐ "Best cleaning service in Long Beach!"\n\nWe just helped another family get their home sparkling clean. Our bonded, insured teams of 2 have over 1,200 happy clients across the LA/Long Beach area.\n\n📞 DM us or text to schedule your cleaning today! Same-day bookings available.\n\n#KardamaClean #LongBeachCleaning`,
+      content: `⭐⭐⭐⭐⭐ Another 5-star review!\n\nWe just helped another family get their home sparkling clean. Our bonded, insured teams of 2 serve the LA/Long Beach area.\n\n📞 DM us or text to schedule your cleaning today! Same-day bookings available.\n\n#KardamaClean #LongBeachCleaning`,
       hashtags: ['#HomeCleaning', '#LongBeach', '#CleanHome', '#HouseCleaningService'],
     },
     {
-      content: `💬 "Maria and Carlos did an AMAZING job — our house has never looked better!"\n\nThank you to our incredible clients! We take pride in every single job, big or small.\n\nLooking for a reliable cleaning team? We serve Long Beach, Torrance, El Segundo, and surrounding areas.\n\n✅ Fully insured  ✅ Background-checked  ✅ Eco-friendly products available\n\nDM to get a free quote!`,
+      content: `💬 Another happy client — thank you for the kind words!\n\nWe take pride in every single job, big or small.\n\nLooking for a reliable cleaning team? We serve Long Beach, Torrance, El Segundo, and surrounding areas.\n\n✅ Fully insured  ✅ Background-checked  ✅ Eco-friendly products available\n\nDM to get a free quote!`,
       hashtags: ['#CleaningService', '#SouthBay', '#FiveStarCleaning'],
     },
   ],
   'promo-discount': [
     {
-      content: `🏠 LIMITED OFFER: 15% OFF your first cleaning!\n\nNew to our service? Welcome! We want to earn your trust with an unbeatable first experience.\n\n📋 Services we offer:\n• Standard cleaning\n• Deep cleaning\n• Move-in/Move-out\n• Airbnb turnovers\n\nComment "FIRST" below or send a DM to claim. Offer ends Sunday!`,
+      content: `🏠 LIMITED OFFER: 15% OFF your first cleaning!\n\nNew to our service? Welcome! We want to earn your trust with an unbeatable first experience.\n\n📋 Services we offer:\n• Standard cleaning\n• Deep cleaning\n• Move-in/Move-out\n• Airbnb turnovers\n\nComment "FIRST" below or send a DM to claim!`,
       hashtags: ['#CleaningDiscount', '#LAHomeCleaning', '#NewClientOffer'],
     },
     {
@@ -86,7 +86,7 @@ const POST_TEMPLATES: Record<MarketingTheme, PostTemplate[]> = {
   ],
   'seasonal-summer': [
     {
-      content: `☀️ SUMMER READY? Let us help!\n\nWith kids out of school and family gatherings in full swing, your home deserves some extra love. Book a summer deep clean and start the season fresh!\n\n🏖 LA/Long Beach area\n🌟 Trusted by 1,200+ families\n💳 Pay via Zelle, Venmo, or cash\n\nSlots filling fast — DM to book this week!\n\n#SummerCleaning #LongBeachFamilies`,
+      content: `☀️ SUMMER READY? Let us help!\n\nWith kids out of school and family gatherings in full swing, your home deserves some extra love. Book a summer deep clean and start the season fresh!\n\n🏖 LA/Long Beach area\n🌟 Trusted by our local community\n💳 Pay via Zelle, Venmo, or cash\n\nSlots filling fast — DM to book this week!\n\n#SummerCleaning #LongBeachFamilies`,
       hashtags: ['#SummerCleaning', '#SummerReady', '#HomeCleaning'],
     },
   ],

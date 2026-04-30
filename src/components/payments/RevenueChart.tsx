@@ -3,7 +3,6 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Payment } from '@/types'
 import { groupPaymentsByMonth } from '@/lib/payment-utils'
 
-// Generate last 6 months of mock data
 function buildChartData(payments: Payment[]) {
   const existing = groupPaymentsByMonth(payments)
   const months: string[] = []
@@ -14,16 +13,12 @@ function buildChartData(payments: Payment[]) {
   }
   return months.map(m => {
     const found = existing.find(e => e.month === m) || { total: 0, zelle: 0, venmo: 0, cash: 0 }
-    // Add mock historical data
-    const mock = m < new Date().toISOString().slice(0, 7) ? {
-      total: 2800 + Math.floor(Math.random() * 1800),
-      zelle: 1400 + Math.floor(Math.random() * 800),
-      venmo: 800 + Math.floor(Math.random() * 600),
-      cash: 400 + Math.floor(Math.random() * 400),
-    } : { total: found.total, zelle: found.zelle, venmo: found.venmo, cash: found.cash }
     return {
       month: new Date(m + '-15').toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
-      ...mock,
+      total: found.total,
+      zelle: found.zelle,
+      venmo: found.venmo,
+      cash: found.cash,
     }
   })
 }

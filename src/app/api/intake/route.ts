@@ -5,6 +5,21 @@ import { SERVICE_PRICES, VALID_SERVICE_TYPES, VALID_TIMES } from '@/lib/services
 
 const VALID_TIMES_SET = new Set(VALID_TIMES)
 
+// Simple in-process rate limiter: max 5 submissions per IP per 10 minutes
+const ipHits = new Map<string, { count: number; resetAt: number }>()
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now()
+  const window = 10 * 60 * 1000
+  const entry = ipHits.get(ip)
+  if (!entry || now > entry.resetAt) {
+    ipHits.set(ip, { count: 1, resetAt: now + window })
+    return true
+  }
+  if (entry.count >= 5) return false
+  entry.count++
+  return true
+}
+
 const CORS = {
   'Access-Control-Allow-Origin': 'https://kardama-intake.vercel.app',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -26,6 +41,11 @@ function to24h(t: string): string {
 }
 
 export async function POST(request: Request) {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  if (!checkRateLimit(ip)) {
+    return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429, headers: CORS })
+  }
+
   const body = await request.json().catch(() => null)
   if (!body) return NextResponse.json({ error: 'Invalid JSON' }, { status: 400, headers: CORS })
 

@@ -35,7 +35,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/login') ||
     pathname.startsWith('/auth') ||
     pathname.startsWith('/book') ||
-    pathname.startsWith('/api/bookings')
+    pathname.startsWith('/api/bookings') ||
+    pathname.startsWith('/api/intake')   // public intake form + self-service cancel/reschedule
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone()

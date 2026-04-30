@@ -363,7 +363,7 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
               onClick={() => setView('week')}
               className={cn(
                 'px-3 py-1.5 text-[12px] font-medium transition-colors',
-                view === 'week' ? 'bg-mint-500 text-black' : 'text-ink-500 hover:text-ink-700',
+                view === 'week' ? 'bg-mint-500 text-white' : 'text-ink-500 hover:text-ink-700',
               )}
             >
               Week
@@ -372,7 +372,7 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
               onClick={() => setView('month')}
               className={cn(
                 'px-3 py-1.5 text-[12px] font-medium border-l border-line transition-colors',
-                view === 'month' ? 'bg-mint-500 text-black' : 'text-ink-500 hover:text-ink-700',
+                view === 'month' ? 'bg-mint-500 text-white' : 'text-ink-500 hover:text-ink-700',
               )}
             >
               Month
@@ -654,7 +654,7 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
                     <div className="flex-shrink-0">
                       <span className={cn(
                         'num inline-flex h-[22px] w-[22px] items-center justify-center rounded-full text-[12px] font-semibold',
-                        isToday ? 'bg-mint-500 text-black' : 'text-ink-700',
+                        isToday ? 'bg-mint-500 text-white' : 'text-ink-700',
                       )}>
                         {date.getDate()}
                       </span>

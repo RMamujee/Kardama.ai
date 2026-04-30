@@ -77,7 +77,7 @@ function SidebarRow({ cleaner, summary, unread, active, onClick }: {
             {preview}
           </span>
           {unread > 0 && (
-            <span className="shrink-0 min-w-[18px] h-[18px] rounded-full bg-mint-500 flex items-center justify-center text-[10px] font-bold text-black px-1">
+            <span className="shrink-0 min-w-[18px] h-[18px] rounded-full bg-mint-500 flex items-center justify-center text-[10px] font-bold text-white px-1">
               {unread > 9 ? '9+' : unread}
             </span>
           )}

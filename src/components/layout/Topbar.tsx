@@ -50,7 +50,7 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
           type="button"
           onClick={onMenuToggle}
           aria-label="Toggle menu"
-          className="flex h-9 w-9 items-center justify-center rounded-[7px] text-ink-400 transition-colors hover:bg-soft hover:text-ink-700 md:hidden"
+          className="flex h-9 w-9 items-center justify-center rounded-[9px] text-ink-400 transition-colors hover:bg-soft hover:text-ink-700 md:hidden"
         >
           <Menu className="h-[16px] w-[16px]" />
         </button>
@@ -72,7 +72,7 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
-            className="group flex h-[34px] w-full items-center gap-2.5 rounded-[8px] bg-soft border border-line px-3.5 text-left text-[13px] text-ink-500 font-medium transition-all duration-150 hover:bg-hover hover:border-line-strong"
+            className="group flex h-[34px] w-full items-center gap-2.5 rounded-[9px] bg-soft border border-line px-3.5 text-left text-[13px] text-ink-500 font-medium transition-all duration-150 hover:bg-hover hover:border-line-strong"
           >
             <Search className="h-[13px] w-[13px] flex-shrink-0" />
             <span className="flex-1 truncate">Search…</span>
@@ -99,7 +99,7 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
             type="button"
             aria-label="Search"
             onClick={() => setPaletteOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-[7px] bg-soft text-ink-500 transition-colors hover:bg-hover hover:text-ink-700 lg:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-[9px] bg-soft text-ink-500 transition-colors hover:bg-hover hover:text-ink-700 lg:hidden"
           >
             <Search className="h-[14px] w-[14px]" />
           </button>
@@ -109,7 +109,7 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
             <Popover.Trigger asChild>
               <button
                 type="button"
-                className="hidden sm:inline-flex h-[34px] items-center gap-1.5 rounded-[7px] bg-mint-400 px-3.5 text-[12.5px] font-semibold text-black shadow-[0_2px_14px_-3px_rgba(29,185,84,0.5)] transition-all duration-150 hover:bg-mint-500 hover:scale-[1.03] active:scale-[0.97]"
+                className="hidden sm:inline-flex h-[34px] items-center gap-1.5 rounded-[9px] bg-mint-500 px-3.5 text-[12.5px] font-semibold text-white shadow-[0_2px_14px_-3px_rgba(139,133,242,0.55),0_1px_0_rgba(255,255,255,0.14)_inset] transition-all duration-150 hover:bg-mint-400 hover:scale-[1.03] active:scale-[0.97]"
               >
                 <Plus className="h-[13px] w-[13px]" strokeWidth={2.5} />
                 New
@@ -148,7 +148,7 @@ export function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
             <button
               type="button"
               aria-label="Notifications"
-              className="relative flex h-9 w-9 items-center justify-center rounded-[7px] bg-soft text-ink-500 transition-colors hover:bg-hover hover:text-ink-700"
+              className="relative flex h-9 w-9 items-center justify-center rounded-[9px] bg-soft text-ink-500 transition-colors hover:bg-hover hover:text-ink-700"
             >
               <Bell className="h-[14px] w-[14px]" strokeWidth={1.75} />
               {hasUnread && (
@@ -178,7 +178,7 @@ function NewMenuItem({
       <button
         type="button"
         onClick={onSelect}
-        className="group flex w-full items-start gap-3 rounded-[7px] px-2.5 py-2.5 text-left transition-colors hover:bg-soft"
+        className="group flex w-full items-start gap-3 rounded-[9px] px-2.5 py-2.5 text-left transition-colors hover:bg-soft"
       >
         <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[6px] bg-mint-500/10 text-mint-500">
           <Icon className="h-[13px] w-[13px]" strokeWidth={1.75} />

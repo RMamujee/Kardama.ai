@@ -89,7 +89,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
                       onClick={onClose}
                       aria-current={active ? 'page' : undefined}
                       className={cn(
-                        'group relative flex items-center gap-2.5 rounded-[7px] px-3 py-2.5',
+                        'group relative flex items-center gap-2.5 rounded-[9px] px-3 py-2.5',
                         'text-[13px] font-medium overflow-hidden select-none',
                         'transition-all duration-150',
                         active
@@ -145,11 +145,11 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
           <button
             type="submit"
             aria-label="Sign out"
-            className="group flex w-full items-center gap-3 rounded-[8px] px-2.5 py-2 text-left transition-colors hover:bg-soft"
+            className="group flex w-full items-center gap-3 rounded-[9px] px-2.5 py-2 text-left transition-colors hover:bg-soft"
           >
             {/* Avatar */}
             <div className="relative flex-shrink-0">
-              <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-mint-500 text-[11px] font-semibold text-white">
+              <div className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-mint-500 text-[11px] font-semibold text-white">
                 DC
               </div>
               <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 border-[2px] border-rail" />

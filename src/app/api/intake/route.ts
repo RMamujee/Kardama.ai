@@ -155,6 +155,8 @@ export async function POST(request: Request) {
         notes: sanitized.notes,
         cleanerNames: assignment.cleanerNames,
         manageUrl: `https://kardama-intake.vercel.app/?manage=${data.id}`,
+        rescheduleUrl: `https://kardama-intake.vercel.app/?manage=${data.id}&action=reschedule`,
+        cancelUrl: `https://kardama-intake.vercel.app/?manage=${data.id}&action=cancel`,
       }),
     }).catch(e => console.error('n8n webhook failed:', e))
   }

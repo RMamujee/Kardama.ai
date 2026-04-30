@@ -1,6 +1,6 @@
 'use client'
 import React, { useState, useMemo, useTransition } from 'react'
-import { ChevronLeft, ChevronRight, Plus, Sparkles, Inbox, CheckCircle2, XCircle, Clock, Pencil, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Sparkles, Inbox, CheckCircle2, XCircle, Clock, Pencil, Trash2, Users, AlertCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -511,52 +511,103 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
                     </div>
                   </div>
                   {isPicking && (
-                    <div className="rounded-lg border border-line bg-soft p-3 space-y-3">
-                      <p className="text-[11.5px] font-medium text-ink-500">
-                        Choose a team to assign this booking. Teams already booked at this time are disabled.
-                      </p>
-                      <div className="flex flex-wrap gap-2">
+                    <motion.div
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="rounded-xl border border-line bg-soft/60 p-5 space-y-5"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-mint-500/12 flex-shrink-0">
+                          <Users className="h-[15px] w-[15px] text-mint-500" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[13.5px] font-semibold text-ink-900 tracking-[-0.01em]">
+                            Assign a cleaning team
+                          </p>
+                          <p className="text-[12px] text-ink-500 mt-0.5 leading-[1.55]">
+                            Pick the team that will handle this booking. Teams already on another job at this time are shown as unavailable.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {teams.map(team => {
                           const conflict = teamConflictAt(team.teamId, req.preferredDate, req.preferredTime, duration)
                           const picked = pickedTeamId === team.teamId
+                          const teamCleaners = cleaners.filter(c => c.teamId === team.teamId)
                           return (
                             <button
                               key={team.teamId}
                               type="button"
                               onClick={() => !conflict && setPickedTeamId(team.teamId)}
                               disabled={!!conflict || busy}
-                              title={conflict ? `Busy at ${conflict.address.split(',')[0]} (${formatTime(conflict.scheduledTime)})` : undefined}
                               className={cn(
-                                'flex items-center gap-1.5 rounded-[7px] border px-2.5 py-1 text-[11.5px] font-semibold transition-colors',
+                                'group relative flex items-start gap-3 rounded-xl border bg-surface p-4 text-left transition-all',
                                 conflict
-                                  ? 'opacity-40 cursor-not-allowed border-line'
+                                  ? 'opacity-50 cursor-not-allowed border-line'
                                   : picked
-                                    ? 'ring-2 ring-offset-1 ring-mint-500/40'
-                                    : 'hover:opacity-80',
+                                    ? 'border-transparent shadow-[0_0_0_2px_rgba(0,0,0,0.04)] ring-2 ring-offset-2 ring-offset-soft'
+                                    : 'border-line hover:border-ink-300 hover:shadow-sm cursor-pointer',
                               )}
-                              style={conflict
-                                ? undefined
-                                : (picked ? teamBlockStyle(team.color) : { borderColor: team.color + '55', color: team.color })
+                              style={picked && !conflict
+                                ? { borderColor: team.color, ...teamBlockStyle(team.color), boxShadow: `0 0 0 1px ${team.color}33` }
+                                : undefined
                               }
                             >
-                              <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ background: team.color }} />
-                              {team.names.join(' & ')}
-                              {conflict && <span className="text-[10px] font-normal opacity-70">· busy</span>}
+                              <div className="flex -space-x-1.5 flex-shrink-0">
+                                {teamCleaners.map(c => (
+                                  <Avatar key={c.id} initials={c.initials} color={c.color} size="sm" />
+                                ))}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: team.color }} />
+                                  <p className={cn(
+                                    'text-[13px] font-semibold tracking-[-0.01em] truncate',
+                                    picked && !conflict ? '' : 'text-ink-900',
+                                  )}>
+                                    {team.names.join(' & ')}
+                                  </p>
+                                </div>
+                                {conflict ? (
+                                  <p className="text-[11.5px] text-ink-400 mt-1 flex items-center gap-1">
+                                    <AlertCircle className="h-3 w-3" />
+                                    Busy until {formatTime(conflict.scheduledTime)}
+                                  </p>
+                                ) : (
+                                  <p className={cn(
+                                    'text-[11.5px] mt-1',
+                                    picked ? 'opacity-80' : 'text-emerald-500',
+                                  )}>
+                                    Available
+                                  </p>
+                                )}
+                              </div>
+                              {picked && !conflict && (
+                                <CheckCircle2 className="absolute top-3 right-3 h-4 w-4" style={{ color: team.color }} />
+                              )}
                             </button>
                           )
                         })}
                       </div>
-                      <div className="flex justify-end">
+
+                      <div className="flex items-center justify-between gap-3 pt-1">
+                        <p className="text-[11.5px] text-ink-400">
+                          {pickedTeamId
+                            ? <>Selected: <span className="font-medium text-ink-700">{teams.find(t => t.teamId === pickedTeamId)?.names.join(' & ')}</span></>
+                            : 'No team selected yet'
+                          }
+                        </p>
                         <button
                           onClick={() => pickedTeamId && handleAccept(req.id, pickedTeamId)}
                           disabled={!pickedTeamId || busy}
-                          className="flex items-center gap-1.5 rounded-lg bg-mint-500 border border-mint-500 px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-mint-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                          className="flex items-center gap-2 rounded-lg bg-mint-500 px-4 py-2 text-[12.5px] font-semibold text-white hover:bg-mint-600 disabled:bg-ink-200 disabled:text-ink-400 disabled:cursor-not-allowed transition-colors"
                         >
-                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          <CheckCircle2 className="h-4 w-4" />
                           {busy ? 'Scheduling…' : 'Confirm Booking'}
                         </button>
                       </div>
-                    </div>
+                    </motion.div>
                   )}
                 </div>
               )

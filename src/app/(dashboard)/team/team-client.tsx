@@ -23,11 +23,39 @@ const STATUS_PILL: Record<StatusKey, { pill: string; text: string; label: string
   'off-duty': { pill: 'bg-soft text-ink-500 border border-line',                         text: 'text-ink-500',     label: 'Off Duty',  dot: 'bg-ink-300' },
 }
 
-const AI_INSIGHTS = [
-  "Rosa + Miguel have 0 jobs today — consider routing them to cover Ashley's area (El Segundo)",
-  'Team Alpha has the highest reliability score this month (94%) — great for premium clients',
-  'Jennifer Kim has handled 3 move-out cleans this month — your top specialist for that service type',
-]
+
+function deriveInsights(cleaners: Cleaner[], jobs: Job[], teams: { id: string; name: string; cleaners: Cleaner[] }[]): string[] {
+  const insights: string[] = []
+  const todayStr = new Date().toISOString().split('T')[0]
+
+  // Cleaners with no jobs today
+  const idleToday = cleaners.filter(
+    c => c.status === 'available' && !jobs.some(j => j.scheduledDate === todayStr && j.cleanerIds.includes(c.id))
+  )
+  if (idleToday.length > 0) {
+    insights.push(`${idleToday.length} cleaner${idleToday.length > 1 ? 's are' : ' is'} available with no jobs scheduled today.`)
+  }
+
+  // Top reliability team
+  const teamsWithCleaners = teams.filter(t => t.cleaners.length > 0)
+  if (teamsWithCleaners.length > 0) {
+    const topTeam = teamsWithCleaners.reduce((best, t) => {
+      const avg = t.cleaners.reduce((s, c) => s + c.reliabilityScore, 0) / t.cleaners.length
+      const bestAvg = best.cleaners.reduce((s, c) => s + c.reliabilityScore, 0) / best.cleaners.length
+      return avg > bestAvg ? t : best
+    })
+    const score = Math.round(topTeam.cleaners.reduce((s, c) => s + c.reliabilityScore, 0) / topTeam.cleaners.length)
+    insights.push(`${topTeam.name} has the highest reliability score this month (${score}%) — great for premium clients.`)
+  }
+
+  // Move-out specialists
+  const moveOutCleaners = cleaners.filter(c => c.specialties?.includes('move-out'))
+  if (moveOutCleaners.length > 0) {
+    insights.push(`${moveOutCleaners.length} cleaner${moveOutCleaners.length > 1 ? 's are' : ' is'} certified for move-out cleans.`)
+  }
+
+  return insights.length > 0 ? insights : ['No insights yet — data will appear as jobs are completed.']
+}
 
 export function TeamClient({ cleaners, jobs, teams: teamsProp }: TeamData) {
   const [_selectedCleaner, setSelectedCleaner] = useState<string | null>(null)
@@ -86,16 +114,16 @@ export function TeamClient({ cleaners, jobs, teams: teamsProp }: TeamData) {
         ))}
       </div>
 
-      {/* ── AI Insights ───────────────────────────────────────── */}
+      {/* ── Team Insights ─────────────────────────────────────── */}
       <div className="card px-5 py-4">
         <div className="flex items-center gap-2.5 mb-3">
           <div className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-mint-500/12">
             <Sparkles className="h-[14px] w-[14px] text-mint-500" strokeWidth={2.25} />
           </div>
-          <h2 className="text-[14.5px] font-semibold text-ink-900 tracking-[-0.01em]">AI Team Insights</h2>
+          <h2 className="text-[14.5px] font-semibold text-ink-900 tracking-[-0.01em]">Team Insights</h2>
         </div>
         <ul className="space-y-2.5">
-          {AI_INSIGHTS.map((insight, i) => (
+          {deriveInsights(cleaners, jobs, teams).map((insight, i) => (
             <li key={i} className="flex items-start gap-2">
               <span className="mt-1.5 h-1 w-1 rounded-full bg-mint-500 flex-shrink-0" />
               <span className="text-[13px] text-ink-700 leading-[1.55]">{insight}</span>

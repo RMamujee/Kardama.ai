@@ -1,33 +1,9 @@
 'use client'
-import { Bell, CheckCircle2, AlertCircle, MessageSquare, DollarSign, Calendar, MessagesSquare } from 'lucide-react'
+import { Bell, MessagesSquare } from 'lucide-react'
 import * as Popover from '@radix-ui/react-popover'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useChatStore } from '@/store/useChatStore'
-
-type StaticNotification = {
-  id: string
-  icon: React.ElementType
-  tone: 'mint' | 'emerald' | 'amber' | 'rose'
-  title: string
-  body: string
-  time: string
-  unread: boolean
-}
-
-const TONE_BG: Record<StaticNotification['tone'], string> = {
-  mint:    'bg-mint-500/10 text-mint-500',
-  emerald: 'bg-emerald-500/10 text-emerald-500',
-  amber:   'bg-amber-500/10 text-amber-500',
-  rose:    'bg-rose-500/10 text-rose-500',
-}
-
-// Static system notifications — replace with a real notifications table when wired up
-const STATIC: StaticNotification[] = [
-  { id: 'n3', icon: Calendar,      tone: 'amber',   title: 'Schedule conflict',   body: 'Team Beta has back-to-back jobs with 8 min drive — consider re-ordering.', time: '2 h ago',   unread: false },
-  { id: 'n4', icon: CheckCircle2,  tone: 'emerald', title: 'Booking confirmed',   body: 'Lisa Thompson booked Friday 11:00 AM via /book/<token> link.',              time: '5 h ago',   unread: false },
-  { id: 'n5', icon: AlertCircle,   tone: 'rose',    title: 'Twilio not configured', body: 'SMS routes returning 503. Set credentials in Vercel env vars.',           time: 'Yesterday', unread: false },
-]
 
 function relativeTime(iso: string) {
   const diff = Date.now() - new Date(iso).getTime()
@@ -44,7 +20,7 @@ export function NotificationsPopover({ children }: { children: React.ReactNode }
   const { notifications: chatNotifs, markAllRead } = useChatStore()
 
   const chatUnread = chatNotifs.filter(n => !n.read).length
-  const totalUnread = chatUnread + STATIC.filter(n => n.unread).length
+  const totalUnread = chatUnread
 
   return (
     <Popover.Root>
@@ -103,35 +79,7 @@ export function NotificationsPopover({ children }: { children: React.ReactNode }
               </Popover.Close>
             ))}
 
-            {/* Static system notifications */}
-            {STATIC.map((n) => {
-              const Icon = n.icon
-              return (
-                <button
-                  key={n.id}
-                  type="button"
-                  className="group relative flex w-full items-start gap-3 border-b border-line px-4 py-3 text-left transition-colors hover:bg-soft last:border-b-0"
-                >
-                  {n.unread && (
-                    <span className="absolute left-1.5 top-4 h-1.5 w-1.5 rounded-full bg-mint-500" aria-hidden />
-                  )}
-                  <div className={cn('flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[8px]', TONE_BG[n.tone])}>
-                    <Icon className="h-[15px] w-[15px]" strokeWidth={1.75} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <p className={cn('text-[12.5px] leading-tight', n.unread ? 'font-semibold text-ink-900' : 'font-medium text-ink-700')}>
-                        {n.title}
-                      </p>
-                      <span className="flex-shrink-0 text-[12px] text-ink-500">{n.time}</span>
-                    </div>
-                    <p className="mt-1 text-[12px] leading-[1.45] text-ink-500">{n.body}</p>
-                  </div>
-                </button>
-              )
-            })}
-
-            {chatNotifs.length === 0 && STATIC.length === 0 && (
+            {chatNotifs.length === 0 && (
               <p className="px-4 py-8 text-center text-[13px] text-ink-400">No notifications</p>
             )}
           </div>

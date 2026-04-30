@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { waitUntil } from '@vercel/functions'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { autoAssignBookingRequest } from '@/lib/auto-assign'
 import { SERVICE_PRICES, VALID_SERVICE_TYPES, VALID_TIMES } from '@/lib/services'
@@ -220,33 +221,37 @@ export async function POST(request: Request) {
     }
   }
 
-  // Fire n8n booking confirmation email (fire-and-forget)
+  // Fire n8n booking confirmation email
   const n8nWebhook = process.env.N8N_BOOKING_WEBHOOK_URL
   if (n8nWebhook) {
-    fetch(n8nWebhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        bookingId: data.id,
-        customerName: sanitized.customer_name,
-        customerEmail: sanitized.customer_email,
-        customerPhone: sanitized.customer_phone,
-        serviceType: service_type,
-        preferredDate: preferred_date,
-        preferredTime: preferred_time,
-        homeSize: sanitized.home_size || null,
-        cleaningFrequency: sanitized.cleaning_frequency || null,
-        address: sanitized.address,
-        notes: sanitized.notes,
-        cleanerNames: assignment?.cleanerNames ?? [],
-        manageUrl: `https://kardama-intake.vercel.app/?manage=${data.id}`,
-        rescheduleUrl: `https://kardama-intake.vercel.app/?manage=${data.id}&action=reschedule`,
-        cancelUrl: `https://kardama-intake.vercel.app/?manage=${data.id}&action=cancel`,
-      }),
-    }).catch(e => console.error('n8n webhook failed:', e))
+    waitUntil(
+      fetch(n8nWebhook, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookingId: data.id,
+          customerName: sanitized.customer_name,
+          customerEmail: sanitized.customer_email,
+          customerPhone: sanitized.customer_phone,
+          serviceType: service_type,
+          preferredDate: preferred_date,
+          preferredTime: preferred_time,
+          homeSize: sanitized.home_size || null,
+          cleaningFrequency: sanitized.cleaning_frequency || null,
+          address: sanitized.address,
+          notes: sanitized.notes,
+          cleanerNames: assignment?.cleanerNames ?? [],
+          manageUrl: `https://kardama-intake.vercel.app/?manage=${data.id}`,
+          rescheduleUrl: `https://kardama-intake.vercel.app/?manage=${data.id}&action=reschedule`,
+          cancelUrl: `https://kardama-intake.vercel.app/?manage=${data.id}&action=cancel`,
+        }),
+      }).catch(e => console.error('n8n booking webhook failed:', e))
+    )
+  } else {
+    console.warn('intake: N8N_BOOKING_WEBHOOK_URL is not set — confirmation email skipped')
   }
 
-  // Fire n8n cleaner assignment notification — one call per assigned cleaner (fire-and-forget)
+  // Fire n8n cleaner assignment notification — one call per assigned cleaner
   const n8nAssignWebhook = process.env.N8N_CLEANER_ASSIGNMENT_WEBHOOK_URL
   if (n8nAssignWebhook && assignment?.cleanerIds.length) {
     try {
@@ -257,22 +262,24 @@ export async function POST(request: Request) {
         .in('id', assignment.cleanerIds)
       if (cleaners?.length) {
         for (const cleaner of cleaners) {
-          fetch(n8nAssignWebhook, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              jobId: assignment.jobId,
-              cleanerName: cleaner.name,
-              cleanerEmail: cleaner.email,
-              cleanerPhone: cleaner.phone,
-              customerName: sanitized.customer_name,
-              serviceType: service_type,
-              scheduledDate: preferred_date,
-              scheduledTime: preferred_time,
-              address: sanitized.address,
-              jobUrl: `https://kardama-mobile.vercel.app/job/${assignment.jobId}`,
-            }),
-          }).catch(e => console.error('n8n cleaner assignment webhook failed:', e))
+          waitUntil(
+            fetch(n8nAssignWebhook, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                jobId: assignment.jobId,
+                cleanerName: cleaner.name,
+                cleanerEmail: cleaner.email,
+                cleanerPhone: cleaner.phone,
+                customerName: sanitized.customer_name,
+                serviceType: service_type,
+                scheduledDate: preferred_date,
+                scheduledTime: preferred_time,
+                address: sanitized.address,
+                jobUrl: `https://kardama-mobile.vercel.app/job/${assignment.jobId}`,
+              }),
+            }).catch(e => console.error('n8n cleaner assignment webhook failed:', e))
+          )
         }
       }
     } catch (e) {
@@ -280,24 +287,26 @@ export async function POST(request: Request) {
     }
   }
 
-  // Fire n8n unassigned alert if no team could be assigned (fire-and-forget)
+  // Fire n8n unassigned alert if no team could be assigned
   const n8nUnassignedWebhook = process.env.N8N_UNASSIGNED_ALERT_WEBHOOK_URL
   if (n8nUnassignedWebhook && !assignment) {
-    fetch(n8nUnassignedWebhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        bookingId: data.id,
-        customerName: sanitized.customer_name,
-        customerEmail: sanitized.customer_email,
-        customerPhone: sanitized.customer_phone,
-        serviceType: service_type,
-        preferredDate: preferred_date,
-        preferredTime: preferred_time,
-        address: sanitized.address,
-        reason: 'No team available for this date/time — check cleaner availability and hours',
-      }),
-    }).catch(e => console.error('n8n unassigned alert webhook failed:', e))
+    waitUntil(
+      fetch(n8nUnassignedWebhook, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookingId: data.id,
+          customerName: sanitized.customer_name,
+          customerEmail: sanitized.customer_email,
+          customerPhone: sanitized.customer_phone,
+          serviceType: service_type,
+          preferredDate: preferred_date,
+          preferredTime: preferred_time,
+          address: sanitized.address,
+          reason: 'No team available for this date/time — check cleaner availability and hours',
+        }),
+      }).catch(e => console.error('n8n unassigned alert webhook failed:', e))
+    )
   }
 
   return NextResponse.json({

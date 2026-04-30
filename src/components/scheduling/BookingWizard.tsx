@@ -92,19 +92,19 @@ export function BookingWizard({ cleaners, customers }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/25 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/25 backdrop-blur-sm p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative w-full max-w-xl rounded-2xl bg-card border border-line-strong shadow-[0_20px_60px_-8px_rgba(0,0,0,0.14),0_8px_24px_-4px_rgba(0,0,0,0.08)]"
+        className="relative w-full max-w-2xl rounded-2xl bg-card border border-line-strong shadow-[0_20px_60px_-8px_rgba(0,0,0,0.14),0_8px_24px_-4px_rgba(0,0,0,0.08)] overflow-hidden"
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-ink-200 p-5">
+        <div className="flex items-center justify-between border-b border-ink-200 px-7 py-5">
           <div>
-            <h2 className="text-[18px] font-semibold text-ink-900">New Job</h2>
-            <p className="text-[13px] text-ink-500">Step {bookingStep + 1} of 4: {STEPS[bookingStep]}</p>
+            <h2 className="text-[19px] font-semibold text-ink-900 tracking-[-0.01em]">New Job</h2>
+            <p className="text-[13px] text-ink-500 mt-0.5">Step {bookingStep + 1} of 4: {STEPS[bookingStep]}</p>
           </div>
-          <button onClick={closeBooking} className="rounded-lg p-2 hover:bg-hover transition-colors">
+          <button onClick={closeBooking} className="rounded-lg p-2 -mr-2 hover:bg-hover transition-colors">
             <X className="h-5 w-5 text-ink-400" />
           </button>
         </div>
@@ -118,28 +118,30 @@ export function BookingWizard({ cleaners, customers }: Props) {
         </div>
 
         {/* Steps */}
-        <div className="p-5">
+        <div className="px-7 py-6">
           <AnimatePresence mode="wait">
             <motion.div key={bookingStep} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
 
               {/* Step 0: Customer */}
               {bookingStep === 0 && (
-                <div className="space-y-4">
+                <div className="space-y-5">
                   <div>
                     <Label className="text-ink-700">Select Customer</Label>
-                    <Select value={formData.customerId} onChange={e => setFormData(d => ({ ...d, customerId: e.target.value }))} className="mt-1.5">
+                    <Select value={formData.customerId} onChange={e => setFormData(d => ({ ...d, customerId: e.target.value }))} className="mt-2">
                       {customers.map(c => (
                         <option key={c.id} value={c.id}>{c.name} — {c.city}</option>
                       ))}
                     </Select>
                   </div>
                   {customer && (
-                    <div className="rounded-xl bg-soft border border-ink-200 p-4 space-y-2">
-                      <div className="flex items-center gap-2 text-[13px]">
-                        <MapPin className="h-4 w-4 text-ink-400" />
-                        <span className="text-ink-500">{customer.address}</span>
+                    <div className="rounded-xl bg-soft border border-ink-200 p-5 space-y-2.5">
+                      <div className="flex items-start gap-2.5 text-[13px]">
+                        <MapPin className="h-4 w-4 text-ink-400 flex-shrink-0 mt-0.5" />
+                        <span className="text-ink-500 leading-[1.5]">{customer.address}</span>
                       </div>
-                      <p className="text-[12px] text-ink-400">Source: {customer.source} · {customer.jobHistory.length} prior jobs · ${customer.totalSpent} spent</p>
+                      <p className="text-[12px] text-ink-400 pl-[26px]">
+                        Source: {customer.source} · {customer.jobHistory.length} prior jobs · ${customer.totalSpent} spent
+                      </p>
                     </div>
                   )}
                 </div>
@@ -147,11 +149,11 @@ export function BookingWizard({ cleaners, customers }: Props) {
 
               {/* Step 1: Service Details */}
               {bookingStep === 1 && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-5">
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-5">
                     <div>
                       <Label className="text-ink-700">Service Type</Label>
-                      <Select value={formData.serviceType} onChange={e => setFormData(d => ({ ...d, serviceType: e.target.value }))} className="mt-1.5">
+                      <Select value={formData.serviceType} onChange={e => setFormData(d => ({ ...d, serviceType: e.target.value }))} className="mt-2">
                         <option value="standard">Standard Clean — $165</option>
                         <option value="deep">Deep Clean — $245</option>
                         <option value="move-out">Move-Out — $380</option>
@@ -161,11 +163,11 @@ export function BookingWizard({ cleaners, customers }: Props) {
                     </div>
                     <div>
                       <Label className="text-ink-700">Date</Label>
-                      <Input type="date" value={formData.date} onChange={e => setFormData(d => ({ ...d, date: e.target.value }))} className="mt-1.5" />
+                      <Input type="date" value={formData.date} onChange={e => setFormData(d => ({ ...d, date: e.target.value }))} className="mt-2" />
                     </div>
                     <div>
                       <Label className="text-ink-700">Start Time</Label>
-                      <Select value={formData.time} onChange={e => setFormData(d => ({ ...d, time: e.target.value }))} className="mt-1.5">
+                      <Select value={formData.time} onChange={e => setFormData(d => ({ ...d, time: e.target.value }))} className="mt-2">
                         {['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00'].map(t => (
                           <option key={t} value={t}>{t}</option>
                         ))}
@@ -173,7 +175,7 @@ export function BookingWizard({ cleaners, customers }: Props) {
                     </div>
                     <div>
                       <Label className="text-ink-700">Price</Label>
-                      <div className="mt-1.5 flex h-9 items-center rounded-lg border border-ink-200 bg-soft px-3 text-[13px] font-semibold text-emerald-500">
+                      <div className="mt-2 flex h-9 items-center rounded-lg border border-ink-200 bg-soft px-3 text-[13px] font-semibold text-emerald-500">
                         {formatCurrency(price)}
                       </div>
                     </div>
@@ -183,8 +185,8 @@ export function BookingWizard({ cleaners, customers }: Props) {
                     <textarea
                       value={formData.notes}
                       onChange={e => setFormData(d => ({ ...d, notes: e.target.value }))}
-                      className="mt-1.5 w-full rounded-lg border border-ink-100 bg-soft px-3 py-2 text-[13px] text-ink-900 placeholder:text-ink-400 resize-none focus:outline-none focus:border-violet-500 focus:ring-[3px] focus:ring-violet-500/20"
-                      rows={2}
+                      className="mt-2 w-full rounded-lg border border-ink-100 bg-soft px-3 py-2.5 text-[13px] text-ink-900 placeholder:text-ink-400 resize-none focus:outline-none focus:border-violet-500 focus:ring-[3px] focus:ring-violet-500/20"
+                      rows={3}
                       placeholder="Special instructions..."
                     />
                   </div>
@@ -193,9 +195,9 @@ export function BookingWizard({ cleaners, customers }: Props) {
 
               {/* Step 2: AI Assignment */}
               {bookingStep === 2 && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 rounded-lg bg-violet-500/10 border border-violet-500/20 p-3">
-                    <Sparkles className="h-4 w-4 text-violet-400" />
+                <div className="space-y-3.5">
+                  <div className="flex items-center gap-2.5 rounded-lg bg-violet-500/10 border border-violet-500/20 px-4 py-3">
+                    <Sparkles className="h-4 w-4 text-violet-400 flex-shrink-0" />
                     <p className="text-[13px] text-violet-400 font-medium">AI analyzed all teams — here are the best matches:</p>
                   </div>
                   {recommendations.map((rec, i) => {
@@ -206,28 +208,28 @@ export function BookingWizard({ cleaners, customers }: Props) {
                         key={i}
                         onClick={() => selectTeam(rec.cleanerIds)}
                         className={cn(
-                          'w-full rounded-xl border-2 p-4 text-left transition-all',
+                          'w-full rounded-xl border-2 p-5 text-left transition-all',
                           isSelected
                             ? 'border-violet-500/60 bg-violet-500/10 shadow-[0_0_0_1px_rgba(139,133,242,0.4)]'
                             : 'border-ink-200 hover:border-ink-300 hover:bg-hover'
                         )}
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="flex -space-x-1">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="flex -space-x-1 flex-shrink-0">
                               {teamCleaners.map(c => <Avatar key={c.id} initials={c.initials} color={c.color} size="sm" />)}
                             </div>
-                            <div>
-                              <p className="font-semibold text-ink-900 text-[13px]">{teamCleaners.map(c => c.name).join(' + ')}</p>
-                              <p className="text-[12px] text-ink-500">{teamCleaners[0]?.homeAreaName} team</p>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-ink-900 text-[13px] truncate">{teamCleaners.map(c => c.name).join(' + ')}</p>
+                              <p className="text-[12px] text-ink-500 mt-0.5">{teamCleaners[0]?.homeAreaName} team</p>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <div className={cn('text-[24px] font-bold', rec.score >= 80 ? 'text-emerald-500' : rec.score >= 60 ? 'text-amber-500' : 'text-rose-500')}>{rec.score}</div>
-                            <div className="text-[11px] text-ink-500">AI score</div>
+                          <div className="text-right flex-shrink-0">
+                            <div className={cn('text-[24px] font-bold leading-none', rec.score >= 80 ? 'text-emerald-500' : rec.score >= 60 ? 'text-amber-500' : 'text-rose-500')}>{rec.score}</div>
+                            <div className="text-[11px] text-ink-500 mt-1">AI score</div>
                           </div>
                         </div>
-                        <div className="mt-3 flex flex-wrap gap-1.5">
+                        <div className="mt-3.5 flex flex-wrap gap-1.5">
                           <Badge variant="neutral" className="text-[11px]">
                             <Clock className="mr-1 h-2.5 w-2.5" />
                             {rec.driveTimeMinutes} min drive
@@ -243,37 +245,37 @@ export function BookingWizard({ cleaners, customers }: Props) {
 
               {/* Step 3: Confirm */}
               {bookingStep === 3 && selectedTeam && customer && (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-4">
-                    <CheckCircle className="h-5 w-5 text-emerald-500" />
+                <div className="space-y-5">
+                  <div className="flex items-center gap-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-3.5">
+                    <CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0" />
                     <p className="text-[13px] font-medium text-emerald-500">Ready to schedule!</p>
                   </div>
-                  <div className="rounded-xl bg-soft border border-ink-200 p-4 space-y-3 text-[13px]">
-                    <div className="flex justify-between">
+                  <div className="rounded-xl bg-soft border border-ink-200 p-5 space-y-3.5 text-[13px]">
+                    <div className="flex justify-between gap-4">
                       <span className="text-ink-500">Customer</span>
-                      <span className="font-medium text-ink-900">{customer.name}</span>
+                      <span className="font-medium text-ink-900 text-right">{customer.name}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between gap-4">
                       <span className="text-ink-500">Service</span>
-                      <span className="font-medium text-ink-900 capitalize">{formData.serviceType} clean</span>
+                      <span className="font-medium text-ink-900 capitalize text-right">{formData.serviceType} clean</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between gap-4">
                       <span className="text-ink-500">Date & Time</span>
-                      <span className="font-medium text-ink-900">{formData.date} at {formData.time}</span>
+                      <span className="font-medium text-ink-900 text-right">{formData.date} at {formData.time}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between gap-4">
                       <span className="text-ink-500">Team</span>
-                      <span className="font-medium text-ink-900">
+                      <span className="font-medium text-ink-900 text-right">
                         {selectedTeam.map(id => cleaners.find(c => c.id === id)?.name.split(' ')[0] ?? id).join(' + ')}
                       </span>
                     </div>
-                    <div className="flex justify-between border-t border-ink-200 pt-3 font-semibold">
+                    <div className="flex justify-between gap-4 border-t border-ink-200 pt-3.5 font-semibold">
                       <span className="text-ink-700">Total Price</span>
                       <span className="text-emerald-500">{formatCurrency(price)}</span>
                     </div>
                   </div>
                   {saveError && (
-                    <p className="rounded-lg bg-rose-500/10 border border-rose-500/25 px-3 py-2 text-[12.5px] text-rose-500">{saveError}</p>
+                    <p className="rounded-lg bg-rose-500/10 border border-rose-500/25 px-3.5 py-2.5 text-[12.5px] text-rose-500">{saveError}</p>
                   )}
                 </div>
               )}
@@ -282,7 +284,7 @@ export function BookingWizard({ cleaners, customers }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-ink-200 p-5">
+        <div className="flex items-center justify-between gap-3 border-t border-ink-200 px-7 py-5">
           <Button variant="outline" onClick={bookingStep === 0 ? closeBooking : prevStep} disabled={isPending}>
             {bookingStep === 0 ? <><X className="h-4 w-4" /> Cancel</> : <><ChevronLeft className="h-4 w-4" /> Back</>}
           </Button>

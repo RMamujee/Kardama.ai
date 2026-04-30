@@ -11,7 +11,7 @@ import { StatTile } from '@/components/ui/stat-tile'
 import { usePaymentStore } from '@/store/usePaymentStore'
 import { LogPaymentModal } from '@/components/payments/LogPaymentModal'
 import { RevenueChart } from '@/components/payments/RevenueChart'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, customerCode, nameFromPaymentNote } from '@/lib/utils'
 import { getMtdRevenue, getYtdRevenue, getMtdTrend, getYtdTrend } from '@/lib/payment-utils'
 import type { Cleaner, Customer, Job, Payment } from '@/types'
 
@@ -135,6 +135,7 @@ export function PaymentsClient({ customers, jobs, payments: serverPayments }: Pa
                   )}
                   {filtered.map((p) => {
                     const customer = customers.find(c => c.id === p.customerId)
+                    const displayName = customer?.name ?? nameFromPaymentNote(p.confirmationNote) ?? 'Unknown'
                     const methodVariant = p.method ? (METHOD_BADGE[p.method] || 'neutral') : 'neutral'
                     return (
                       <tr
@@ -142,7 +143,12 @@ export function PaymentsClient({ customers, jobs, payments: serverPayments }: Pa
                         className="border-b border-line transition-colors hover:bg-soft last:border-0"
                       >
                         <td className="px-4 py-3.5 num text-[13px] text-ink-400">{p.receivedAt.split('T')[0]}</td>
-                        <td className="px-4 py-3.5 text-[13px] font-medium text-ink-900">{customer?.name || 'Unknown'}</td>
+                        <td className="px-4 py-3.5">
+                          <span className="text-[13px] font-medium text-ink-900">{displayName}</span>
+                          {customer && (
+                            <span className="ml-1.5 num text-[11px] text-ink-400">{customerCode(customer.id)}</span>
+                          )}
+                        </td>
                         <td className="px-4 py-3.5 num text-[13px] font-semibold text-emerald-500">{formatCurrency(p.amount)}</td>
                         <td className="px-4 py-3.5">
                           {p.method ? (

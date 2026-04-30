@@ -30,6 +30,21 @@ export function getStatusColor(status: string): string {
   return map[status] || '#94a3b8'
 }
 
+// Short 4-char alphanumeric code derived from the customer ID — deterministic and unique enough
+// to disambiguate duplicate names (e.g. two "John Smith" customers).
+export function customerCode(id: string): string {
+  let h = 5381
+  for (let i = 0; i < id.length; i++) h = (((h << 5) + h) ^ id.charCodeAt(i)) >>> 0
+  return '#' + (h % 1679616).toString(36).toUpperCase().padStart(4, '0')
+}
+
+// Extract customer name from a payment's confirmationNote as a fallback when customer_id is null.
+// Intake payments use the format "Intake: Name — service_type".
+export function nameFromPaymentNote(note: string): string | null {
+  const m = note.match(/^Intake:\s+(.+?)\s+—/)
+  return m?.[1] ?? null
+}
+
 export function getServiceLabel(type: string): string {
   const map: Record<string, string> = {
     standard: 'Standard Clean', deep: 'Deep Clean', 'move-out': 'Move-Out',

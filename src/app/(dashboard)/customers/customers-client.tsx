@@ -13,7 +13,7 @@ import { Select } from '@/components/ui/select'
 import { StatTile } from '@/components/ui/stat-tile'
 import { AddCustomerDialog } from '@/components/customers/AddCustomerDialog'
 import { sendBookingLink } from '@/app/actions/customers'
-import { formatCurrency, getServiceLabel, cn } from '@/lib/utils'
+import { formatCurrency, getServiceLabel, customerCode, cn } from '@/lib/utils'
 import type { Customer, Cleaner, Job, Payment } from '@/types'
 
 type CustomersData = { customers: Customer[]; jobs: Job[]; cleaners: Cleaner[]; payments: Payment[] }
@@ -238,7 +238,10 @@ export function CustomersClient({ customers, jobs, cleaners, payments }: Custome
                           {initials}
                         </div>
                         <div className="min-w-0">
-                          <p className="truncate text-[13px] font-semibold text-ink-900">{customer.name}</p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="truncate text-[13px] font-semibold text-ink-900">{customer.name}</p>
+                            <span className="num flex-shrink-0 text-[10.5px] text-ink-400">{customerCode(customer.id)}</span>
+                          </div>
                           {customer.city && (
                             <p className="flex items-center gap-1 text-[11.5px] text-ink-500 mt-0.5">
                               <MapPin className="h-2.5 w-2.5 flex-shrink-0" />
@@ -371,7 +374,10 @@ function DetailPanel({
               {initials}
             </div>
             <div className="min-w-0">
-              <p className="truncate text-[14px] font-semibold text-ink-900">{customer.name}</p>
+              <div className="flex items-center gap-2">
+                <p className="truncate text-[14px] font-semibold text-ink-900">{customer.name}</p>
+                <span className="num flex-shrink-0 rounded-[5px] bg-soft px-1.5 py-0.5 text-[10.5px] text-ink-500">{customerCode(customer.id)}</span>
+              </div>
               <p className="mt-0.5 truncate text-[12px] text-ink-500">
                 {customer.city} · <span className="num">{jobs.length}</span> jobs
               </p>

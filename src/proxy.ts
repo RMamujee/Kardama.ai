@@ -100,9 +100,14 @@ export async function proxy(req: NextRequest) {
         .select('role')
         .eq('user_id', user.id)
         .single()
-      const url = req.nextUrl.clone()
-      url.pathname = profile?.role === 'cleaner' ? '/me' : '/dashboard'
-      return NextResponse.redirect(url)
+      // Only redirect if there's a valid profile — no profile means the auth session is
+      // orphaned (invite accepted but profile insert failed, etc.) and we must NOT redirect
+      // or the user ends up in an infinite /login → /dashboard → /login loop.
+      if (profile?.role) {
+        const url = req.nextUrl.clone()
+        url.pathname = profile.role === 'cleaner' ? '/me' : '/dashboard'
+        return NextResponse.redirect(url)
+      }
     }
     return response
   }

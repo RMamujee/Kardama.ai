@@ -522,10 +522,10 @@ export function MessagesClient({ jobs, customers, cleaners }: MessagesData) {
                       {/* SMS header */}
                       <div className="mb-3 flex items-center gap-2 border-b border-line pb-3">
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-mint-400 to-mint-600 text-[11px] font-semibold text-page">
-                          DC
+                          K
                         </div>
                         <div>
-                          <div className="text-[13px] font-semibold text-ink-900">David&apos;s Cleaning</div>
+                          <div className="text-[13px] font-semibold text-ink-900">Kardama</div>
                           <div className="text-[11px] text-ink-500">SMS Notification</div>
                         </div>
                       </div>

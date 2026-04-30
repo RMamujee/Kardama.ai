@@ -6,6 +6,53 @@ import { SERVICE_PRICES, VALID_SERVICE_TYPES, VALID_TIMES } from '@/lib/services
 
 const VALID_TIMES_SET = new Set(VALID_TIMES)
 
+function parseMinutes(time: string): number {
+  const [h, m] = time.split(':').map(Number)
+  return h * 60 + m
+}
+
+// Returns true when every configured team has a conflicting job at the given slot.
+async function allTeamsBooked(date: string, time: string): Promise<boolean> {
+  const DEFAULT_DURATION = 150
+  const admin = getSupabaseAdminClient()
+
+  const [{ data: cleaners }, { data: jobs }] = await Promise.all([
+    admin.from('cleaners').select('id, team_id').not('team_id', 'is', null),
+    admin.from('jobs')
+      .select('cleaner_ids, scheduled_time, estimated_duration')
+      .eq('scheduled_date', date)
+      .neq('status', 'cancelled'),
+  ])
+
+  if (!cleaners?.length) return false
+
+  const teamMap = new Map<string, string[]>()
+  for (const c of cleaners) {
+    if (!c.team_id) continue
+    const list = teamMap.get(c.team_id as string) ?? []
+    list.push(c.id as string)
+    teamMap.set(c.team_id as string, list)
+  }
+  if (teamMap.size === 0) return false
+
+  const slotStart = parseMinutes(time)
+  const slotEnd   = slotStart + DEFAULT_DURATION + 30
+
+  for (const [, cleanerIds] of teamMap.entries()) {
+    const teamHasConflict = cleanerIds.some(cid =>
+      (jobs ?? []).some(j => {
+        if (!(j.cleaner_ids as string[]).includes(cid)) return false
+        const jStart = parseMinutes(j.scheduled_time as string)
+        const jEnd   = jStart + ((j.estimated_duration as number) ?? DEFAULT_DURATION) + 30
+        return !(slotEnd <= jStart || slotStart >= jEnd)
+      })
+    )
+    if (!teamHasConflict) return false // at least one team is free
+  }
+
+  return true // every team has a conflict — slot is full
+}
+
 // Simple in-process rate limiter: max 5 submissions per IP per 10 minutes
 const ipHits = new Map<string, { count: number; resetAt: number }>()
 function checkRateLimit(ip: string): boolean {
@@ -110,6 +157,14 @@ export async function POST(request: Request) {
   if (dupCheck) {
     return NextResponse.json(
       { error: 'A booking already exists for this address at that date and time. Please choose a different time slot.' },
+      { status: 409, headers: CORS }
+    )
+  }
+
+  // Capacity guard: reject if all teams are already booked for this slot.
+  if (await allTeamsBooked(preferred_date, preferred_time)) {
+    return NextResponse.json(
+      { error: 'This time slot is fully booked. Please go back and choose a different date or time.' },
       { status: 409, headers: CORS }
     )
   }

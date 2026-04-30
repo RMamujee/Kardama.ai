@@ -8,7 +8,7 @@ interface SchedulingStore {
   bookingStep: number
   pendingRequest: SchedulingRequest | null
   recommendations: RankedTeam[]
-  selectedTeam: [string, string] | null
+  selectedTeam: string[] | null
 
   setWeekOffset: (n: number) => void
   openBooking: () => void
@@ -18,7 +18,7 @@ interface SchedulingStore {
   setStep: (n: number) => void
   setPendingRequest: (r: SchedulingRequest) => void
   computeRecommendations: (r: SchedulingRequest, cleaners: Cleaner[], jobs: Job[], customers: Customer[]) => SchedulingResult
-  selectTeam: (ids: [string, string]) => void
+  selectTeam: (ids: string[]) => void
 }
 
 export const useSchedulingStore = create<SchedulingStore>((set) => ({

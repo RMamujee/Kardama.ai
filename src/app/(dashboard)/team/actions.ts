@@ -2,7 +2,6 @@
 
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
-import { Resend } from 'resend'
 import { requireOwner } from '@/lib/supabase/dal'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
@@ -38,8 +37,8 @@ export async function inviteCleanerAction(_prev: InviteState, formData: FormData
   const mobileUrl = process.env.NEXT_PUBLIC_MOBILE_APP_URL ?? 'https://kardama-mobile.vercel.app'
 
   // 1. Generate invite link without letting Supabase send its generic email.
-  //    generateLink creates the auth.users row and returns the magic link so we
-  //    can send our own branded onboarding email instead.
+  //    generateLink creates the auth.users row and returns the magic link so
+  //    the n8n workflow can embed it in a branded onboarding email.
   const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
     type: 'invite',
     email,
@@ -93,86 +92,27 @@ export async function inviteCleanerAction(_prev: InviteState, formData: FormData
     return { error: `Failed to create profile: ${profileErr.message}` }
   }
 
-  // 4. Send branded onboarding email via Resend.
-  const resendKey = process.env.RESEND_API_KEY
-  if (resendKey) {
-    const resend = new Resend(resendKey)
-    const fromAddress = process.env.RESEND_FROM_EMAIL ?? 'Kardama <onboarding@kardama.ai>'
-    await resend.emails.send({
-      from: fromAddress,
-      to: email,
-      subject: `You're invited to join Kardama`,
-      html: buildOnboardingEmail({ name, email, mobileUrl, inviteUrl }),
-    }).catch(e => console.error('Resend onboarding email failed:', e))
+  // 4. Fire n8n onboarding email webhook (fire-and-forget).
+  //    The n8n workflow receives the invite URL and sends the branded welcome email.
+  const n8nWelcomeWebhook = process.env.N8N_CLEANER_WELCOME_WEBHOOK_URL
+  if (n8nWelcomeWebhook) {
+    fetch(n8nWelcomeWebhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cleanerName: name,
+        cleanerEmail: email,
+        cleanerPhone: phone,
+        mobileAppUrl: mobileUrl,
+        inviteUrl,
+      }),
+    }).catch(e => console.error('n8n cleaner welcome webhook failed:', e))
   } else {
-    console.warn('RESEND_API_KEY not set — onboarding email not sent for', email)
+    console.warn('N8N_CLEANER_WELCOME_WEBHOOK_URL not set — onboarding email not sent for', email)
   }
 
   revalidatePath('/team')
   return { ok: true }
-}
-
-function buildOnboardingEmail({ name, email, mobileUrl, inviteUrl }: {
-  name: string; email: string; mobileUrl: string; inviteUrl: string
-}) {
-  const firstName = name.split(' ')[0]
-  return `<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Welcome to Kardama</title></head>
-<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px;">
-    <tr><td align="center">
-      <table width="100%" style="max-width:520px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-
-        <!-- Header -->
-        <tr><td style="background:#0a0f0b;padding:32px 40px;text-align:center;">
-          <div style="display:inline-flex;align-items:center;gap:10px;">
-            <div style="width:36px;height:36px;background:#1ED760;border-radius:8px;display:inline-block;vertical-align:middle;"></div>
-            <span style="color:#ffffff;font-size:22px;font-weight:700;vertical-align:middle;letter-spacing:-0.5px;">Kardama</span>
-          </div>
-        </td></tr>
-
-        <!-- Body -->
-        <tr><td style="padding:40px 40px 32px;">
-          <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#0a0f0b;letter-spacing:-0.5px;">Welcome, ${firstName}!</h1>
-          <p style="margin:0 0 24px;font-size:15px;color:#52525b;line-height:1.6;">
-            You've been added to the Kardama cleaning team. Use the button below to set your password and activate your account — it only takes a minute.
-          </p>
-
-          <!-- CTA -->
-          <div style="text-align:center;margin:0 0 32px;">
-            <a href="${inviteUrl}" style="display:inline-block;background:#1ED760;color:#000000;font-size:15px;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:10px;letter-spacing:-0.2px;">
-              Set Up My Account
-            </a>
-          </div>
-
-          <!-- Details box -->
-          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;border-radius:10px;padding:20px 24px;margin-bottom:24px;">
-            <tr><td>
-              <p style="margin:0 0 12px;font-size:12px;font-weight:600;color:#71717a;text-transform:uppercase;letter-spacing:0.06em;">Your login details</p>
-              <p style="margin:0 0 6px;font-size:14px;color:#3f3f46;"><strong style="color:#0a0f0b;">Email:</strong> ${email}</p>
-              <p style="margin:0;font-size:14px;color:#3f3f46;"><strong style="color:#0a0f0b;">App:</strong> <a href="${mobileUrl}" style="color:#1ED760;text-decoration:none;">${mobileUrl}</a></p>
-            </td></tr>
-          </table>
-
-          <p style="margin:0;font-size:13px;color:#71717a;line-height:1.6;">
-            After setting your password, open the app on your phone and sign in with your email. You'll see your assigned jobs, schedule, and can message the team.
-          </p>
-        </td></tr>
-
-        <!-- Footer -->
-        <tr><td style="padding:20px 40px 32px;border-top:1px solid #e4e4e7;">
-          <p style="margin:0;font-size:12px;color:#a1a1aa;text-align:center;line-height:1.6;">
-            This invite link expires in 24 hours. If you didn't expect this email, you can safely ignore it.<br>
-            © ${new Date().getFullYear()} Kardama
-          </p>
-        </td></tr>
-
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`
 }
 
 // ─────────────── Create team ───────────────

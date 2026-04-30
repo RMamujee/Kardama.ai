@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { SchedulingRequest, RankedTeam, SchedulingResult } from '@/types'
+import { Cleaner, Customer, Job, SchedulingRequest, RankedTeam, SchedulingResult } from '@/types'
 import { computeSchedulingRecommendations } from '@/lib/scheduling-engine'
 
 interface SchedulingStore {
@@ -17,7 +17,7 @@ interface SchedulingStore {
   prevStep: () => void
   setStep: (n: number) => void
   setPendingRequest: (r: SchedulingRequest) => void
-  computeRecommendations: (r: SchedulingRequest) => SchedulingResult
+  computeRecommendations: (r: SchedulingRequest, cleaners: Cleaner[], jobs: Job[], customers: Customer[]) => SchedulingResult
   selectTeam: (ids: [string, string]) => void
 }
 
@@ -36,8 +36,8 @@ export const useSchedulingStore = create<SchedulingStore>((set) => ({
   prevStep: () => set((s) => ({ bookingStep: Math.max(0, s.bookingStep - 1) })),
   setStep: (n) => set({ bookingStep: n }),
   setPendingRequest: (r) => set({ pendingRequest: r }),
-  computeRecommendations: (r) => {
-    const result = computeSchedulingRecommendations(r)
+  computeRecommendations: (r, cleaners, jobs, customers) => {
+    const result = computeSchedulingRecommendations(r, cleaners, jobs, customers)
     set({ recommendations: result.rankedTeams })
     return result
   },

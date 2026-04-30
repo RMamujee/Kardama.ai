@@ -1177,7 +1177,7 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
       </div>
 
       {/* Booking Wizard */}
-      {bookingOpen && <BookingWizard cleaners={cleaners} customers={customers} />}
+      {bookingOpen && <BookingWizard cleaners={cleaners} customers={customers} jobs={jobs} />}
     </div>
   )
 }

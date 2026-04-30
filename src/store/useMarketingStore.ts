@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { MarketingPost, FacebookGroup } from '@/types'
-import { FACEBOOK_GROUPS } from '@/lib/mock-data'
-import { generateAllPosts, generateAiPost, generatePost, PostTone } from '@/lib/marketing-engine'
+import { FACEBOOK_GROUPS, generateAllPosts, generateAiPost, generatePost, PostTone } from '@/lib/marketing-engine'
 import { MarketingTheme } from '@/types'
 import { getWeek } from 'date-fns'
 

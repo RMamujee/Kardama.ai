@@ -1,13 +1,5 @@
-import { CLEANERS, JOBS, CUSTOMERS } from './mock-data'
-import { Cleaner, SchedulingRequest, SchedulingResult, RankedTeam } from '@/types'
+import { Cleaner, Customer, Job, SchedulingRequest, SchedulingResult, RankedTeam } from '@/types'
 import { estimateDriveMinutes } from './drive-time'
-
-const TEAMS: Record<string, [string, string]> = {
-  'team-a': ['c1', 'c2'],
-  'team-b': ['c3', 'c4'],
-  'team-c': ['c5', 'c6'],
-  'team-d': ['c7', 'c8'],
-}
 
 function getDay(dateStr: string): string {
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -19,87 +11,94 @@ function parseMinutes(time: string): number {
   return h * 60 + m
 }
 
-function hasTimeConflict(cleaner: Cleaner, date: string, startTime: string, duration: number): boolean {
+function hasTimeConflict(
+  cleaner: Cleaner,
+  date: string,
+  startTime: string,
+  duration: number,
+  jobs: Job[],
+): boolean {
   const newStart = parseMinutes(startTime)
-  const newEnd = newStart + duration + 30 // 30 min buffer
-  const jobsForCleaner = JOBS.filter(j => j.cleanerIds.includes(cleaner.id) && j.scheduledDate === date && j.status !== 'cancelled')
-  return jobsForCleaner.some(j => {
-    const jStart = parseMinutes(j.scheduledTime)
-    const jEnd = jStart + j.estimatedDuration + 30
-    return !(newEnd <= jStart || newStart >= jEnd)
-  })
+  const newEnd = newStart + duration + 30
+  return jobs
+    .filter(j => j.cleanerIds.includes(cleaner.id) && j.scheduledDate === date && j.status !== 'cancelled')
+    .some(j => {
+      const jStart = parseMinutes(j.scheduledTime)
+      const jEnd = jStart + j.estimatedDuration + 30
+      return !(newEnd <= jStart || newStart >= jEnd)
+    })
 }
 
 function scoreTeam(
-  teamId: string,
-  request: SchedulingRequest
+  teamCleaners: Cleaner[],
+  request: SchedulingRequest,
+  jobs: Job[],
+  customer: Customer | undefined,
 ): RankedTeam {
-  const cleanerIds = TEAMS[teamId] as [string, string]
-  const cleaners = cleanerIds.map(id => CLEANERS.find(c => c.id === id)!).filter(Boolean)
+  const cleanerIds = teamCleaners.map(c => c.id) as [string, string]
 
-  if (cleaners.length < 2) {
-    return { cleanerIds, score: 0, driveTimeMinutes: 999, availabilityConfidence: 0, matchReasons: [], warnings: ['Team not fully available'], estimatedArrivalBuffer: 0 }
+  if (teamCleaners.length < 2) {
+    return {
+      cleanerIds,
+      score: 0,
+      driveTimeMinutes: 999,
+      availabilityConfidence: 0,
+      matchReasons: [],
+      warnings: ['Team not fully staffed'],
+      estimatedArrivalBuffer: 0,
+    }
   }
 
-  const customer = CUSTOMERS.find(c => c.id === request.customerId)
   const day = getDay(request.jobDate)
   const matchReasons: string[] = []
   const warnings: string[] = []
 
-  // Per-cleaner scoring
-  const cleanerScores = cleaners.map(cleaner => {
-    // Factor 1: Proximity (30%)
+  const cleanerScores = teamCleaners.map(cleaner => {
     const driveMin = estimateDriveMinutes(cleaner.currentLat, cleaner.currentLng, request.jobLat, request.jobLng)
     const proximityScore = Math.max(0, 100 - driveMin * 2)
 
-    // Factor 2: Availability (25%)
     const hours = cleaner.availableHours[day]
     let availabilityScore = 0
     if (!hours) {
       warnings.push(`${cleaner.name.split(' ')[0]} is off today`)
-      availabilityScore = 0
+    } else if (hasTimeConflict(cleaner, request.jobDate, request.jobTime, request.jobDuration, jobs)) {
+      warnings.push(`${cleaner.name.split(' ')[0]} has a conflict`)
+      availabilityScore = 10
     } else {
-      const conflict = hasTimeConflict(cleaner, request.jobDate, request.jobTime, request.jobDuration)
-      if (conflict) {
-        warnings.push(`${cleaner.name.split(' ')[0]} has a scheduling conflict`)
-        availabilityScore = 10
-      } else {
-        // Check buffer
-        const requestStart = parseMinutes(request.jobTime)
-        const available = parseMinutes(hours.start)
-        const buffer = requestStart - available
-        availabilityScore = buffer >= 30 ? 100 : 60
-      }
+      const buffer = parseMinutes(request.jobTime) - parseMinutes(hours.start)
+      availabilityScore = buffer >= 30 ? 100 : 60
     }
 
-    // Factor 3: Reliability (20%)
-    const reliabilityScore = cleaner.reliabilityScore
-
-    // Factor 4: Customer preference (15%)
     let preferenceScore = 50
     if (customer?.preferredCleanerIds.includes(cleaner.id)) {
       preferenceScore = 100
       if (!matchReasons.includes('Customer preferred team')) matchReasons.push('Customer preferred team')
     }
 
-    // Factor 5: Specialty (10%)
-    const specialtyScore = cleaner.specialties.includes(request.serviceType as any) ? 100 : 40
+    const specialtyScore = cleaner.specialties.includes(request.serviceType as never) ? 100 : 40
 
-    return 0.30 * proximityScore + 0.25 * availabilityScore + 0.20 * reliabilityScore + 0.15 * preferenceScore + 0.10 * specialtyScore
+    return (
+      0.30 * proximityScore +
+      0.25 * availabilityScore +
+      0.20 * cleaner.reliabilityScore +
+      0.15 * preferenceScore +
+      0.10 * specialtyScore
+    )
   })
 
   const avgScore = cleanerScores.reduce((a, b) => a + b, 0) / cleanerScores.length
-  const avgDrive = cleaners.reduce((sum, c) => sum + estimateDriveMinutes(c.currentLat, c.currentLng, request.jobLat, request.jobLng), 0) / cleaners.length
+  const avgDrive =
+    teamCleaners.reduce((sum, c) => sum + estimateDriveMinutes(c.currentLat, c.currentLng, request.jobLat, request.jobLng), 0) /
+    teamCleaners.length
 
-  // Build match reasons
   if (avgDrive <= 15) matchReasons.push(`Only ${Math.round(avgDrive)} min away`)
   else if (avgDrive <= 30) matchReasons.push(`${Math.round(avgDrive)} min drive`)
 
-  const avgRating = cleaners.reduce((s, c) => s + c.rating, 0) / cleaners.length
-  if (avgRating >= 4.8) matchReasons.push(`${avgRating.toFixed(1)}★ average rating`)
+  const avgRating = teamCleaners.reduce((s, c) => s + c.rating, 0) / teamCleaners.length
+  if (avgRating >= 4.8) matchReasons.push(`${avgRating.toFixed(1)}★ avg rating`)
 
-  const avgReliability = cleaners.reduce((s, c) => s + c.reliabilityScore, 0) / cleaners.length
-  if (avgReliability >= 90) matchReasons.push(`${Math.round(avgReliability)}% reliability score`)
+  const avgReliability = teamCleaners.reduce((s, c) => s + c.reliabilityScore, 0) / teamCleaners.length
+  if (avgReliability >= 90) matchReasons.push(`${Math.round(avgReliability)}% reliability`)
 
   return {
     cleanerIds,
@@ -112,20 +111,34 @@ function scoreTeam(
   }
 }
 
-export function computeSchedulingRecommendations(request: SchedulingRequest): SchedulingResult {
-  const rankedTeams = Object.keys(TEAMS)
-    .map(teamId => scoreTeam(teamId, request))
+export function computeSchedulingRecommendations(
+  request: SchedulingRequest,
+  cleaners: Cleaner[] = [],
+  jobs: Job[] = [],
+  customers: Customer[] = [],
+): SchedulingResult {
+  const teamMap = new Map<string, Cleaner[]>()
+  for (const c of cleaners) {
+    if (c.teamId) {
+      const list = teamMap.get(c.teamId) ?? []
+      list.push(c)
+      teamMap.set(c.teamId, list)
+    }
+  }
+
+  const customer = customers.find(c => c.id === request.customerId)
+  const rankedTeams = Array.from(teamMap.values())
+    .map(teamCleaners => scoreTeam(teamCleaners, request, jobs, customer))
     .sort((a, b) => b.score - a.score)
 
-  const best = rankedTeams[0]
-  const bestCleaners = best.cleanerIds.map(id => CLEANERS.find(c => c.id === id)!)
-  const names = bestCleaners.map(c => c.name).join(' + ')
+  if (rankedTeams.length === 0) {
+    return { rankedTeams: [], reasoning: 'No teams configured yet.', confidenceScore: 0 }
+  }
 
+  const best = rankedTeams[0]
+  const bestCleaners = best.cleanerIds.map(id => cleaners.find(c => c.id === id)).filter(Boolean) as Cleaner[]
+  const names = bestCleaners.map(c => c.name).join(' + ')
   const reasoning = `${names} is the best match: ${best.driveTimeMinutes}-minute drive, ${best.matchReasons[0] || 'fully available'}. Confidence: ${best.score}%.`
 
-  return {
-    rankedTeams,
-    reasoning,
-    confidenceScore: best.score,
-  }
+  return { rankedTeams, reasoning, confidenceScore: best.score }
 }

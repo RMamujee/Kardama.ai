@@ -13,7 +13,7 @@ import { Progress } from '@/components/ui/progress'
 import { useSchedulingStore } from '@/store/useSchedulingStore'
 import { createJob } from '@/app/actions/scheduling'
 import { formatCurrency, cn } from '@/lib/utils'
-import type { Cleaner, Customer, SchedulingRequest } from '@/types'
+import type { Cleaner, Customer, Job, SchedulingRequest } from '@/types'
 
 const STEPS = ['Customer', 'Service Details', 'AI Assignment', 'Confirm']
 const SERVICE_PRICES: Record<string, number> = {
@@ -26,9 +26,10 @@ const SERVICE_DURATIONS: Record<string, number> = {
 interface Props {
   cleaners: Cleaner[]
   customers: Customer[]
+  jobs: Job[]
 }
 
-export function BookingWizard({ cleaners, customers }: Props) {
+export function BookingWizard({ cleaners, customers, jobs }: Props) {
   const router = useRouter()
   const {
     bookingStep, nextStep, prevStep, closeBooking,
@@ -60,7 +61,7 @@ export function BookingWizard({ cleaners, customers }: Props) {
       customerId: formData.customerId,
       preferredCleanerIds: customer.preferredCleanerIds,
     }
-    computeRecommendations(req)
+    computeRecommendations(req, cleaners, jobs, customers)
     nextStep()
   }
 

@@ -40,6 +40,15 @@ const SERVICE_OPTIONS = [
   { value: 'airbnb', label: 'Airbnb' },
 ]
 
+const SERVICE_DURATIONS: Record<string, number> = {
+  standard: 180, deep: 240, 'move-out': 300, 'post-construction': 360, airbnb: 120,
+}
+
+function timeToMinutes(t: string): number {
+  const [h, m] = t.split(':').map(Number)
+  return (h ?? 0) * 60 + (m ?? 0)
+}
+
 const STATUS_OPTIONS = [
   { value: 'scheduled', label: 'Scheduled' },
   { value: 'in-progress', label: 'In Progress' },
@@ -125,6 +134,8 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [selectedTeams, setSelectedTeams] = useState<Set<string>>(new Set())
+  const [scheduleTarget, setScheduleTarget] = useState<string | null>(null)
+  const [pickedTeamId, setPickedTeamId] = useState<string | null>(null)
 
   const teams = useMemo(() => {
     const map = new Map<string, { teamId: string; color: string; names: string[] }>()
@@ -222,18 +233,39 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
     })
   }
 
-  function handleAccept(id: string) {
+  function handleAccept(id: string, teamId: string) {
     setActionTarget(id)
     setAcceptError(null)
     startTransition(async () => {
       try {
-        await acceptBookingRequest(id)
+        await acceptBookingRequest(id, teamId)
+        setScheduleTarget(null)
+        setPickedTeamId(null)
       } catch (e) {
         setAcceptError(e instanceof Error ? e.message : 'Failed to schedule booking')
       } finally {
         setActionTarget(null)
       }
     })
+  }
+
+  // Returns a conflicting job if any cleaner on `teamId` is busy during the
+  // proposed slot, otherwise null. Mirrors the server-side check so we can
+  // disable busy teams in the picker before the round-trip.
+  function teamConflictAt(teamId: string, date: string | null, time: string | null, duration: number): Job | null {
+    if (!date) return null
+    const proposedStart = timeToMinutes(time ?? '09:00')
+    const proposedEnd = proposedStart + duration
+    const teamCleanerIds = new Set(cleaners.filter(c => c.teamId === teamId).map(c => c.id))
+    for (const j of jobs) {
+      if (j.scheduledDate !== date) continue
+      if (j.status === 'cancelled') continue
+      if (!j.cleanerIds.some(id => teamCleanerIds.has(id))) continue
+      const start = timeToMinutes(j.scheduledTime)
+      const end = start + (j.estimatedDuration ?? 180)
+      if (start < proposedEnd && proposedStart < end) return j
+    }
+    return null
   }
 
   function handleDecline(id: string) {
@@ -271,12 +303,18 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
   function saveEdit() {
     if (!selectedJob || !draft) return
     setIsSaving(true)
+    setAcceptError(null)
     startTransition(async () => {
-      await updateJob(selectedJob.id, draft)
-      setEditMode(false)
-      setDraft(null)
-      setIsSaving(false)
-      setSelectedJob(null)
+      try {
+        await updateJob(selectedJob.id, draft)
+        setEditMode(false)
+        setDraft(null)
+        setSelectedJob(null)
+      } catch (e) {
+        setAcceptError(e instanceof Error ? e.message : 'Failed to save job')
+      } finally {
+        setIsSaving(false)
+      }
     })
   }
 
@@ -417,43 +455,109 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
           <div className="divide-y divide-line">
             {bookingRequests.map(req => {
               const busy = isPending && actionTarget === req.id
+              const isPicking = scheduleTarget === req.id
+              const duration = SERVICE_DURATIONS[req.serviceType] ?? 180
               return (
-                <div key={req.id} className="grid grid-cols-[1fr_auto] items-center gap-4 px-5 py-4">
-                  <div className="min-w-0 space-y-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-[13px] font-semibold text-ink-900">{req.customerName}</p>
-                      <Badge variant="neutral" className="text-[11px]">{getServiceLabel(req.serviceType)}</Badge>
+                <div key={req.id} className="px-5 py-4 space-y-3">
+                  <div className="grid grid-cols-[1fr_auto] items-center gap-4">
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-[13px] font-semibold text-ink-900">{req.customerName}</p>
+                        <Badge variant="neutral" className="text-[11px]">{getServiceLabel(req.serviceType)}</Badge>
+                      </div>
+                      <div className="flex items-center gap-3 text-[12px] text-ink-500">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {req.preferredDate ? fmtDisplayDate(req.preferredDate) : '—'}{' '}
+                          {req.preferredTime ? `at ${fmtDisplayTime(req.preferredTime)}` : ''}
+                        </span>
+                        <span className="truncate">{req.address}</span>
+                      </div>
+                      {req.notes && (
+                        <p className="text-[11.5px] text-ink-400 truncate">{req.notes}</p>
+                      )}
                     </div>
-                    <div className="flex items-center gap-3 text-[12px] text-ink-500">
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {req.preferredDate ? fmtDisplayDate(req.preferredDate) : '—'}{' '}
-                        {req.preferredTime ? `at ${fmtDisplayTime(req.preferredTime)}` : ''}
-                      </span>
-                      <span className="truncate">{req.address}</span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => handleDecline(req.id)}
+                        disabled={busy}
+                        className="flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-[12px] font-medium text-ink-500 hover:border-rose-500/40 hover:text-rose-500 disabled:opacity-40 transition-colors"
+                      >
+                        <XCircle className="h-3.5 w-3.5" />
+                        Decline
+                      </button>
+                      {!isPicking ? (
+                        <button
+                          onClick={() => {
+                            setScheduleTarget(req.id)
+                            setPickedTeamId(null)
+                            setAcceptError(null)
+                          }}
+                          disabled={busy}
+                          className="flex items-center gap-1.5 rounded-lg bg-mint-500/12 border border-mint-500/25 px-3 py-1.5 text-[12px] font-medium text-mint-500 hover:bg-mint-500/20 disabled:opacity-40 transition-colors"
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          Schedule
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => { setScheduleTarget(null); setPickedTeamId(null) }}
+                          disabled={busy}
+                          className="rounded-lg border border-line px-3 py-1.5 text-[12px] font-medium text-ink-500 hover:text-ink-700 disabled:opacity-40 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      )}
                     </div>
-                    {req.notes && (
-                      <p className="text-[11.5px] text-ink-400 truncate">{req.notes}</p>
-                    )}
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <button
-                      onClick={() => handleDecline(req.id)}
-                      disabled={busy}
-                      className="flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-[12px] font-medium text-ink-500 hover:border-rose-500/40 hover:text-rose-500 disabled:opacity-40 transition-colors"
-                    >
-                      <XCircle className="h-3.5 w-3.5" />
-                      Decline
-                    </button>
-                    <button
-                      onClick={() => handleAccept(req.id)}
-                      disabled={busy}
-                      className="flex items-center gap-1.5 rounded-lg bg-mint-500/12 border border-mint-500/25 px-3 py-1.5 text-[12px] font-medium text-mint-500 hover:bg-mint-500/20 disabled:opacity-40 transition-colors"
-                    >
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      {busy ? 'Scheduling…' : 'Schedule'}
-                    </button>
-                  </div>
+                  {isPicking && (
+                    <div className="rounded-lg border border-line bg-soft p-3 space-y-3">
+                      <p className="text-[11.5px] font-medium text-ink-500">
+                        Choose a team to assign this booking. Teams already booked at this time are disabled.
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {teams.map(team => {
+                          const conflict = teamConflictAt(team.teamId, req.preferredDate, req.preferredTime, duration)
+                          const picked = pickedTeamId === team.teamId
+                          return (
+                            <button
+                              key={team.teamId}
+                              type="button"
+                              onClick={() => !conflict && setPickedTeamId(team.teamId)}
+                              disabled={!!conflict || busy}
+                              title={conflict ? `Busy at ${conflict.address.split(',')[0]} (${formatTime(conflict.scheduledTime)})` : undefined}
+                              className={cn(
+                                'flex items-center gap-1.5 rounded-[7px] border px-2.5 py-1 text-[11.5px] font-semibold transition-colors',
+                                conflict
+                                  ? 'opacity-40 cursor-not-allowed border-line'
+                                  : picked
+                                    ? 'ring-2 ring-offset-1 ring-mint-500/40'
+                                    : 'hover:opacity-80',
+                              )}
+                              style={conflict
+                                ? undefined
+                                : (picked ? teamBlockStyle(team.color) : { borderColor: team.color + '55', color: team.color })
+                              }
+                            >
+                              <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ background: team.color }} />
+                              {team.names.join(' & ')}
+                              {conflict && <span className="text-[10px] font-normal opacity-70">· busy</span>}
+                            </button>
+                          )
+                        })}
+                      </div>
+                      <div className="flex justify-end">
+                        <button
+                          onClick={() => pickedTeamId && handleAccept(req.id, pickedTeamId)}
+                          disabled={!pickedTeamId || busy}
+                          className="flex items-center gap-1.5 rounded-lg bg-mint-500 border border-mint-500 px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-mint-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          {busy ? 'Scheduling…' : 'Confirm Booking'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )
             })}

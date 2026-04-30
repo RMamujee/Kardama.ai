@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache'
 import { requireOwner } from '@/lib/supabase/dal'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { sendSms } from '@/lib/twilio'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 const SERVICE_PRICES: Record<string, number> = {
   standard: 165, deep: 245, 'move-out': 380, 'post-construction': 450, airbnb: 195,
@@ -13,6 +14,68 @@ const SERVICE_DURATIONS: Record<string, number> = {
 
 function genId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+}
+
+function toMinutes(t: string): number {
+  const [h, m] = t.split(':').map(Number)
+  return (h ?? 0) * 60 + (m ?? 0)
+}
+
+function fmtClock(min: number): string {
+  const h = Math.floor(min / 60)
+  const m = min % 60
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  const hour = h > 12 ? h - 12 : h === 0 ? 12 : h
+  return `${hour}:${String(m).padStart(2, '0')} ${ampm}`
+}
+
+// Returns a description of a conflicting job if the given team is busy during
+// the proposed window, otherwise null. Excludes `excludeJobId` (use when editing).
+async function findTeamConflict(
+  supabase: SupabaseClient,
+  teamId: string,
+  date: string,
+  time: string,
+  durationMin: number,
+  excludeJobId?: string,
+): Promise<{ address: string; start: string; end: string } | null> {
+  const { data: teamCleaners } = await supabase
+    .from('cleaners')
+    .select('id')
+    .eq('team_id', teamId)
+  if (!teamCleaners || teamCleaners.length === 0) return null
+  const teamIds = new Set(teamCleaners.map(c => c.id as string))
+
+  const { data: jobs } = await supabase
+    .from('jobs')
+    .select('id, scheduled_time, estimated_duration, cleaner_ids, address, status')
+    .eq('scheduled_date', date)
+    .neq('status', 'cancelled')
+  if (!jobs || jobs.length === 0) return null
+
+  const proposedStart = toMinutes(time)
+  const proposedEnd = proposedStart + durationMin
+
+  for (const j of jobs) {
+    if (excludeJobId && j.id === excludeJobId) continue
+    const ids = (j.cleaner_ids as string[] | null) ?? []
+    if (!ids.some(id => teamIds.has(id))) continue
+    const start = toMinutes(j.scheduled_time as string)
+    const end = start + ((j.estimated_duration as number | null) ?? 180)
+    if (start < proposedEnd && proposedStart < end) {
+      return {
+        address: (j.address as string | null) ?? '',
+        start: fmtClock(start),
+        end: fmtClock(end),
+      }
+    }
+  }
+  return null
+}
+
+async function teamIdForCleaner(supabase: SupabaseClient, cleanerId: string): Promise<string | null> {
+  const { data } = await supabase.from('cleaners').select('team_id').eq('id', cleanerId).maybeSingle()
+  return (data?.team_id as string | undefined) ?? null
 }
 
 export async function createJob(data: {
@@ -31,6 +94,20 @@ export async function createJob(data: {
 }): Promise<string> {
   await requireOwner()
   const supabase = await createSupabaseServerClient()
+
+  if (data.cleanerIds.length > 0) {
+    const teamId = await teamIdForCleaner(supabase, data.cleanerIds[0])
+    if (teamId) {
+      const conflict = await findTeamConflict(
+        supabase, teamId, data.scheduledDate, data.scheduledTime, data.estimatedDuration,
+      )
+      if (conflict) {
+        const where = conflict.address ? ` at ${conflict.address.split(',')[0]}` : ''
+        throw new Error(`Team is already booked${where} from ${conflict.start} to ${conflict.end}.`)
+      }
+    }
+  }
+
   const id = genId('j')
   const { error } = await supabase.from('jobs').insert({
     id,
@@ -57,10 +134,12 @@ export async function createJob(data: {
   return id
 }
 
-// Converts a pending booking_request into a scheduled job.
-// Creates a customer row if none exists for that email.
-export async function acceptBookingRequest(requestId: string): Promise<void> {
+// Converts a pending booking_request into a scheduled job assigned to the
+// chosen team. Creates a customer row if none exists for that email.
+// Throws if the team has an overlapping job at the resolved date/time.
+export async function acceptBookingRequest(requestId: string, teamId: string): Promise<void> {
   await requireOwner()
+  if (!teamId) throw new Error('A team must be selected before scheduling.')
   const supabase = await createSupabaseServerClient()
 
   const { data: req, error: reqErr } = await supabase
@@ -75,6 +154,22 @@ export async function acceptBookingRequest(requestId: string): Promise<void> {
   tomorrow.setDate(tomorrow.getDate() + 1)
   const scheduledDate = req.preferred_date ?? tomorrow.toISOString().split('T')[0]
   const scheduledTime = req.preferred_time ?? '09:00'
+  const duration = SERVICE_DURATIONS[req.service_type] ?? 180
+
+  // Resolve the team's cleaners and reject if the team has no members
+  const { data: teamCleaners } = await supabase
+    .from('cleaners').select('id').eq('team_id', teamId)
+  if (!teamCleaners || teamCleaners.length === 0) {
+    throw new Error('Selected team has no cleaners assigned.')
+  }
+  const cleanerIds = teamCleaners.map(c => c.id as string)
+
+  // Block double-booking
+  const conflict = await findTeamConflict(supabase, teamId, scheduledDate, scheduledTime, duration)
+  if (conflict) {
+    const where = conflict.address ? ` at ${conflict.address.split(',')[0]}` : ''
+    throw new Error(`That team is already booked${where} from ${conflict.start} to ${conflict.end}.`)
+  }
 
   // Find or create the customer
   let customerId: string
@@ -111,10 +206,10 @@ export async function acceptBookingRequest(requestId: string): Promise<void> {
   const { error: jobErr } = await supabase.from('jobs').insert({
     id: jobId,
     customer_id: customerId,
-    cleaner_ids: [],
+    cleaner_ids: cleanerIds,
     scheduled_date: scheduledDate,
     scheduled_time: scheduledTime,
-    estimated_duration: SERVICE_DURATIONS[req.service_type] ?? 180,
+    estimated_duration: duration,
     actual_duration: null,
     status: 'scheduled' as const,
     service_type: req.service_type,
@@ -186,6 +281,30 @@ export async function updateJob(
 ): Promise<void> {
   await requireOwner()
   const supabase = await createSupabaseServerClient()
+
+  // Need current job state to evaluate conflicts when only some fields change
+  const { data: current, error: curErr } = await supabase
+    .from('jobs')
+    .select('scheduled_date, scheduled_time, estimated_duration, cleaner_ids')
+    .eq('id', jobId)
+    .single()
+  if (curErr || !current) throw new Error('Job not found')
+
+  const nextDate     = patch.scheduledDate     ?? (current.scheduled_date as string)
+  const nextTime     = patch.scheduledTime     ?? (current.scheduled_time as string)
+  const nextDuration = patch.estimatedDuration ?? ((current.estimated_duration as number | null) ?? 180)
+  const nextCleaners = patch.cleanerIds        ?? ((current.cleaner_ids as string[] | null) ?? [])
+
+  if (nextCleaners.length > 0) {
+    const teamId = await teamIdForCleaner(supabase, nextCleaners[0])
+    if (teamId) {
+      const conflict = await findTeamConflict(supabase, teamId, nextDate, nextTime, nextDuration, jobId)
+      if (conflict) {
+        const where = conflict.address ? ` at ${conflict.address.split(',')[0]}` : ''
+        throw new Error(`That team is already booked${where} from ${conflict.start} to ${conflict.end}.`)
+      }
+    }
+  }
 
   const { error } = await supabase.from('jobs').update({
     ...(patch.scheduledDate    !== undefined && { scheduled_date:    patch.scheduledDate }),

@@ -1,12 +1,11 @@
 'use client'
 import { create } from 'zustand'
 import { Payment } from '@/types'
-import { PAYMENTS } from '@/lib/mock-data'
 
 interface PaymentStore {
   payments: Payment[]
   filterMethod: 'all' | 'zelle' | 'venmo' | 'cash'
-  filterStatus: 'all' | 'pending' | 'received' | 'confirmed'
+  filterStatus: 'all' | 'pending' | 'confirmed' | 'cancelled'
   searchQuery: string
   logModalOpen: boolean
 
@@ -17,14 +16,13 @@ interface PaymentStore {
   openLogModal: () => void
   closeLogModal: () => void
   addPayment: (p: Payment) => void
-  markReceived: (id: string) => Promise<void>
   confirmPayment: (id: string) => Promise<void>
 
   getFiltered: () => Payment[]
 }
 
 export const usePaymentStore = create<PaymentStore>((set, get) => ({
-  payments: PAYMENTS,
+  payments: [],
   filterMethod: 'all',
   filterStatus: 'all',
   searchQuery: '',
@@ -37,18 +35,6 @@ export const usePaymentStore = create<PaymentStore>((set, get) => ({
   openLogModal: () => set({ logModalOpen: true }),
   closeLogModal: () => set({ logModalOpen: false }),
   addPayment: (p) => set(s => ({ payments: [p, ...s.payments] })),
-
-  markReceived: async (id) => {
-    const res = await fetch(`/api/payments/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'received' }),
-    })
-    if (!res.ok) return
-    set(s => ({
-      payments: s.payments.map(p => p.id === id ? { ...p, status: 'received' as const } : p),
-    }))
-  },
 
   confirmPayment: async (id) => {
     const res = await fetch(`/api/payments/${id}`, {
@@ -69,7 +55,9 @@ export const usePaymentStore = create<PaymentStore>((set, get) => ({
       if (filterStatus !== 'all' && p.status !== filterStatus) return false
       if (searchQuery) {
         const q = searchQuery.toLowerCase()
-        if (!p.confirmationNote.toLowerCase().includes(q) && !p.customerId.toLowerCase().includes(q)) return false
+        const inNote = p.confirmationNote.toLowerCase().includes(q)
+        const inCustomer = p.customerId?.toLowerCase().includes(q) ?? false
+        if (!inNote && !inCustomer) return false
       }
       return true
     })

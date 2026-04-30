@@ -76,29 +76,63 @@ export async function POST(request: Request) {
   await markTokenUsed(token)
   await saveBooking(booking)
 
-  // Auto-log a pending payment so the owner can confirm receipt later (human-in-the-loop)
-  if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  // Persist to Supabase — create job row and auto-log pending payment
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
     try {
       const { getSupabaseAdminClient } = await import('@/lib/supabase/admin')
       const admin = getSupabaseAdminClient()
-      const customerJobs = allJobs.filter(j => j.customerId === customer.id)
-      const amount = customerJobs.length > 0
+
+      // Derive team from first cleaner's teamId
+      const leadCleaner = allCleaners.find(c => c.id === match.cleanerIds[0])
+      const teamId = leadCleaner?.teamId ?? null
+
+      // Estimate price: reuse customer's last job price or fall back by service type
+      const PRICE_BY_SERVICE: Record<string, number> = {
+        standard: 175, deep: 275, 'move-out': 325, 'post-construction': 325, airbnb: 200,
+      }
+      const customerJobs = allJobs.filter(j => j.customerId === customer.id && j.status === 'completed')
+      const price = customerJobs.length > 0
         ? customerJobs[customerJobs.length - 1].price
-        : 0
+        : PRICE_BY_SERVICE['standard']
+
+      const jobId = `job-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+      await admin.from('jobs').insert({
+        id: jobId,
+        customer_id: customer.id,
+        cleaner_ids: booking.cleanerIds,
+        team_id: teamId,
+        scheduled_date: match.date,
+        scheduled_time: match.time,
+        estimated_duration: 150,
+        actual_duration: null,
+        status: 'scheduled',
+        service_type: 'standard' as const,
+        price,
+        paid: false,
+        payment_method: null,
+        payment_confirmation_id: null,
+        address: customer.address,
+        lat: customer.lat,
+        lng: customer.lng,
+        notes: booking.notes ?? '',
+        drive_time_minutes: match.driveTimeMinutes,
+      })
+
       const now = new Date()
       await admin.from('payments').insert({
         id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        job_id: jobId,
         booking_ref: booking.id,
         customer_id: customer.id,
         cleaner_ids: booking.cleanerIds,
-        amount,
+        amount: price,
         status: 'pending',
-        confirmation_note: `Auto-logged: booking ${booking.id} for ${customer.name}`,
+        confirmation_note: `Booked via link — ${customer.name}`,
         received_at: now.toISOString(),
         month: now.toISOString().slice(0, 7),
       })
-    } catch {
-      // Don't fail the booking if payment logging fails
+    } catch (e) {
+      console.error('bookings: supabase persist failed', e)
     }
   }
 

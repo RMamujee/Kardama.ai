@@ -85,18 +85,23 @@ type JobRow = {
   updated_at: string
   team_id: string | null
 }
-type JobInsert = Omit<JobRow, 'created_at' | 'updated_at' | 'team_id'> & { team_id?: string | null }
+type JobInsert = Omit<JobRow, 'created_at' | 'updated_at' | 'actual_duration' | 'payment_method' | 'payment_confirmation_id' | 'team_id'> & {
+  actual_duration?: number | null
+  payment_method?: JobRow['payment_method']
+  payment_confirmation_id?: string | null
+  team_id?: string | null
+}
 type JobUpdate = Partial<JobInsert>
 
 type PaymentRow = {
   id: string
   job_id: string | null
   booking_ref: string | null
-  customer_id: string
+  customer_id: string | null
   cleaner_ids: string[]
   amount: number
   method: 'zelle' | 'venmo' | 'cash' | null
-  status: 'pending' | 'received' | 'confirmed'
+  status: 'pending' | 'received' | 'confirmed' | 'cancelled'
   confirmation_note: string
   received_at: string
   month: string
@@ -105,11 +110,11 @@ type PaymentInsert = {
   id: string
   job_id?: string | null
   booking_ref?: string | null
-  customer_id: string
+  customer_id?: string | null
   cleaner_ids?: string[]
   amount: number
   method?: 'zelle' | 'venmo' | 'cash' | null
-  status?: 'pending' | 'received' | 'confirmed'
+  status?: 'pending' | 'received' | 'confirmed' | 'cancelled'
   confirmation_note?: string
   received_at?: string
   month: string

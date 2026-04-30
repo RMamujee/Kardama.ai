@@ -74,14 +74,6 @@ export function detectNurturingCandidates(
 
 // ─── Teams map ────────────────────────────────────────────────────────────────
 
-const TEAMS: Record<string, [string, string]> = {
-  'team-a': ['c1',  'c2'],
-  'team-b': ['c3',  'c4'],
-  'team-c': ['c5',  'c6'],
-  'team-d': ['c7',  'c8'],
-  'team-e': ['c9',  'c10'],
-}
-
 const SLOT_TIMES = ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00']
 const DEFAULT_DURATION = 150
 
@@ -120,12 +112,22 @@ export function getAvailableSlots(
   const allJobs: Job[] = [...jobs, ...extraJobs as Job[]]
   const slots: BookingSlot[] = []
 
+  // Derive team map from actual cleaner data so real DB cleaners work alongside mock fallback
+  const teamMap = new Map<string, Cleaner[]>()
+  for (const c of cleaners) {
+    if (c.teamId) {
+      const existing = teamMap.get(c.teamId) ?? []
+      existing.push(c)
+      teamMap.set(c.teamId, existing)
+    }
+  }
+
   for (let dayOffset = 1; dayOffset <= 8; dayOffset++) {
     const date    = fmtDate(addDays(getToday(), dayOffset))
     const dayName = getDayName(addDays(getToday(), dayOffset))
 
-    for (const [teamId, cleanerIds] of Object.entries(TEAMS)) {
-      const teamCleaners = cleanerIds.map(id => cleaners.find(c => c.id === id)!).filter(Boolean)
+    for (const [teamId, teamCleaners] of teamMap.entries()) {
+      const cleanerIds = teamCleaners.map(c => c.id)
       if (teamCleaners.length < 2) continue
 
       for (const time of SLOT_TIMES) {

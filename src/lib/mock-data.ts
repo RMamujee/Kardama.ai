@@ -553,30 +553,7 @@ export const JOBS: Job[] = [
 ]
 
 // ─── Payments ─────────────────────────────────────────────────────────────────
-export const PAYMENTS: Payment[] = [
-  { id: 'pay-001', jobId: 'job-001', customerId: 'cust-001', cleanerIds: ['c1', 'c2'], amount: 280, method: 'zelle', status: 'confirmed', confirmationNote: 'Received via Zelle', receivedAt: ago(20), month: monthOf(ago(20)) },
-  { id: 'pay-002', jobId: 'job-002', customerId: 'cust-002', cleanerIds: ['c3', 'c4'], amount: 260, method: 'venmo', status: 'confirmed', confirmationNote: 'Received via Venmo', receivedAt: ago(24), month: monthOf(ago(24)) },
-  { id: 'pay-003', jobId: 'job-003', customerId: 'cust-003', cleanerIds: ['c5', 'c6'], amount: 350, method: 'zelle', status: 'confirmed', confirmationNote: 'Received via Zelle', receivedAt: ago(26), month: monthOf(ago(26)) },
-  { id: 'pay-004', jobId: 'job-004', customerId: 'cust-004', cleanerIds: ['c1', 'c2'], amount: 240, method: 'cash', status: 'confirmed', confirmationNote: 'Cash received', receivedAt: ago(31), month: monthOf(ago(31)) },
-  { id: 'pay-005', jobId: 'job-005', customerId: 'cust-005', cleanerIds: ['c3', 'c4'], amount: 295, method: 'venmo', status: 'confirmed', confirmationNote: 'Received via Venmo', receivedAt: ago(35), month: monthOf(ago(35)) },
-  { id: 'pay-006', jobId: 'job-006', customerId: 'cust-006', cleanerIds: ['c5', 'c6'], amount: 380, method: 'zelle', status: 'confirmed', confirmationNote: 'Received via Zelle', receivedAt: ago(40), month: monthOf(ago(40)) },
-  { id: 'pay-007', jobId: 'job-007', customerId: 'cust-007', cleanerIds: ['c7', 'c8'], amount: 270, method: 'cash', status: 'confirmed', confirmationNote: 'Cash received', receivedAt: ago(48), month: monthOf(ago(48)) },
-  { id: 'pay-008', jobId: 'job-008', customerId: 'cust-008', cleanerIds: ['c9', 'c10'], amount: 480, method: 'zelle', status: 'confirmed', confirmationNote: 'Received via Zelle', receivedAt: ago(60), month: monthOf(ago(60)) },
-  { id: 'pay-009', jobId: 'job-009', customerId: 'cust-009', cleanerIds: ['c9', 'c10'], amount: 250, method: 'venmo', status: 'confirmed', confirmationNote: 'Received via Venmo', receivedAt: ago(5), month: monthOf(ago(5)) },
-  { id: 'pay-010', jobId: 'job-010', customerId: 'cust-010', cleanerIds: ['c3', 'c4'], amount: 275, method: 'zelle', status: 'confirmed', confirmationNote: 'Received via Zelle', receivedAt: ago(10), month: monthOf(ago(10)) },
-  { id: 'pay-011', jobId: 'job-011', customerId: 'cust-011', cleanerIds: ['c5', 'c6'], amount: 340, method: 'venmo', status: 'confirmed', confirmationNote: 'Received via Venmo', receivedAt: ago(15), month: monthOf(ago(15)) },
-  { id: 'pay-012', jobId: 'job-012', customerId: 'cust-012', cleanerIds: ['c7', 'c8'], amount: 265, method: 'cash', status: 'received', confirmationNote: 'Cash in hand', receivedAt: ago(19), month: monthOf(ago(19)) },
-  { id: 'pay-013', jobId: 'job-013', customerId: 'cust-013', cleanerIds: ['c9', 'c10'], amount: 290, method: 'zelle', status: 'confirmed', confirmationNote: 'Received via Zelle', receivedAt: ago(28), month: monthOf(ago(28)) },
-  { id: 'pay-014', jobId: 'job-014', customerId: 'cust-014', cleanerIds: ['c9', 'c10'], amount: 255, method: 'venmo', status: 'confirmed', confirmationNote: 'Received via Venmo', receivedAt: ago(42), month: monthOf(ago(42)) },
-  { id: 'pay-015', jobId: 'job-015', customerId: 'cust-015', cleanerIds: ['c9', 'c10'], amount: 310, method: 'venmo', status: 'confirmed', confirmationNote: 'Received via Venmo', receivedAt: ago(3), month: monthOf(ago(3)) },
-  { id: 'pay-016', jobId: 'job-016', customerId: 'cust-001', cleanerIds: ['c1', 'c2'], amount: 260, method: 'zelle', status: 'confirmed', confirmationNote: 'Received via Zelle', receivedAt: ago(55), month: monthOf(ago(55)) },
-  { id: 'pay-017', jobId: 'job-017', customerId: 'cust-002', cleanerIds: ['c3', 'c4'], amount: 245, method: 'venmo', status: 'confirmed', confirmationNote: 'Received via Venmo', receivedAt: ago(65), month: monthOf(ago(65)) },
-  { id: 'pay-018', jobId: 'job-018', customerId: 'cust-004', cleanerIds: ['c1', 'c2'], amount: 360, method: 'cash', status: 'confirmed', confirmationNote: 'Cash received', receivedAt: ago(70), month: monthOf(ago(70)) },
-  { id: 'pay-019', jobId: 'job-019', customerId: 'cust-009', cleanerIds: ['c9', 'c10'], amount: 250, method: 'venmo', status: 'confirmed', confirmationNote: 'Received via Venmo', receivedAt: ago(22), month: monthOf(ago(22)) },
-  { id: 'pay-020', jobId: 'job-020', customerId: 'cust-010', cleanerIds: ['c3', 'c4'], amount: 275, method: 'zelle', status: 'confirmed', confirmationNote: 'Received via Zelle', receivedAt: ago(45), month: monthOf(ago(45)) },
-  { id: 'pay-021', jobId: 'job-021', customerId: 'cust-011', cleanerIds: ['c5', 'c6'], amount: 340, method: 'venmo', status: 'confirmed', confirmationNote: 'Received via Venmo', receivedAt: ago(50), month: monthOf(ago(50)) },
-  { id: 'pay-022', jobId: 'job-022', customerId: 'cust-015', cleanerIds: ['c9', 'c10'], amount: 310, method: 'venmo', status: 'confirmed', confirmationNote: 'Received via Venmo', receivedAt: ago(18), month: monthOf(ago(18)) },
-]
+export const PAYMENTS: Payment[] = []
 
 export const FACEBOOK_GROUPS: FacebookGroup[] = [
   { id: 'fg1', name: 'Long Beach Moms & Dads', memberCount: 12400, category: 'parenting', city: 'Long Beach' },

@@ -28,16 +28,19 @@ const METHOD_BADGE: Record<string, 'default' | 'success' | 'neutral'> = {
   cash:  'success',
 }
 
-const STATUS_VARIANT = {
-  pending: 'warning', received: 'default', confirmed: 'success',
-} as const
+const STATUS_VARIANT: Record<string, 'warning' | 'default' | 'success' | 'neutral'> = {
+  pending:   'warning',
+  received:  'default',
+  confirmed: 'success',
+  cancelled: 'neutral',
+}
 
 export function PaymentsClient({ customers, jobs, payments: serverPayments }: PaymentsData) {
   const {
     payments, setPayments,
     filterMethod, filterStatus, searchQuery, logModalOpen,
     setFilterMethod, setFilterStatus, setSearchQuery,
-    openLogModal, markReceived, confirmPayment, getFiltered,
+    openLogModal, confirmPayment, getFiltered,
   } = usePaymentStore()
 
   // Hydrate store from server-fetched data on mount
@@ -108,8 +111,8 @@ export function PaymentsClient({ customers, jobs, payments: serverPayments }: Pa
               <Select value={filterStatus} onChange={e => setFilterStatus(e.target.value as typeof filterStatus)} className="w-36">
                 <option value="all">All statuses</option>
                 <option value="pending">Pending</option>
-                <option value="received">Received</option>
                 <option value="confirmed">Confirmed</option>
+                <option value="cancelled">Cancelled</option>
               </Select>
             </div>
 
@@ -156,20 +159,10 @@ export function PaymentsClient({ customers, jobs, payments: serverPayments }: Pa
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => markReceived(p.id)}
-                              className="text-amber-500 hover:text-amber-500"
-                            >
-                              Mark Received
-                            </Button>
-                          )}
-                          {p.status === 'received' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
                               onClick={() => confirmPayment(p.id)}
                               className="text-emerald-500 hover:text-emerald-500"
                             >
-                              Confirm
+                              Mark Received
                             </Button>
                           )}
                         </td>

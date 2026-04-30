@@ -89,14 +89,14 @@ function mapTeam(r: TeamRow): Team {
 }
 
 type PaymentRow = {
-  id: string; job_id: string | null; booking_ref: string | null; customer_id: string; cleaner_ids: string[]
+  id: string; job_id: string | null; booking_ref: string | null; customer_id: string | null; cleaner_ids: string[]
   amount: number; method: Payment['method'] | null; status: Payment['status']
   confirmation_note: string; received_at: string; month: string
 }
 function mapPayment(r: PaymentRow): Payment {
   return {
     id: r.id, jobId: r.job_id ?? '', bookingRef: r.booking_ref ?? undefined,
-    customerId: r.customer_id, cleanerIds: r.cleaner_ids,
+    customerId: r.customer_id ?? undefined, cleanerIds: r.cleaner_ids,
     amount: Number(r.amount), method: r.method ?? undefined, status: r.status,
     confirmationNote: r.confirmation_note,
     receivedAt: r.received_at, month: r.month,

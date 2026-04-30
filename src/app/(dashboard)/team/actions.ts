@@ -15,6 +15,13 @@ const InviteSchema = z.object({
 
 const TEAM_COLORS = ['#8B85F2', '#34D399', '#FBBF24', '#A78BFA', '#2DD4BF', '#F472B6']
 
+function generateTempPassword(): string {
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
+  const arr = new Uint8Array(12)
+  crypto.getRandomValues(arr)
+  return Array.from(arr).map(b => chars[b % chars.length]).join('')
+}
+
 export type InviteState = {
   ok?: boolean
   error?: string
@@ -36,21 +43,18 @@ export async function inviteCleanerAction(_prev: InviteState, formData: FormData
   const admin = getSupabaseAdminClient()
   const mobileUrl = process.env.NEXT_PUBLIC_MOBILE_APP_URL ?? 'https://kardama-mobile.vercel.app'
 
-  const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
-    type: 'invite',
-    email,
-    options: { redirectTo: `${mobileUrl}/auth/callback` },
-  })
-  if (linkErr || !linkData.user) {
-    return { error: linkErr?.message ?? 'Failed to generate invite link' }
-  }
-  const userId = linkData.user.id
-  const inviteUrl = linkData.properties.action_link
+  const tempPassword = generateTempPassword()
 
-  // Flag the user so the mobile app prompts them to set a password on first login.
-  await admin.auth.admin.updateUserById(userId, {
+  const { data: newUser, error: createErr } = await admin.auth.admin.createUser({
+    email,
+    password: tempPassword,
+    email_confirm: true,
     user_metadata: { needs_password_setup: true },
   })
+  if (createErr || !newUser.user) {
+    return { error: createErr?.message ?? 'Failed to create cleaner account' }
+  }
+  const userId = newUser.user.id
 
   // 2. Create the cleaner row.
   const cleanerId = `c_${Date.now().toString(36)}`
@@ -106,7 +110,7 @@ export async function inviteCleanerAction(_prev: InviteState, formData: FormData
         cleanerEmail: email,
         cleanerPhone: phone,
         mobileAppUrl: mobileUrl,
-        inviteUrl,
+        tempPassword,
       }),
     }).catch(e => console.error('n8n cleaner welcome webhook failed:', e))
   }

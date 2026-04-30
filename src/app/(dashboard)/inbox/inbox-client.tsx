@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   MessageSquare, Search, Send, Sparkles, Bot, CheckCheck,
@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import type { SocialLead } from '@/types'
+import { useChatStore } from '@/store/useChatStore'
 
 type MessageFrom = 'them' | 'us'
 interface ThreadMessage { from: MessageFrom; text: string; time: string }
@@ -139,6 +140,13 @@ export function InboxClient({ leads }: { leads: SocialLead[] }) {
   const [threads, setThreads] = useState<Record<string, ThreadMessage[]>>(
     Object.fromEntries(conversations.map(c => [c.id, c.thread]))
   )
+  // Track which unread conversations have been opened this session
+  const [seenIds, setSeenIds] = useState<Set<string>>(() =>
+    conversations[0]?.unread > 0 ? new Set([conversations[0].id]) : new Set()
+  )
+
+  const setInboxUnread = useChatStore(s => s.setInboxUnread)
+  const decrementInboxUnread = useChatStore(s => s.decrementInboxUnread)
 
   const filtered = conversations.filter(c => {
     if (filterStatus !== 'all' && c.status !== filterStatus) return false
@@ -147,6 +155,22 @@ export function InboxClient({ leads }: { leads: SocialLead[] }) {
   })
 
   const totalUnread = conversations.reduce((s, c) => s + c.unread, 0)
+
+  // Sync sidebar badge on mount; subtract auto-selected first conversation if it was unread
+  useEffect(() => {
+    const autoRead = conversations[0]?.unread ?? 0
+    setInboxUnread(Math.max(0, totalUnread - autoRead))
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function handleSelectConv(conv: Conversation) {
+    if (conv.unread > 0 && !seenIds.has(conv.id)) {
+      setSeenIds(prev => new Set(prev).add(conv.id))
+      decrementInboxUnread()
+    }
+    setSelected(conv)
+    setDraft('')
+    setMobilePanel('thread')
+  }
 
   function handleAiDraft() {
     if (!selected) return
@@ -273,7 +297,7 @@ export function InboxClient({ leads }: { leads: SocialLead[] }) {
             ) : filtered.map(conv => (
               <button
                 key={conv.id}
-                onClick={() => { setSelected(conv); setDraft(''); setMobilePanel('thread') }}
+                onClick={() => handleSelectConv(conv)}
                 className={cn(
                   'w-full flex items-start gap-3 text-left transition-colors border-b border-line px-4 py-3.5',
                   selected?.id === conv.id ? 'bg-mint-500/[0.06]' : 'hover:bg-soft',

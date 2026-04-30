@@ -36,7 +36,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: 'Analytics', href: '/analytics', icon: BarChart3 },
       { label: 'Marketing', href: '/marketing', icon: Megaphone },
       { label: 'Campaigns', href: '/campaigns', icon: Bell },
-      { label: 'Inbox',     href: '/inbox',     icon: MessageSquare, badge: 2 },
+      { label: 'Inbox',     href: '/inbox',     icon: MessageSquare },
       { label: 'Messages',  href: '/messages',  icon: Send },
     ],
   },
@@ -45,6 +45,7 @@ const NAV_SECTIONS: NavSection[] = [
 export function Sidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname()
   const chatUnread = useChatStore(s => s.totalUnread)
+  const inboxUnread = useChatStore(s => s.inboxUnread)
 
   return (
     <div className="flex h-screen w-[240px] flex-col bg-rail border-r border-line">
@@ -78,6 +79,8 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
                 const active = pathname === href || pathname.startsWith(href + '/')
                 const displayBadge = href === '/chats'
                   ? (chatUnread > 0 ? chatUnread : undefined)
+                  : href === '/inbox'
+                  ? (inboxUnread > 0 ? inboxUnread : undefined)
                   : badge
                 return (
                   <li key={href}>

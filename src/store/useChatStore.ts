@@ -14,11 +14,14 @@ interface ChatStore {
   totalUnread: number
   selectedCleanerId: string | null
   notifications: ChatNotification[]
+  inboxUnread: number
   incrementUnread: (cleanerId: string) => void
   clearUnread: (cleanerId: string) => void
   setSelectedCleaner: (cleanerId: string | null) => void
   addNotification: (n: Omit<ChatNotification, 'id' | 'read'>) => void
   markAllRead: () => void
+  setInboxUnread: (count: number) => void
+  decrementInboxUnread: () => void
 }
 
 export const useChatStore = create<ChatStore>((set) => ({
@@ -26,6 +29,7 @@ export const useChatStore = create<ChatStore>((set) => ({
   totalUnread: 0,
   selectedCleanerId: null,
   notifications: [],
+  inboxUnread: 0,
   incrementUnread: (cleanerId) =>
     set((s) => {
       const next = { ...s.unreadMap, [cleanerId]: (s.unreadMap[cleanerId] ?? 0) + 1 }
@@ -43,4 +47,7 @@ export const useChatStore = create<ChatStore>((set) => ({
     })),
   markAllRead: () =>
     set((s) => ({ notifications: s.notifications.map(n => ({ ...n, read: true })) })),
+  setInboxUnread: (count) => set({ inboxUnread: count }),
+  decrementInboxUnread: () =>
+    set((s) => ({ inboxUnread: Math.max(0, s.inboxUnread - 1) })),
 }))

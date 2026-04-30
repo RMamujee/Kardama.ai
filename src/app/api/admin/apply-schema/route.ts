@@ -1,39 +1,11 @@
 import { NextResponse } from 'next/server'
 import { Pool } from 'pg'
-import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 
 // POST /api/admin/apply-schema
-// One-shot full setup. Runs every schema migration AND data operation.
+// Runs all schema DDL — creates/alters tables, indexes, RLS policies.
+// Does NOT insert any seed or test data.
 // Safe to call multiple times — all DDL uses IF NOT EXISTS / ADD COLUMN IF NOT EXISTS.
-// Requires POSTGRES_URL_NON_POOLING + SUPABASE_SERVICE_ROLE_KEY (auto-set by Vercel Marketplace).
-
-const TEST_PASSWORD = 'Test1234!'
-
-const CLEANERS = [
-  { id: 'c1',  name: 'Cleaner 1',  initials: 'C1',  email: 'cleaner1@kardama.ai',  teamId: 'team-a' },
-  { id: 'c2',  name: 'Cleaner 2',  initials: 'C2',  email: 'cleaner2@kardama.ai',  teamId: 'team-a' },
-  { id: 'c3',  name: 'Cleaner 3',  initials: 'C3',  email: 'cleaner3@kardama.ai',  teamId: 'team-b' },
-  { id: 'c4',  name: 'Cleaner 4',  initials: 'C4',  email: 'cleaner4@kardama.ai',  teamId: 'team-b' },
-  { id: 'c5',  name: 'Cleaner 5',  initials: 'C5',  email: 'cleaner5@kardama.ai',  teamId: 'team-c' },
-  { id: 'c6',  name: 'Cleaner 6',  initials: 'C6',  email: 'cleaner6@kardama.ai',  teamId: 'team-c' },
-  { id: 'c7',  name: 'Cleaner 7',  initials: 'C7',  email: 'cleaner7@kardama.ai',  teamId: 'team-d' },
-  { id: 'c8',  name: 'Cleaner 8',  initials: 'C8',  email: 'cleaner8@kardama.ai',  teamId: 'team-d' },
-  { id: 'c9',  name: 'Cleaner 9',  initials: 'C9',  email: 'cleaner9@kardama.ai',  teamId: 'team-e' },
-  { id: 'c10', name: 'Cleaner 10', initials: 'C10', email: 'cleaner10@kardama.ai', teamId: 'team-e' },
-]
-
-const TEAMS = [
-  { id: 'team-a', name: 'Team A', color: '#5EEAD4' },
-  { id: 'team-b', name: 'Team B', color: '#34D399' },
-  { id: 'team-c', name: 'Team C', color: '#FBBF24' },
-  { id: 'team-d', name: 'Team D', color: '#60A5FA' },
-  { id: 'team-e', name: 'Team E', color: '#A78BFA' },
-]
-
-const TEST_ACCOUNTS = [
-  { email: 'owner@kardama.test',   role: 'owner_operator' as const, displayName: 'Test Owner',   cleanerId: null },
-  { email: 'cleaner@kardama.test', role: 'cleaner' as const,        displayName: 'Test Cleaner', cleanerId: 'c1' },
-]
+// Requires POSTGRES_URL_NON_POOLING (auto-set by Vercel Marketplace).
 
 // Each entry is run as a separate query so errors are isolated and reported.
 // ALTER TYPE ... ADD VALUE cannot run inside a transaction, so it's first.
@@ -209,7 +181,7 @@ const DDL_STEPS: Array<{ label: string; sql: string }> = [
     `,
   },
   {
-    label: 'teams: create table + seed',
+    label: 'teams: create table',
     sql: `
       CREATE TABLE IF NOT EXISTS public.teams (
         id         text        PRIMARY KEY,
@@ -225,13 +197,6 @@ const DDL_STEPS: Array<{ label: string; sql: string }> = [
             FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
         END IF;
       END $$;
-      INSERT INTO public.teams (id, name, color) VALUES
-        ('team-a','Team A','#5EEAD4'),
-        ('team-b','Team B','#34D399'),
-        ('team-c','Team C','#FBBF24'),
-        ('team-d','Team D','#60A5FA'),
-        ('team-e','Team E','#A78BFA')
-      ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name, color=EXCLUDED.color;
       ALTER TABLE public.teams ENABLE ROW LEVEL SECURITY;
       DO $$ BEGIN
         IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='teams' AND policyname='teams_owner_all') THEN
@@ -302,32 +267,6 @@ const DDL_STEPS: Array<{ label: string; sql: string }> = [
       DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.daily_routes;  EXCEPTION WHEN others THEN NULL; END $$;
     `,
   },
-  {
-    label: 'cleaners: rename to Cleaner 1-10',
-    sql: `
-      UPDATE public.cleaners SET name='Cleaner 1',  initials='C1',  email='cleaner1@kardama.ai'  WHERE id='c1';
-      UPDATE public.cleaners SET name='Cleaner 2',  initials='C2',  email='cleaner2@kardama.ai'  WHERE id='c2';
-      UPDATE public.cleaners SET name='Cleaner 3',  initials='C3',  email='cleaner3@kardama.ai'  WHERE id='c3';
-      UPDATE public.cleaners SET name='Cleaner 4',  initials='C4',  email='cleaner4@kardama.ai'  WHERE id='c4';
-      UPDATE public.cleaners SET name='Cleaner 5',  initials='C5',  email='cleaner5@kardama.ai'  WHERE id='c5';
-      UPDATE public.cleaners SET name='Cleaner 6',  initials='C6',  email='cleaner6@kardama.ai'  WHERE id='c6';
-      UPDATE public.cleaners SET name='Cleaner 7',  initials='C7',  email='cleaner7@kardama.ai'  WHERE id='c7';
-      UPDATE public.cleaners SET name='Cleaner 8',  initials='C8',  email='cleaner8@kardama.ai'  WHERE id='c8';
-      UPDATE public.cleaners SET name='Cleaner 9',  initials='C9',  email='cleaner9@kardama.ai'  WHERE id='c9';
-      UPDATE public.cleaners SET name='Cleaner 10', initials='C10', email='cleaner10@kardama.ai' WHERE id='c10';
-    `,
-  },
-  {
-    label: 'transactional tables: clear test/seed data',
-    sql: `
-      TRUNCATE public.payments         RESTART IDENTITY CASCADE;
-      TRUNCATE public.jobs             RESTART IDENTITY CASCADE;
-      TRUNCATE public.booking_requests RESTART IDENTITY CASCADE;
-      TRUNCATE public.customers        RESTART IDENTITY CASCADE;
-      TRUNCATE public.social_leads     RESTART IDENTITY CASCADE;
-      TRUNCATE public.messages         RESTART IDENTITY CASCADE;
-    `,
-  },
 ]
 
 export async function POST(request: Request) {
@@ -337,14 +276,10 @@ export async function POST(request: Request) {
   }
 
   const dbUrl = process.env.POSTGRES_URL_NON_POOLING
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-  if (!dbUrl)      return NextResponse.json({ error: 'POSTGRES_URL_NON_POOLING not set' }, { status: 500 })
-  if (!serviceKey) return NextResponse.json({ error: 'SUPABASE_SERVICE_ROLE_KEY not set' }, { status: 500 })
+  if (!dbUrl) return NextResponse.json({ error: 'POSTGRES_URL_NON_POOLING not set' }, { status: 500 })
 
   const log: Array<{ step: string; status: 'ok' | 'error' | 'skipped'; detail?: string }> = []
 
-  // ── 1. Schema DDL via direct pg connection ─────────────────
   const pool = new Pool({ connectionString: dbUrl, ssl: { rejectUnauthorized: false }, max: 1 })
   const client = await pool.connect()
   try {
@@ -354,7 +289,6 @@ export async function POST(request: Request) {
         log.push({ step: step.label, status: 'ok' })
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e)
-        // "already exists" errors are harmless — treat as skipped
         if (msg.includes('already exists') || msg.includes('does not exist')) {
           log.push({ step: step.label, status: 'skipped', detail: msg.split('\n')[0] })
         } else {
@@ -367,59 +301,6 @@ export async function POST(request: Request) {
     await pool.end()
   }
 
-  // ── 2. Data ops via Supabase admin client ──────────────────
-  const admin = getSupabaseAdminClient()
-
-  // Teams upsert
-  const { error: teamsErr } = await admin.from('teams').upsert(
-    TEAMS.map(t => ({ ...t, archived: false })), { onConflict: 'id' }
-  )
-  log.push({ step: 'teams upsert', status: teamsErr ? 'error' : 'ok', detail: teamsErr?.message })
-
-  // Cleaner team_id wire
-  let cleanerOk = 0
-  for (const c of CLEANERS) {
-    const { error } = await admin.from('cleaners').update({ name: c.name, initials: c.initials, email: c.email, team_id: c.teamId }).eq('id', c.id)
-    if (!error) cleanerOk++
-  }
-  log.push({ step: `cleaners rename + team_id (${cleanerOk}/${CLEANERS.length})`, status: cleanerOk === CLEANERS.length ? 'ok' : 'error' })
-
-  // Auth accounts
-  const { data: existingUsers } = await admin.auth.admin.listUsers()
-  for (const account of TEST_ACCOUNTS) {
-    const existing = existingUsers?.users?.find(u => u.email === account.email)
-    let userId: string
-
-    if (existing) {
-      userId = existing.id
-      log.push({ step: `auth: ${account.email}`, status: 'skipped', detail: 'already exists' })
-    } else {
-      const { data: created, error } = await admin.auth.admin.createUser({
-        email: account.email, password: TEST_PASSWORD, email_confirm: true,
-      })
-      if (error || !created.user) {
-        log.push({ step: `auth: ${account.email}`, status: 'error', detail: error?.message })
-        continue
-      }
-      userId = created.user.id
-      log.push({ step: `auth: ${account.email}`, status: 'ok', detail: 'created' })
-    }
-
-    const { error: profileErr } = await admin.from('profiles').upsert({
-      user_id: userId, role: account.role, display_name: account.displayName, cleaner_id: account.cleanerId,
-    }, { onConflict: 'user_id' })
-    log.push({ step: `profile: ${account.email}`, status: profileErr ? 'error' : 'ok', detail: profileErr?.message })
-  }
-
   const errors = log.filter(l => l.status === 'error')
-
-  return NextResponse.json({
-    ok: errors.length === 0,
-    errors: errors.length,
-    log,
-    credentials: {
-      owner:   { email: 'owner@kardama.test',   password: TEST_PASSWORD, path: '/dashboard' },
-      cleaner: { email: 'cleaner@kardama.test', password: TEST_PASSWORD, path: '/me' },
-    },
-  }, { status: errors.length > 0 ? 207 : 200 })
+  return NextResponse.json({ ok: errors.length === 0, errors: errors.length, log }, { status: errors.length > 0 ? 207 : 200 })
 }

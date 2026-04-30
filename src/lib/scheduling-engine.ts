@@ -42,9 +42,9 @@ function scoreTeam(
   jobs: Job[],
   customer: Customer | undefined,
 ): RankedTeam | null {
-  const cleanerIds = teamCleaners.map(c => c.id) as [string, string]
+  const cleanerIds = teamCleaners.map(c => c.id)
 
-  if (teamCleaners.length < 2) return null
+  if (teamCleaners.length < 1) return null
 
   const day = getDay(request.jobDate)
 

@@ -17,6 +17,97 @@ import { deleteCleanerAction, assignCleanerToTeamAction } from './actions'
 
 type TeamData = { cleaners: Cleaner[]; jobs: Job[]; teams: Team[] }
 
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
+
+function CleanerDetailDialog({
+  cleaner,
+  teamName,
+  onClose,
+}: {
+  cleaner: Cleaner | null
+  teamName: string
+  onClose: () => void
+}) {
+  const sp = cleaner ? (STATUS_PILL[cleaner.status as StatusKey] ?? STATUS_PILL['off-duty']) : null
+  const hasSchedule = cleaner ? Object.keys(cleaner.availableHours).length > 0 : false
+
+  return (
+    <Dialog open={!!cleaner} onClose={onClose} title={cleaner?.name ?? ''} description={teamName || 'No team assigned'}>
+      {cleaner && sp && (
+        <DialogBody className="space-y-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-[12.5px] text-ink-400">
+              <MapPin className="h-3.5 w-3.5" />
+              {cleaner.homeAreaName || '—'}
+            </div>
+            <span className={cn('text-[10.5px] font-medium px-2 py-[3px] rounded-full', sp.pill)}>
+              {sp.label}
+            </span>
+          </div>
+
+          <div>
+            <p className="text-[11.5px] font-medium text-ink-500 mb-2.5">Weekly Schedule</p>
+            {!hasSchedule ? (
+              <p className="text-[12px] text-ink-400">No schedule set yet — cleaner hasn&apos;t set availability in the app.</p>
+            ) : (
+              <div className="grid grid-cols-7 gap-1">
+                {DAYS.map(d => {
+                  const hours = cleaner.availableHours[d]
+                  const isWorkDay = !!hours
+                  return (
+                    <div key={d} className="flex flex-col items-center gap-1">
+                      <div className={cn(
+                        'w-full text-center rounded-[6px] py-1.5 text-[10.5px] font-semibold',
+                        isWorkDay ? 'bg-mint-500/12 text-mint-500' : 'bg-soft text-ink-400',
+                      )}>
+                        {d[0]}
+                      </div>
+                      {isWorkDay ? (
+                        <div className="text-center leading-tight">
+                          <div className="text-[9px] text-ink-500">{hours!.start}</div>
+                          <div className="text-[9px] text-ink-500">{hours!.end}</div>
+                        </div>
+                      ) : (
+                        <div className="text-[9px] text-ink-300 text-center">off</div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-[10px] p-3 bg-soft border border-line text-center">
+              <p className="num text-[16px] font-semibold text-amber-500">{cleaner.rating > 0 ? `${cleaner.rating}★` : '—'}</p>
+              <p className="text-[11px] text-ink-500 mt-0.5">Rating</p>
+            </div>
+            <div className="rounded-[10px] p-3 bg-soft border border-line text-center">
+              <p className="num text-[16px] font-semibold text-emerald-500">{cleaner.reliabilityScore}%</p>
+              <p className="text-[11px] text-ink-500 mt-0.5">Reliability</p>
+            </div>
+            <div className="rounded-[10px] p-3 bg-soft border border-line text-center">
+              <p className="num text-[16px] font-semibold text-ink-700">{cleaner.totalJobs}</p>
+              <p className="text-[11px] text-ink-500 mt-0.5">Total Jobs</p>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[11.5px] font-medium text-ink-500 mb-1.5">Specialties</p>
+            <div className="flex flex-wrap gap-1.5">
+              {cleaner.specialties.map(s => (
+                <span key={s} className="capitalize text-[11px] bg-soft border border-line text-ink-500 rounded-[6px] px-2 py-0.5">
+                  {s.replace('-', ' ')}
+                </span>
+              ))}
+            </div>
+          </div>
+        </DialogBody>
+      )}
+    </Dialog>
+  )
+}
+
 function TeamSelect({ cleanerId, currentTeamId, teams }: { cleanerId: string; currentTeamId: string; teams: Team[] }) {
   const [isPending, startTransition] = useTransition()
   return (
@@ -87,7 +178,7 @@ function deriveInsights(cleaners: Cleaner[], jobs: Job[], teams: { id: string; n
 }
 
 export function TeamClient({ cleaners, jobs, teams: teamsProp }: TeamData) {
-  const [_selectedCleaner, setSelectedCleaner] = useState<string | null>(null)
+  const [selectedCleanerId, setSelectedCleanerId] = useState<string | null>(null)
   const [deleteCleanerId, setDeleteCleanerId] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -217,7 +308,7 @@ export function TeamClient({ cleaners, jobs, teams: teamsProp }: TeamData) {
                               key={cleaner.id}
                               type="button"
                               className="flex-1 flex items-center gap-2.5 p-3 rounded-[10px] bg-soft border border-line cursor-pointer transition-colors duration-150 hover:bg-hover hover:border-line-strong text-left"
-                              onClick={() => setSelectedCleaner(cleaner.id)}
+                              onClick={() => setSelectedCleanerId(cleaner.id)}
                             >
                               <div className="relative">
                                 <Avatar initials={cleaner.initials} color={team.color} size="sm" />
@@ -433,6 +524,19 @@ export function TeamClient({ cleaners, jobs, teams: teamsProp }: TeamData) {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Cleaner detail dialog */}
+      {(() => {
+        const cleaner = cleaners.find(c => c.id === selectedCleanerId) ?? null
+        const teamName = cleaner ? (teamNameById[cleaner.teamId] ?? '') : ''
+        return (
+          <CleanerDetailDialog
+            cleaner={cleaner}
+            teamName={teamName}
+            onClose={() => setSelectedCleanerId(null)}
+          />
+        )
+      })()}
 
       {/* Delete cleaner confirmation */}
       {(() => {

@@ -10,7 +10,7 @@ export interface SchedulingRequest {
 }
 
 export interface RankedTeam {
-  cleanerIds: [string, string]
+  cleanerIds: string[]
   score: number
   driveTimeMinutes: number
   availabilityConfidence: number

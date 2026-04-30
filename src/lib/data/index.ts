@@ -82,14 +82,15 @@ function mapJob(r: JobRow): Job {
 }
 
 type PaymentRow = {
-  id: string; job_id: string; customer_id: string; cleaner_ids: string[]
-  amount: number; method: Payment['method']; status: Payment['status']
+  id: string; job_id: string | null; booking_ref: string | null; customer_id: string; cleaner_ids: string[]
+  amount: number; method: Payment['method'] | null; status: Payment['status']
   confirmation_note: string; received_at: string; month: string
 }
 function mapPayment(r: PaymentRow): Payment {
   return {
-    id: r.id, jobId: r.job_id, customerId: r.customer_id, cleanerIds: r.cleaner_ids,
-    amount: Number(r.amount), method: r.method, status: r.status,
+    id: r.id, jobId: r.job_id ?? '', bookingRef: r.booking_ref ?? undefined,
+    customerId: r.customer_id, cleanerIds: r.cleaner_ids,
+    amount: Number(r.amount), method: r.method ?? undefined, status: r.status,
     confirmationNote: r.confirmation_note,
     receivedAt: r.received_at, month: r.month,
   }
@@ -206,6 +207,41 @@ export const getAcceptedBookings = cache(async (): Promise<BookingRequest[]> => 
     .order('assigned_team')
   if (error || !data) return []
   return (data as unknown as BookingRequestRow[]).map(mapBookingRequest)
+})
+
+// ─────────── messages ───────────
+
+export type Message = {
+  id: string
+  cleanerId: string
+  senderRole: 'owner' | 'cleaner'
+  content: string
+  readAt: string | null
+  createdAt: string
+}
+
+type MessageRow = {
+  id: string; cleaner_id: string; sender_role: string
+  content: string; read_at: string | null; created_at: string
+}
+
+function mapMessage(r: MessageRow): Message {
+  return {
+    id: r.id, cleanerId: r.cleaner_id,
+    senderRole: r.sender_role as 'owner' | 'cleaner',
+    content: r.content, readAt: r.read_at, createdAt: r.created_at,
+  }
+}
+
+export const getAllMessages = cache(async (): Promise<Message[]> => {
+  if (!isSupabaseConfigured()) return []
+  const supabase = await createSupabaseServerClient()
+  const { data } = await supabase
+    .from('messages')
+    .select('id, cleaner_id, sender_role, content, read_at, created_at')
+    .order('created_at', { ascending: true })
+    .limit(500)
+  return (data ?? []).map(r => mapMessage(r as MessageRow))
 })
 
 // ─────────── derived helpers (mirror mock-data.ts API) ───────────

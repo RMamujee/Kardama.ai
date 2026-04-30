@@ -29,27 +29,30 @@ function hasTimeConflict(
     })
 }
 
+// Returns true only if the cleaner has explicitly set their hours for this day
+// (even null = "day off" counts as "known"). Undefined/missing = not set in mobile.
+function scheduleKnown(cleaner: Cleaner, day: string): boolean {
+  const h = cleaner.availableHours
+  return !!h && Object.keys(h).length > 0 && day in h
+}
+
 function scoreTeam(
   teamCleaners: Cleaner[],
   request: SchedulingRequest,
   jobs: Job[],
   customer: Customer | undefined,
-): RankedTeam {
+): RankedTeam | null {
   const cleanerIds = teamCleaners.map(c => c.id) as [string, string]
 
-  if (teamCleaners.length < 2) {
-    return {
-      cleanerIds,
-      score: 0,
-      driveTimeMinutes: 999,
-      availabilityConfidence: 0,
-      matchReasons: [],
-      warnings: ['Team not fully staffed'],
-      estimatedArrivalBuffer: 0,
-    }
-  }
+  if (teamCleaners.length < 2) return null
 
   const day = getDay(request.jobDate)
+
+  // Hard block: any cleaner hasn't set their schedule in the mobile app
+  for (const c of teamCleaners) {
+    if (!scheduleKnown(c, day)) return null
+  }
+
   const matchReasons: string[] = []
   const warnings: string[] = []
 
@@ -60,6 +63,7 @@ function scoreTeam(
     const hours = cleaner.availableHours[day]
     let availabilityScore = 0
     if (!hours) {
+      // null = explicitly off this day (schedule is known, cleaner is unavailable)
       warnings.push(`${cleaner.name.split(' ')[0]} is off today`)
     } else if (hasTimeConflict(cleaner, request.jobDate, request.jobTime, request.jobDuration, jobs)) {
       warnings.push(`${cleaner.name.split(' ')[0]} has a conflict`)
@@ -129,10 +133,11 @@ export function computeSchedulingRecommendations(
   const customer = customers.find(c => c.id === request.customerId)
   const rankedTeams = Array.from(teamMap.values())
     .map(teamCleaners => scoreTeam(teamCleaners, request, jobs, customer))
+    .filter((t): t is RankedTeam => t !== null)
     .sort((a, b) => b.score - a.score)
 
   if (rankedTeams.length === 0) {
-    return { rankedTeams: [], reasoning: 'No teams configured yet.', confidenceScore: 0 }
+    return { rankedTeams: [], reasoning: 'No teams with confirmed schedules are available for this date.', confidenceScore: 0 }
   }
 
   const best = rankedTeams[0]

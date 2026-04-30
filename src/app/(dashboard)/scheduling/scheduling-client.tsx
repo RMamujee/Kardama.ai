@@ -277,6 +277,40 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
     return null
   }
 
+  type AvailabilityBlock =
+    | { blocked: false }
+    | { blocked: true; reason: 'no-schedule'; name: string }
+    | { blocked: true; reason: 'day-off'; name: string }
+    | { blocked: true; reason: 'outside-hours'; name: string; start: string; end: string }
+
+  // Returns the first availability problem for the team, or {blocked:false} if clear.
+  function teamAvailabilityAt(teamId: string, date: string | null, time: string | null, duration: number): AvailabilityBlock {
+    if (!date || !time) return { blocked: false }
+    const dayName = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' })
+    const teamCleaners = cleaners.filter(c => c.teamId === teamId)
+    for (const c of teamCleaners) {
+      const h = c.availableHours
+      // No schedule data at all, or this day was never entered in mobile app
+      if (!h || Object.keys(h).length === 0 || !(dayName in h)) {
+        return { blocked: true, reason: 'no-schedule', name: c.name.split(' ')[0] }
+      }
+      const dayHours = h[dayName]
+      // Explicitly marked off for this day
+      if (dayHours === null) {
+        return { blocked: true, reason: 'day-off', name: c.name.split(' ')[0] }
+      }
+      // Job falls outside their working window
+      const workStart = timeToMinutes(dayHours.start)
+      const workEnd = timeToMinutes(dayHours.end)
+      const jobStart = timeToMinutes(time)
+      const jobEnd = jobStart + duration
+      if (jobStart < workStart || jobEnd > workEnd) {
+        return { blocked: true, reason: 'outside-hours', name: c.name.split(' ')[0], start: dayHours.start, end: dayHours.end }
+      }
+    }
+    return { blocked: false }
+  }
+
   function handleDecline(id: string) {
     setActionTarget(id)
     startTransition(async () => {
@@ -559,24 +593,26 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                         {teams.map(team => {
-                          const conflict = teamConflictAt(team.teamId, req.preferredDate, req.preferredTime, duration)
+                          const avail = teamAvailabilityAt(team.teamId, req.preferredDate, req.preferredTime, duration)
+                          const conflict = !avail.blocked ? teamConflictAt(team.teamId, req.preferredDate, req.preferredTime, duration) : null
+                          const isBlocked = avail.blocked || !!conflict
                           const picked = pickedTeamId === team.teamId
                           const teamCleaners = cleaners.filter(c => c.teamId === team.teamId)
                           return (
                             <button
                               key={team.teamId}
                               type="button"
-                              onClick={() => !conflict && setPickedTeamId(team.teamId)}
-                              disabled={!!conflict || busy}
+                              onClick={() => !isBlocked && setPickedTeamId(team.teamId)}
+                              disabled={isBlocked || busy}
                               className={cn(
                                 'group relative flex items-start gap-3 rounded-xl border bg-surface p-4 text-left transition-all',
-                                conflict
+                                isBlocked
                                   ? 'opacity-50 cursor-not-allowed border-line'
                                   : picked
                                     ? 'border-transparent shadow-[0_0_0_2px_rgba(0,0,0,0.04)] ring-2 ring-offset-2 ring-offset-soft'
                                     : 'border-line hover:border-ink-300 hover:shadow-sm cursor-pointer',
                               )}
-                              style={picked && !conflict
+                              style={picked && !isBlocked
                                 ? { borderColor: team.color, ...teamBlockStyle(team.color), boxShadow: `0 0 0 1px ${team.color}33` }
                                 : undefined
                               }
@@ -591,12 +627,21 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
                                   <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: team.color }} />
                                   <p className={cn(
                                     'text-[13px] font-semibold tracking-[-0.01em] truncate',
-                                    picked && !conflict ? '' : 'text-ink-900',
+                                    picked && !isBlocked ? '' : 'text-ink-900',
                                   )}>
                                     {team.teamName}
                                   </p>
                                 </div>
-                                {conflict ? (
+                                {avail.blocked ? (
+                                  <p className="text-[11.5px] text-amber-500 mt-1 flex items-center gap-1">
+                                    <AlertCircle className="h-3 w-3" />
+                                    {avail.reason === 'no-schedule'
+                                      ? `${avail.name}: schedule not set in app`
+                                      : avail.reason === 'day-off'
+                                      ? `${avail.name}: off this day`
+                                      : `${avail.name}: works ${avail.start}–${avail.end}`}
+                                  </p>
+                                ) : conflict ? (
                                   <p className="text-[11.5px] text-ink-400 mt-1 flex items-center gap-1">
                                     <AlertCircle className="h-3 w-3" />
                                     Busy until {formatTime(conflict.scheduledTime)}
@@ -610,7 +655,7 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
                                   </p>
                                 )}
                               </div>
-                              {picked && !conflict && (
+                              {picked && !isBlocked && (
                                 <CheckCircle2 className="absolute top-3 right-3 h-4 w-4" style={{ color: team.color }} />
                               )}
                             </button>

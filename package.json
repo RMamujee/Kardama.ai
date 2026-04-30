@@ -51,7 +51,6 @@
     "react-is": "^19.2.5",
     "react-leaflet": "^5.0.0",
     "recharts": "^3.8.1",
-    "resend": "^6.12.2",
     "tailwind-merge": "^3.5.0",
     "twilio": "^5.7.0",
     "uuid": "^14.0.0",

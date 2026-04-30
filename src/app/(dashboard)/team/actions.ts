@@ -49,6 +49,11 @@ export async function inviteCleanerAction(_prev: InviteState, formData: FormData
   }
   const inviteUrl = linkData.properties.action_link
 
+  // Flag the user so the mobile app prompts them to set a password on first login.
+  await admin.auth.admin.updateUserById(linkData.user.id, {
+    user_metadata: { needs_password_setup: true },
+  })
+
   // 2. Create the cleaner row.
   const cleanerId = `c_${Date.now().toString(36)}`
   const initials = name.split(/\s+/).map(p => p[0]).join('').slice(0, 2).toUpperCase()

@@ -68,7 +68,7 @@ export async function inviteCleanerAction(_prev: InviteState, formData: FormData
     specialties: ['standard'],
     reliability_score: 0,
     current_job_id: null,
-    team_id: 'team-a',
+    team_id: null,
     color,
   })
   if (cleanerErr) {

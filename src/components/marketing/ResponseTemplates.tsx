@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { Copy, CheckCircle, Globe2, Camera, MapPin, Search, Tag } from 'lucide-react'
+import { Copy, CheckCircle, Globe2, Camera, MapPin, MessageCircle, Search, Tag } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -21,6 +21,7 @@ const PLATFORM_ICONS: Record<LeadPlatform, React.ElementType> = {
   'facebook-page': Globe2,
   'instagram': Camera,
   'nextdoor': MapPin,
+  'messenger': MessageCircle,
 }
 
 const CATEGORIES: { value: TemplateCategory | 'all'; label: string }[] = [

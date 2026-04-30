@@ -5,7 +5,7 @@ export type PaymentStatus = 'pending' | 'received' | 'confirmed' | 'cancelled'
 
 export interface Payment {
   id: string
-  jobId: string
+  jobId: string | null
   bookingRef?: string
   customerId?: string
   cleanerIds: string[]

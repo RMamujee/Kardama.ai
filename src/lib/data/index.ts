@@ -81,7 +81,7 @@ type PaymentRow = {
 }
 function mapPayment(r: PaymentRow): Payment {
   return {
-    id: r.id, jobId: r.job_id ?? '', bookingRef: r.booking_ref ?? undefined,
+    id: r.id, jobId: r.job_id, bookingRef: r.booking_ref ?? undefined,
     customerId: r.customer_id ?? undefined, cleanerIds: r.cleaner_ids,
     amount: Number(r.amount), method: r.method ?? undefined, status: r.status,
     confirmationNote: r.confirmation_note,
@@ -137,15 +137,26 @@ export type BookingRequest = {
   customerPhone: string
   customerEmail: string
   address: string
+  unit: string | null
   city: string | null
   serviceType: 'standard' | 'deep' | 'move-out' | 'post-construction' | 'airbnb'
   preferredDate: string | null
   preferredTime: string | null
+  preferredDays: string[]
+  preferredArrivalTimes: string[]
+  preferredExitTimes: string[]
+  homeSize: string | null
+  cleaningFrequency: string | null
+  hasPetsAllergies: string | null
   notes: string
   status: 'pending' | 'accepted' | 'declined' | 'converted'
   source: string | null
+  convertedCustomerId: string | null
+  convertedJobId: string | null
   createdAt: string
   assignedTeam: number | null
+  paymentMethod: string | null
+  calendarEventId: string | null
 }
 
 type BookingRequestRow = {
@@ -154,15 +165,26 @@ type BookingRequestRow = {
   customer_phone: string
   customer_email: string
   address: string
+  unit: string | null
   city: string | null
-  service_type: BookingRequest['serviceType']
+  service_type: BookingRequest['serviceType'] | null
   preferred_date: string | null
   preferred_time: string | null
+  preferred_days: string[]
+  preferred_arrival_times: string[]
+  preferred_exit_times: string[]
+  home_size: string | null
+  cleaning_frequency: string | null
+  has_pets_allergies: string | null
   notes: string
   status: BookingRequest['status']
   source: string | null
+  converted_customer_id: string | null
+  converted_job_id: string | null
   created_at: string
   assigned_team: number | null
+  payment_method: string | null
+  calendar_event_id: string | null
 }
 
 function mapBookingRequest(r: BookingRequestRow): BookingRequest {
@@ -172,15 +194,26 @@ function mapBookingRequest(r: BookingRequestRow): BookingRequest {
     customerPhone: r.customer_phone,
     customerEmail: r.customer_email,
     address: r.address,
+    unit: r.unit,
     city: r.city,
-    serviceType: r.service_type,
+    serviceType: r.service_type ?? 'standard',
     preferredDate: r.preferred_date,
     preferredTime: r.preferred_time,
+    preferredDays: r.preferred_days ?? [],
+    preferredArrivalTimes: r.preferred_arrival_times ?? [],
+    preferredExitTimes: r.preferred_exit_times ?? [],
+    homeSize: r.home_size,
+    cleaningFrequency: r.cleaning_frequency,
+    hasPetsAllergies: r.has_pets_allergies,
     notes: r.notes,
     status: r.status,
     source: r.source,
+    convertedCustomerId: r.converted_customer_id,
+    convertedJobId: r.converted_job_id,
     createdAt: r.created_at?.slice(0, 10) ?? '',
     assignedTeam: r.assigned_team ?? null,
+    paymentMethod: r.payment_method,
+    calendarEventId: r.calendar_event_id,
   }
 }
 

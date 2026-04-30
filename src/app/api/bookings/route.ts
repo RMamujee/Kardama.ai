@@ -4,6 +4,7 @@ import { getAvailableSlots } from '@/lib/campaign-engine'
 import { saveBooking, listBookings, newBookingId, getBookedJobsForDate, isTokenUsed, markTokenUsed } from '@/lib/booking-store'
 import { getCustomers, getCleaners, getJobs } from '@/lib/data'
 import { BookingSlot } from '@/types'
+import { SERVICE_PRICES } from '@/lib/services'
 
 const VALID_TIMES = new Set(['08:00', '09:00', '10:00', '11:00', '13:00', '14:00'])
 
@@ -87,13 +88,10 @@ export async function POST(request: Request) {
       const teamId = leadCleaner?.teamId ?? null
 
       // Estimate price: reuse customer's last job price or fall back by service type
-      const PRICE_BY_SERVICE: Record<string, number> = {
-        standard: 175, deep: 275, 'move-out': 325, 'post-construction': 325, airbnb: 200,
-      }
       const customerJobs = allJobs.filter(j => j.customerId === customer.id && j.status === 'completed')
       const price = customerJobs.length > 0
         ? customerJobs[customerJobs.length - 1].price
-        : PRICE_BY_SERVICE['standard']
+        : SERVICE_PRICES['standard']
 
       const jobId = `job-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
       await admin.from('jobs').insert({

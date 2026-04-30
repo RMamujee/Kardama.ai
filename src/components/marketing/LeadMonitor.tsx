@@ -17,10 +17,11 @@ import { SocialLead, LeadPlatform, LeadStatus } from '@/types'
 import { cn } from '@/lib/utils'
 
 const PLATFORM_CONFIG: Record<LeadPlatform, { label: string; color: string; bg: string; Icon: React.ElementType }> = {
-  'facebook-group': { label: 'FB Group', color: 'text-violet-400', bg: 'bg-violet-500/15', Icon: Globe2 },
-  'facebook-page':  { label: 'FB Page',  color: 'text-violet-400', bg: 'bg-violet-500/15', Icon: Globe2 },
-  'instagram':      { label: 'Instagram', color: 'text-pink-500',  bg: 'bg-pink-500/15',   Icon: Camera },
-  'nextdoor':       { label: 'Nextdoor',  color: 'text-emerald-500', bg: 'bg-emerald-500/15', Icon: MapPin },
+  'facebook-group': { label: 'FB Group',   color: 'text-violet-400',  bg: 'bg-violet-500/15',  Icon: Globe2 },
+  'facebook-page':  { label: 'FB Page',    color: 'text-violet-400',  bg: 'bg-violet-500/15',  Icon: Globe2 },
+  'instagram':      { label: 'Instagram',  color: 'text-pink-500',    bg: 'bg-pink-500/15',    Icon: Camera },
+  'nextdoor':       { label: 'Nextdoor',   color: 'text-emerald-500', bg: 'bg-emerald-500/15', Icon: MapPin },
+  'messenger':      { label: 'Messenger',  color: 'text-blue-400',    bg: 'bg-blue-500/15',    Icon: MessageCircle },
 }
 
 const URGENCY_CONFIG = {

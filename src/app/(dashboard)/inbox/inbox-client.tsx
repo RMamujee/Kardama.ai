@@ -105,7 +105,7 @@ function generateDraft(conv: Conversation): string {
   const last = conv.thread[conv.thread.length - 1].text.toLowerCase()
   const firstName = conv.name.split(' ')[0]
   if (last.includes('how much') || last.includes('charge') || last.includes('price') || last.includes('cost')) {
-    return `Hi ${firstName}! Thanks for reaching out 😊 For a standard clean we start at $165, and deep cleans from $235. We serve ${conv.city || 'your area'} and usually have availability within the week. Want to set up a time?`
+    return `Hi ${firstName}! Thanks for reaching out 😊 For a standard clean we start at $165, and deep cleans from $245. We serve ${conv.city || 'your area'} and usually have availability within the week. Want to set up a time?`
   }
   if (last.includes('available') || last.includes('opening') || last.includes('schedule') || last.includes('appointment')) {
     return `Hi ${firstName}! Yes, we have openings coming up — I can lock in a time that works for you. What day/time is best? 🗓️`

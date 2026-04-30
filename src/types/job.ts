@@ -22,4 +22,5 @@ export interface Job {
   notes: string
   driveTimeMinutes: number
   createdAt: string
+  teamId?: string | null
 }

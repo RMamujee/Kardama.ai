@@ -95,11 +95,12 @@ export async function createJob(data: {
   await requireOwner()
   const supabase = await createSupabaseServerClient()
 
+  let resolvedTeamId: string | null = null
   if (data.cleanerIds.length > 0) {
-    const teamId = await teamIdForCleaner(supabase, data.cleanerIds[0])
-    if (teamId) {
+    resolvedTeamId = await teamIdForCleaner(supabase, data.cleanerIds[0])
+    if (resolvedTeamId) {
       const conflict = await findTeamConflict(
-        supabase, teamId, data.scheduledDate, data.scheduledTime, data.estimatedDuration,
+        supabase, resolvedTeamId, data.scheduledDate, data.scheduledTime, data.estimatedDuration,
       )
       if (conflict) {
         const where = conflict.address ? ` at ${conflict.address.split(',')[0]}` : ''
@@ -128,6 +129,7 @@ export async function createJob(data: {
     lng: data.lng,
     notes: data.notes,
     drive_time_minutes: data.driveTimeMinutes,
+    team_id: resolvedTeamId,
   })
   if (error) throw new Error(error.message)
   revalidatePath('/scheduling')
@@ -222,6 +224,7 @@ export async function acceptBookingRequest(requestId: string, teamId: string): P
     lng: 0,
     notes: req.notes,
     drive_time_minutes: 0,
+    team_id: teamId,
   })
   if (jobErr) throw new Error(jobErr.message)
 

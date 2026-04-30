@@ -83,8 +83,9 @@ type JobRow = {
   drive_time_minutes: number
   created_at: string
   updated_at: string
+  team_id: string | null
 }
-type JobInsert = Omit<JobRow, 'created_at' | 'updated_at'>
+type JobInsert = Omit<JobRow, 'created_at' | 'updated_at' | 'team_id'> & { team_id?: string | null }
 type JobUpdate = Partial<JobInsert>
 
 type PaymentRow = {
@@ -191,6 +192,22 @@ type PushSubscriptionRow = {
 type PushSubscriptionInsert = Omit<PushSubscriptionRow, 'id' | 'created_at'>
 type PushSubscriptionUpdate = Partial<PushSubscriptionInsert>
 
+type TeamRow = {
+  id: string
+  name: string
+  color: string
+  archived: boolean
+  created_at: string
+  updated_at: string
+}
+type TeamInsert = {
+  id: string
+  name: string
+  color?: string
+  archived?: boolean
+}
+type TeamUpdate = Partial<TeamInsert>
+
 export type Database = {
   public: {
     Tables: {
@@ -203,6 +220,7 @@ export type Database = {
       social_leads: { Row: SocialLeadRow; Insert: SocialLeadInsert; Update: SocialLeadUpdate; Relationships: [] }
       messages: { Row: MessageRow; Insert: MessageInsert; Update: MessageUpdate; Relationships: [] }
       push_subscriptions: { Row: PushSubscriptionRow; Insert: PushSubscriptionInsert; Update: PushSubscriptionUpdate; Relationships: [] }
+      teams: { Row: TeamRow; Insert: TeamInsert; Update: TeamUpdate; Relationships: [] }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

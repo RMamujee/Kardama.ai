@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { requireOwner } from '@/lib/supabase/dal'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 
 const InviteSchema = z.object({
@@ -87,6 +88,57 @@ export async function inviteCleanerAction(_prev: InviteState, formData: FormData
     await admin.from('cleaners').delete().eq('id', cleanerId)
     await admin.auth.admin.deleteUser(invite.user.id)
     return { error: `Failed to create profile: ${profileErr.message}` }
+  }
+
+  revalidatePath('/team')
+  return { ok: true }
+}
+
+// ─────────────── Create team ───────────────
+const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/
+
+const TeamSchema = z.object({
+  name: z.string().min(2, 'Name required').max(40, 'Name too long').trim(),
+  color: z.string().regex(HEX_COLOR_RE, 'Color must be a #RRGGBB hex value'),
+})
+
+export type CreateTeamState = {
+  ok?: boolean
+  error?: string
+  fieldErrors?: { name?: string[]; color?: string[] }
+} | undefined
+
+function slugifyTeamName(name: string): string {
+  const slug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 32)
+  return slug ? `team-${slug}` : `team-${Date.now().toString(36)}`
+}
+
+export async function createTeamAction(
+  _prev: CreateTeamState,
+  formData: FormData,
+): Promise<CreateTeamState> {
+  await requireOwner()
+
+  const parsed = TeamSchema.safeParse({
+    name: formData.get('name'),
+    color: formData.get('color'),
+  })
+  if (!parsed.success) return { fieldErrors: parsed.error.flatten().fieldErrors }
+  const { name, color } = parsed.data
+
+  const supabase = await createSupabaseServerClient()
+  const id = slugifyTeamName(name)
+
+  const { error } = await supabase.from('teams').insert({ id, name, color })
+  if (error) {
+    if (error.code === '23505') {
+      return { fieldErrors: { name: ['A team with that name already exists'] } }
+    }
+    return { error: error.message }
   }
 
   revalidatePath('/team')

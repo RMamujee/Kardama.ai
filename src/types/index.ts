@@ -1,4 +1,5 @@
 export * from './cleaner'
+export * from './team'
 export * from './customer'
 export * from './job'
 export * from './payment'

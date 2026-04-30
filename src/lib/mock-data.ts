@@ -1,4 +1,12 @@
-import { Cleaner, Customer, Job, Payment, FacebookGroup } from '@/types'
+import { Cleaner, Customer, Job, Payment, FacebookGroup, Team } from '@/types'
+
+export const TEAMS: Team[] = [
+  { id: 'team-a', name: 'Team Alpha',   color: '#5EEAD4', archived: false },
+  { id: 'team-b', name: 'Team Beta',    color: '#34D399', archived: false },
+  { id: 'team-c', name: 'Team Gamma',   color: '#FBBF24', archived: false },
+  { id: 'team-d', name: 'Team Delta',   color: '#60A5FA', archived: false },
+  { id: 'team-e', name: 'Team Epsilon', color: '#A78BFA', archived: false },
+]
 
 export const LA_CENTER = { lat: 33.9425, lng: -118.2 }
 

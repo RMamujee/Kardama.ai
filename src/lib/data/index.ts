@@ -1,6 +1,6 @@
 import 'server-only'
 import { cache } from 'react'
-import type { Cleaner, Customer, Job, Payment } from '@/types'
+import type { Cleaner, Customer, Job, Payment, Team } from '@/types'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import * as mock from '@/lib/mock-data'
 
@@ -64,6 +64,7 @@ type JobRow = {
   payment_method: Job['paymentMethod'] | null; payment_confirmation_id: string | null
   address: string; lat: number; lng: number; notes: string
   drive_time_minutes: number; created_at: string
+  team_id: string | null
 }
 function mapJob(r: JobRow): Job {
   return {
@@ -78,7 +79,13 @@ function mapJob(r: JobRow): Job {
     address: r.address, lat: Number(r.lat), lng: Number(r.lng), notes: r.notes,
     driveTimeMinutes: r.drive_time_minutes,
     createdAt: r.created_at?.slice(0, 10) ?? '',
+    teamId: r.team_id,
   }
+}
+
+type TeamRow = { id: string; name: string; color: string; archived: boolean }
+function mapTeam(r: TeamRow): Team {
+  return { id: r.id, name: r.name, color: r.color, archived: r.archived }
 }
 
 type PaymentRow = {
@@ -96,6 +103,18 @@ function mapPayment(r: PaymentRow): Payment {
 }
 
 // ─────────── public fetchers (cached per request) ───────────
+export const getTeams = cache(async (): Promise<Team[]> => {
+  if (!isSupabaseConfigured()) return mock.TEAMS
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('teams')
+    .select('*')
+    .eq('archived', false)
+    .order('name')
+  if (error || !data || data.length === 0) return mock.TEAMS
+  return (data as TeamRow[]).map(mapTeam)
+})
+
 export const getCleaners = cache(async (): Promise<Cleaner[]> => {
   if (!isSupabaseConfigured()) return mock.CLEANERS
   const supabase = await createSupabaseServerClient()
@@ -233,4 +252,36 @@ export async function getMonthRevenue(): Promise<number> {
 export async function getPendingRevenue(): Promise<number> {
   const all = await getJobs()
   return all.filter(j => !j.paid && j.status === 'completed').reduce((sum, j) => sum + j.price, 0)
+}
+
+// Returns appointments for a single team in a date range, ordered by date+time.
+// Falls back to in-memory filtering against the mock jobs when Supabase isn't configured.
+export async function getTeamSchedule(
+  teamId: string,
+  fromDate: string,
+  toDate: string,
+): Promise<Job[]> {
+  if (!isSupabaseConfigured()) {
+    return mock.JOBS
+      .filter(j => j.scheduledDate >= fromDate && j.scheduledDate <= toDate)
+      .filter(j => {
+        const lead = mock.CLEANERS.find(c => c.id === j.cleanerIds[0])
+        return lead?.teamId === teamId
+      })
+      .sort((a, b) =>
+        a.scheduledDate.localeCompare(b.scheduledDate) ||
+        a.scheduledTime.localeCompare(b.scheduledTime),
+      )
+  }
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('jobs')
+    .select('*')
+    .eq('team_id', teamId)
+    .gte('scheduled_date', fromDate)
+    .lte('scheduled_date', toDate)
+    .order('scheduled_date')
+    .order('scheduled_time')
+  if (error || !data) return []
+  return (data as JobRow[]).map(mapJob)
 }

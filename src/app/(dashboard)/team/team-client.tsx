@@ -8,24 +8,11 @@ import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { StatTile } from '@/components/ui/stat-tile'
 import { formatCurrency, cn } from '@/lib/utils'
-import type { Cleaner, Job } from '@/types'
+import type { Cleaner, Job, Team } from '@/types'
 import { InviteCleanerForm } from './invite-form'
+import { CreateTeamForm } from './create-team-form'
 
-type TeamData = { cleaners: Cleaner[]; jobs: Job[] }
-
-const TEAM_NAMES: Record<string, string> = {
-  'team-a': 'Team Alpha',
-  'team-b': 'Team Beta',
-  'team-c': 'Team Gamma',
-  'team-d': 'Team Delta',
-}
-
-const TEAM_COLORS: Record<string, string> = {
-  'team-a': '#5EEAD4',
-  'team-b': '#34D399',
-  'team-c': '#FBBF24',
-  'team-d': '#60A5FA',
-}
+type TeamData = { cleaners: Cleaner[]; jobs: Job[]; teams: Team[] }
 
 type StatusKey = 'available' | 'en-route' | 'cleaning' | 'off-duty'
 
@@ -42,7 +29,7 @@ const AI_INSIGHTS = [
   'Jennifer Kim has handled 3 move-out cleans this month — your top specialist for that service type',
 ]
 
-export function TeamClient({ cleaners, jobs }: TeamData) {
+export function TeamClient({ cleaners, jobs, teams: teamsProp }: TeamData) {
   const [_selectedCleaner, setSelectedCleaner] = useState<string | null>(null)
 
   const avgRating = cleaners.length
@@ -50,13 +37,18 @@ export function TeamClient({ cleaners, jobs }: TeamData) {
     : '0.0'
   const availableCount = cleaners.filter(c => c.status === 'available').length
 
-  // Group cleaners by team
-  const teams = ['team-a', 'team-b', 'team-c', 'team-d'].map(teamId => ({
-    id: teamId,
-    name: TEAM_NAMES[teamId],
-    color: TEAM_COLORS[teamId],
-    cleaners: cleaners.filter(c => c.teamId === teamId),
-  }))
+  // Group cleaners by team — driven by the teams table, not a hardcoded list.
+  const teams = teamsProp
+    .filter(t => !t.archived)
+    .map(t => ({
+      id: t.id,
+      name: t.name,
+      color: t.color,
+      cleaners: cleaners.filter(c => c.teamId === t.id),
+    }))
+  const teamNameById: Record<string, string> = Object.fromEntries(
+    teamsProp.map(t => [t.id, t.name]),
+  )
 
   // Calculate monthly pay per cleaner (35% of each completed job price)
   const getMonthlyPay = (cleanerId: string) => {
@@ -75,7 +67,10 @@ export function TeamClient({ cleaners, jobs }: TeamData) {
 
   return (
     <div className="space-y-6">
-      <InviteCleanerForm />
+      <div className="flex items-center gap-2">
+        <InviteCleanerForm />
+        <CreateTeamForm />
+      </div>
 
       {/* ── Stats row ─────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -234,7 +229,7 @@ export function TeamClient({ cleaners, jobs }: TeamData) {
                         <Avatar initials={cleaner.initials} color={cleaner.color} size="md" />
                         <div>
                           <p className="text-[13.5px] font-semibold text-ink-900">{cleaner.name}</p>
-                          <p className="text-[11.5px] text-ink-400 mt-0.5">{TEAM_NAMES[cleaner.teamId]}</p>
+                          <p className="text-[11.5px] text-ink-400 mt-0.5">{teamNameById[cleaner.teamId] ?? '—'}</p>
                         </div>
                       </div>
                       <span className={cn('text-[10.5px] font-medium px-2 py-[3px] rounded-full', sp.pill)}>
@@ -335,7 +330,7 @@ export function TeamClient({ cleaners, jobs }: TeamData) {
                         <Avatar initials={cleaner.initials} color={cleaner.color} size="sm" />
                         <div>
                           <p className="text-[13px] font-medium text-ink-900">{cleaner.name}</p>
-                          <p className="text-[11px] text-ink-400 mt-0.5">{TEAM_NAMES[cleaner.teamId]}</p>
+                          <p className="text-[11px] text-ink-400 mt-0.5">{teamNameById[cleaner.teamId] ?? '—'}</p>
                         </div>
                       </div>
                       <div className="num text-[13px] font-medium text-ink-700">{completedJobs.length}</div>

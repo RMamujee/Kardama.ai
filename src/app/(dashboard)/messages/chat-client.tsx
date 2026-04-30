@@ -39,6 +39,16 @@ function relativeTime(iso: string | null): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+// Use inline styles for bubble radius — avoids Tailwind JIT purging dynamic classes
+function bubbleRadius(isOwner: boolean, isFirst: boolean, isLast: boolean): React.CSSProperties {
+  const full = 18
+  const nub = 4
+  if (isOwner) {
+    return { borderRadius: `${full}px ${isFirst ? nub : full}px ${isLast ? nub : full}px ${full}px` }
+  }
+  return { borderRadius: `${isFirst ? nub : full}px ${full}px ${full}px ${isLast ? nub : full}px` }
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type ConversationSummary = {
@@ -48,7 +58,7 @@ type ConversationSummary = {
   lastAt: string | null
 }
 
-// ── Cleaner sidebar row ───────────────────────────────────────────────────────
+// ── Sidebar cleaner row ───────────────────────────────────────────────────────
 
 function CleanerRow({
   cleaner,
@@ -65,48 +75,51 @@ function CleanerRow({
 }) {
   const preview = summary.lastContent
     ? (summary.lastSenderRole === 'owner' ? 'You: ' : '') +
-      summary.lastContent.slice(0, 42) +
-      (summary.lastContent.length > 42 ? '…' : '')
+      summary.lastContent.slice(0, 38) +
+      (summary.lastContent.length > 38 ? '…' : '')
     : 'No messages yet'
 
   return (
     <button
       onClick={onClick}
       className={cn(
-        'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors',
-        selected ? 'bg-mint/10' : 'hover:bg-hover',
+        'relative w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-left transition-colors',
+        selected ? 'bg-mint-500/10' : 'hover:bg-hover',
       )}
     >
+      {/* Active indicator */}
+      {selected && (
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 rounded-r bg-mint-500" />
+      )}
+
       {/* Avatar */}
       <div
-        className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-[12px] font-bold text-black"
+        className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-[11px] font-bold text-black"
         style={{ backgroundColor: cleaner.color }}
       >
         {cleaner.initials}
       </div>
 
-      {/* Text */}
+      {/* Text content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-0.5">
+        <div className="flex items-center justify-between gap-1 mb-0.5">
           <span className={cn(
-            'text-[13px] font-semibold truncate',
-            selected ? 'text-mint' : 'text-ink-900',
+            'text-[13px] font-semibold leading-none truncate',
+            selected ? 'text-mint-500' : unread > 0 ? 'text-ink-900' : 'text-ink-700',
           )}>
             {cleaner.name}
           </span>
-          <span className="text-[11px] text-ink-400 shrink-0 ml-2">
-            {relativeTime(summary.lastAt)}
-          </span>
+          <span className="text-[10px] text-ink-400 shrink-0">{relativeTime(summary.lastAt)}</span>
         </div>
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-1.5">
           <span className={cn(
-            'text-[12px] truncate',
-            unread > 0 ? 'text-ink-700 font-medium' : 'text-ink-400',
+            'text-[11.5px] truncate leading-none',
+            unread > 0 ? 'text-ink-600 font-medium' : 'text-ink-400',
           )}>
             {preview}
           </span>
           {unread > 0 && (
-            <span className="shrink-0 min-w-[18px] h-[18px] rounded-full bg-mint flex items-center justify-center text-[10px] font-bold text-black px-1">
+            <span className="shrink-0 min-w-[16px] h-4 rounded-full bg-mint-500 flex items-center justify-center text-[9.5px] font-bold text-black px-1 leading-none">
               {unread > 9 ? '9+' : unread}
             </span>
           )}
@@ -116,15 +129,26 @@ function CleanerRow({
   )
 }
 
-// ── Thread view ───────────────────────────────────────────────────────────────
+// ── Message bubble ────────────────────────────────────────────────────────────
 
-function Thread({
-  cleaner,
-  messages,
-}: {
-  cleaner: Cleaner
-  messages: Message[]
+function Bubble({ m, isOwner, isFirst, isLast }: {
+  m: Message; isOwner: boolean; isFirst: boolean; isLast: boolean
 }) {
+  const radius = bubbleRadius(isOwner, isFirst, isLast)
+
+  return (
+    <div
+      className={cn('max-w-[68%] px-3.5 py-2', isOwner ? 'bg-mint-500 text-black' : 'bg-card border border-line-strong text-ink-700')}
+      style={radius}
+    >
+      <p className="text-[13px] leading-[1.55] whitespace-pre-wrap break-words">{m.content}</p>
+    </div>
+  )
+}
+
+// ── Thread ────────────────────────────────────────────────────────────────────
+
+function Thread({ cleaner, messages }: { cleaner: Cleaner; messages: Message[] }) {
   const groups: { date: string; msgs: Message[] }[] = []
   for (const m of messages) {
     const label = formatDate(m.createdAt)
@@ -135,71 +159,67 @@ function Thread({
 
   if (groups.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center pb-16">
+      <div className="flex flex-col items-center justify-center h-full text-center">
         <div
-          className="w-14 h-14 rounded-full flex items-center justify-center mb-4 text-[18px] font-bold text-black"
+          className="w-16 h-16 rounded-full flex items-center justify-center mb-4 text-[20px] font-bold text-black"
           style={{ backgroundColor: cleaner.color }}
         >
           {cleaner.initials}
         </div>
-        <p className="text-[15px] font-semibold text-ink-700">Start a conversation</p>
-        <p className="text-[13px] text-ink-400 mt-1">
-          Send {cleaner.name.split(' ')[0]} a message
+        <p className="text-[14px] font-semibold text-ink-700">
+          {cleaner.name}
+        </p>
+        <p className="text-[12px] text-ink-500 mt-1 max-w-[200px] leading-relaxed">
+          Send a message to start the conversation
         </p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-4 py-4 px-5">
+    <div className="px-6 py-4 space-y-1">
       {groups.map(group => (
         <div key={group.date}>
           {/* Date divider */}
           <div className="flex items-center gap-3 my-5">
             <div className="flex-1 h-px bg-line" />
-            <span className="text-[11px] font-semibold text-ink-400 uppercase tracking-[0.06em]">
+            <span className="text-[10.5px] font-semibold text-ink-400 uppercase tracking-[0.08em]">
               {group.date}
             </span>
             <div className="flex-1 h-px bg-line" />
           </div>
 
-          <div className="space-y-1">
+          {/* Message cluster */}
+          <div className="space-y-[3px]">
             {group.msgs.map((m, idx) => {
               const isOwner = m.senderRole === 'owner'
-              const isFirst = idx === 0 || group.msgs[idx - 1].senderRole !== m.senderRole
-              const isLast = idx === group.msgs.length - 1 || group.msgs[idx + 1].senderRole !== m.senderRole
+              const prevSame = idx > 0 && group.msgs[idx - 1].senderRole === m.senderRole
+              const nextSame = idx < group.msgs.length - 1 && group.msgs[idx + 1].senderRole === m.senderRole
+              const isFirst = !prevSame
+              const isLast = !nextSame
 
               return (
-                <div key={m.id} className={cn('flex flex-col', isOwner ? 'items-end' : 'items-start')}>
+                <div key={m.id}>
+                  {/* Sender name — first bubble in a cleaner group */}
                   {isFirst && !isOwner && (
-                    <div className="flex items-center gap-2 mb-1 ml-1">
+                    <div className="flex items-center gap-1.5 mb-1 mt-2">
                       <div
-                        className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-black"
+                        className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold text-black"
                         style={{ backgroundColor: cleaner.color }}
-                      >
-                        {cleaner.initials}
-                      </div>
+                      />
                       <span className="text-[11px] font-semibold text-ink-500">{cleaner.name}</span>
                     </div>
                   )}
-                  <div
-                    className={cn(
-                      'max-w-[72%] px-4 py-2.5',
-                      isOwner
-                        ? 'bg-mint text-black rounded-2xl' +
-                          (isFirst ? ' rounded-tr-md' : '') +
-                          (isLast ? ' rounded-br-sm' : '')
-                        : 'bg-soft border border-line text-ink-900 rounded-2xl' +
-                          (isFirst ? ' rounded-tl-md' : '') +
-                          (isLast ? ' rounded-bl-sm' : ''),
-                    )}
-                  >
-                    <p className="text-[13.5px] leading-[1.5]">{m.content}</p>
+
+                  <div className={cn('flex', isOwner ? 'justify-end' : 'justify-start', isFirst && !isOwner ? '' : !isOwner ? 'ml-5.5' : '')}>
+                    <Bubble m={m} isOwner={isOwner} isFirst={isFirst} isLast={isLast} />
                   </div>
+
+                  {/* Timestamp — only after the last bubble in a group */}
                   {isLast && (
-                    <p className={cn('text-[11px] mt-1 mb-0.5', isOwner ? 'text-ink-400 mr-1' : 'text-ink-400 ml-1')}>
-                      {formatTime(m.createdAt)}
-                    </p>
+                    <div className={cn('flex mt-0.5 mb-1', isOwner ? 'justify-end mr-1' : 'justify-start ml-6')}>
+                      <span className="text-[10.5px] text-ink-400">{formatTime(m.createdAt)}</span>
+                    </div>
                   )}
                 </div>
               )
@@ -228,37 +248,26 @@ export function ChatClient({
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
   const { unreadMap, clearUnread, incrementUnread } = useChatStore()
-
   const selectedCleaner = cleaners.find(c => c.id === selectedId) ?? null
 
-  // Group all messages by cleaner for sidebar summaries
   const summaryMap = useMemo<Record<string, ConversationSummary>>(() => {
     const map: Record<string, ConversationSummary> = {}
     for (const m of messages) {
-      const existing = map[m.cleanerId]
-      if (!existing || m.createdAt > existing.lastAt!) {
-        map[m.cleanerId] = {
-          cleanerId: m.cleanerId,
-          lastContent: m.content,
-          lastSenderRole: m.senderRole,
-          lastAt: m.createdAt,
-        }
+      const ex = map[m.cleanerId]
+      if (!ex || m.createdAt > ex.lastAt!) {
+        map[m.cleanerId] = { cleanerId: m.cleanerId, lastContent: m.content, lastSenderRole: m.senderRole, lastAt: m.createdAt }
       }
     }
     return map
   }, [messages])
 
-  // Sort cleaners: those with messages first (by recency), then alphabetically
-  const sortedCleaners = useMemo(() => {
-    return [...cleaners].sort((a, b) => {
-      const aAt = summaryMap[a.id]?.lastAt ?? ''
-      const bAt = summaryMap[b.id]?.lastAt ?? ''
-      if (aAt || bAt) return bAt.localeCompare(aAt)
-      return a.name.localeCompare(b.name)
-    })
-  }, [cleaners, summaryMap])
+  const sortedCleaners = useMemo(() => [...cleaners].sort((a, b) => {
+    const aAt = summaryMap[a.id]?.lastAt ?? ''
+    const bAt = summaryMap[b.id]?.lastAt ?? ''
+    if (aAt || bAt) return bAt.localeCompare(aAt)
+    return a.name.localeCompare(b.name)
+  }), [cleaners, summaryMap])
 
-  // Messages for the selected conversation
   const threadMessages = useMemo(
     () => messages.filter(m => m.cleanerId === selectedId),
     [messages, selectedId],
@@ -272,74 +281,65 @@ export function ChatClient({
     el.style.height = `${Math.min(el.scrollHeight, 120)}px`
   }, [text])
 
-  // Scroll to bottom when thread changes
+  // Scroll to bottom on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [threadMessages.length])
 
-  // Mark read when conversation opened
+  // Mark read when opening a conversation
   useEffect(() => {
     if (!selectedId) return
     clearUnread(selectedId)
     markCleanerMessagesRead(selectedId).catch(() => {})
   }, [selectedId, clearUnread])
 
-  // Global realtime: all messages → update state + sidebar + unread
+  // Global realtime subscription
   useEffect(() => {
     const supabase = getSupabaseBrowserClient()
-    const channel = supabase
+    const ch = supabase
       .channel('dashboard-chat-global')
-      .on('postgres_changes', {
-        event: 'INSERT', schema: 'public', table: 'messages',
-      }, payload => {
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
         const r = payload.new as {
           id: string; cleaner_id: string; sender_role: string
           content: string; read_at: string | null; created_at: string
         }
-        const msg: Message = {
+        setMessages(prev => [...prev, {
           id: r.id, cleanerId: r.cleaner_id,
           senderRole: r.sender_role as 'owner' | 'cleaner',
           content: r.content, readAt: r.read_at, createdAt: r.created_at,
-        }
-        setMessages(prev => [...prev, msg])
-        // Track unread only for cleaner messages not in the open conversation
+        }])
         if (r.sender_role === 'cleaner' && r.cleaner_id !== selectedId) {
           incrementUnread(r.cleaner_id)
         }
       })
       .subscribe()
-    return () => { supabase.removeChannel(channel) }
+    return () => { supabase.removeChannel(ch) }
   }, [selectedId, incrementUnread])
-
-  function selectCleaner(id: string) {
-    setSelectedId(id)
-    setText('')
-  }
 
   function handleSend() {
     const trimmed = text.trim()
     if (!trimmed || isPending || !selectedId) return
     setText('')
-    startTransition(async () => {
-      await sendOwnerMessage(selectedId, trimmed)
-    })
+    startTransition(async () => { await sendOwnerMessage(selectedId, trimmed) })
   }
 
   return (
-    <div className="flex h-[calc(100vh-60px)] overflow-hidden">
+    <div className="flex h-[calc(100vh-60px)] overflow-hidden bg-page">
 
-      {/* ── Left sidebar ─────────────────────────────────────────── */}
-      <aside className="w-64 shrink-0 flex flex-col border-r border-line bg-rail">
-        {/* Sidebar header */}
-        <div className="px-4 pt-5 pb-3 border-b border-line">
+      {/* ── Sidebar ───────────────────────────────────────────────── */}
+      <aside className="w-[260px] shrink-0 flex flex-col border-r border-line bg-rail overflow-hidden">
+        {/* Header */}
+        <div className="px-4 py-4 border-b border-line shrink-0">
           <div className="flex items-center gap-2">
-            <MessageSquare className="h-4 w-4 text-mint" />
-            <h2 className="text-[13px] font-semibold text-ink-900 tracking-[-0.01em]">Direct Messages</h2>
+            <MessageSquare className="h-3.5 w-3.5 text-mint-500 shrink-0" />
+            <span className="text-[12px] font-semibold text-ink-500 uppercase tracking-[0.06em]">
+              Direct Messages
+            </span>
           </div>
         </div>
 
         {/* Cleaner list */}
-        <div className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5">
+        <div className="flex-1 overflow-y-auto px-2 py-2 space-y-px">
           {sortedCleaners.map(cleaner => (
             <CleanerRow
               key={cleaner.id}
@@ -347,73 +347,75 @@ export function ChatClient({
               summary={summaryMap[cleaner.id] ?? { cleanerId: cleaner.id, lastContent: null, lastSenderRole: null, lastAt: null }}
               unread={unreadMap[cleaner.id] ?? 0}
               selected={selectedId === cleaner.id}
-              onClick={() => selectCleaner(cleaner.id)}
+              onClick={() => { setSelectedId(cleaner.id); setText('') }}
             />
           ))}
         </div>
       </aside>
 
-      {/* ── Main chat area ───────────────────────────────────────── */}
+      {/* ── Chat area ─────────────────────────────────────────────── */}
       {selectedCleaner ? (
-        <div className="flex flex-col flex-1 min-w-0">
+        <div className="flex flex-col flex-1 min-w-0 bg-page">
 
-          {/* Thread header */}
-          <div className="shrink-0 flex items-center gap-3 px-5 py-3.5 border-b border-line bg-rail">
+          {/* Top bar */}
+          <div className="shrink-0 flex items-center gap-3 px-6 h-14 border-b border-line bg-rail">
             <div
-              className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold text-black shrink-0"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-black shrink-0"
               style={{ backgroundColor: selectedCleaner.color }}
             >
               {selectedCleaner.initials}
             </div>
-            <div>
-              <p className="text-[14px] font-semibold text-ink-900 leading-tight">{selectedCleaner.name}</p>
-              <div className="flex items-center gap-1.5 mt-0.5">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-[14px] font-semibold text-ink-900 leading-none">
+                  {selectedCleaner.name}
+                </span>
                 <div className={cn(
-                  'w-1.5 h-1.5 rounded-full',
-                  selectedCleaner.status === 'available' ? 'bg-mint' : 'bg-ink-300',
+                  'w-1.5 h-1.5 rounded-full shrink-0',
+                  selectedCleaner.status === 'available' ? 'bg-mint-500' : 'bg-ink-400',
                 )} />
-                <p className="text-[12px] text-ink-500 capitalize">{selectedCleaner.status}</p>
+                <span className="text-[11px] text-ink-400 capitalize">{selectedCleaner.status}</span>
               </div>
             </div>
           </div>
 
-          {/* Thread scroll area */}
+          {/* Thread */}
           <div className="flex-1 overflow-y-auto">
             <Thread cleaner={selectedCleaner} messages={threadMessages} />
-            <div ref={bottomRef} />
+            <div ref={bottomRef} className="h-2" />
           </div>
 
-          {/* Input bar */}
-          <div className="shrink-0 border-t border-line bg-rail px-5 py-3">
-            <div className="flex items-end gap-2.5">
-              <div className="flex-1">
-                <textarea
-                  ref={inputRef}
-                  value={text}
-                  onChange={e => setText(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
-                  }}
-                  placeholder={`Message ${selectedCleaner.name.split(' ')[0]}…`}
-                  rows={1}
-                  className="w-full resize-none rounded-[10px] border border-line bg-soft px-4 py-2.5 text-[13.5px] text-ink-900 placeholder:text-ink-400 focus:outline-none focus:border-mint/40 transition-colors leading-[1.5] overflow-hidden"
-                />
-              </div>
+          {/* Input */}
+          <div className="shrink-0 px-6 py-4 border-t border-line bg-rail">
+            <div className="flex items-end gap-3 bg-soft border border-line-strong rounded-xl px-4 py-3 focus-within:border-mint-500/40 transition-colors">
+              <textarea
+                ref={inputRef}
+                value={text}
+                onChange={e => setText(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
+                }}
+                placeholder={`Message ${selectedCleaner.name.split(' ')[0]}…`}
+                rows={1}
+                className="flex-1 resize-none bg-transparent text-[13.5px] text-ink-900 placeholder:text-ink-400 focus:outline-none leading-[1.55] overflow-hidden"
+              />
               <button
                 onClick={handleSend}
                 disabled={!text.trim() || isPending}
-                className="w-9 h-9 rounded-full bg-mint flex items-center justify-center shrink-0 transition-all hover:opacity-90 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed mb-0.5"
+                className="w-8 h-8 rounded-lg bg-mint-500 flex items-center justify-center shrink-0 transition-all hover:bg-mint-400 active:scale-95 disabled:opacity-25 disabled:cursor-not-allowed"
               >
-                <Send size={14} className="text-black translate-x-[1px] -translate-y-[1px]" />
+                <Send size={13} className="text-black translate-x-px" />
               </button>
             </div>
-            <p className="text-[11px] text-ink-400 mt-1.5 ml-1">Enter to send · Shift+Enter for new line</p>
+            <p className="text-[10.5px] text-ink-400 mt-2 ml-1">
+              Enter to send · Shift+Enter for new line
+            </p>
           </div>
         </div>
       ) : (
-        <div className="flex flex-1 items-center justify-center flex-col gap-3 text-center">
+        <div className="flex flex-1 items-center justify-center flex-col gap-3 text-center bg-page">
           <MessageSquare className="h-10 w-10 text-ink-300" />
-          <p className="text-[13px] text-ink-500">No cleaners yet</p>
+          <p className="text-[13px] text-ink-500">Select a conversation</p>
         </div>
       )}
     </div>

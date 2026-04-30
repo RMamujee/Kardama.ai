@@ -33,7 +33,7 @@ async function sendPush(cleanerId: string, body: string) {
 
   const webpush = (await import('web-push')).default
   webpush.setVapidDetails(
-    'mailto:heyrahil@gmail.com',
+    process.env.VAPID_SUBJECT!,
     process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
     process.env.VAPID_PRIVATE_KEY!,
   )
@@ -47,6 +47,17 @@ async function sendPush(cleanerId: string, body: string) {
     // Subscription expired — clean up
     await admin.from('push_subscriptions').delete().eq('cleaner_id', cleanerId)
   }
+}
+
+export async function markMessagesRead(cleanerId: string) {
+  await requireOwner()
+  const supabase = await createSupabaseServerClient()
+  await supabase
+    .from('messages')
+    .update({ read_at: new Date().toISOString() })
+    .eq('cleaner_id', cleanerId)
+    .eq('sender_role', 'cleaner')
+    .is('read_at', null)
 }
 
 export async function getCleanerMessages(cleanerId: string) {

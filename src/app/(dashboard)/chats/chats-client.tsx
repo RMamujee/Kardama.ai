@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 import type { Cleaner } from '@/types'
 import type { Message } from '@/lib/data'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
-import { sendMessageToCleaner, getCleanerMessages } from './actions'
+import { sendMessageToCleaner, getCleanerMessages, markMessagesRead } from './actions'
 import { useChatStore } from '@/store/useChatStore'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -175,7 +175,7 @@ export function ChatsClient({ cleaners, initialMessages }: { cleaners: Cleaner[]
   const [isPending, startTransition] = useTransition()
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
-  const { unreadMap, clearUnread, incrementUnread, setSelectedCleaner } = useChatStore()
+  const { unreadMap, clearUnread, setSelectedCleaner } = useChatStore()
 
   const selectedCleaner = cleaners.find(c => c.id === selectedId) ?? null
 
@@ -220,6 +220,7 @@ export function ChatsClient({ cleaners, initialMessages }: { cleaners: Cleaner[]
     if (!selectedId) return
     setSelectedCleaner(selectedId)
     clearUnread(selectedId)
+    markMessagesRead(selectedId).catch(() => {})
     // Load messages for this cleaner if not already in state
     const hasMsgs = messages.some(m => m.cleanerId === selectedId)
     if (!hasMsgs) {
@@ -232,7 +233,7 @@ export function ChatsClient({ cleaners, initialMessages }: { cleaners: Cleaner[]
 
   useEffect(() => () => { setSelectedCleaner(null) }, [setSelectedCleaner])
 
-  // Global realtime
+  // Global realtime — only updates local message list; ChatListener in the layout handles unread counts
   useEffect(() => {
     const sb = getSupabaseBrowserClient()
     const ch = sb.channel('chats-global')
@@ -240,11 +241,14 @@ export function ChatsClient({ cleaners, initialMessages }: { cleaners: Cleaner[]
         const row = r as RawMsg
         const msg = rawToMsg(row)
         setMessages(prev => prev.some(x => x.id === msg.id) ? prev : [...prev, msg])
-        if (row.sender_role === 'cleaner' && row.cleaner_id !== selectedId) incrementUnread(row.cleaner_id)
+        // Auto-mark as read if the owner has this conversation open
+        if (row.sender_role === 'cleaner' && row.cleaner_id === selectedId) {
+          markMessagesRead(row.cleaner_id).catch(() => {})
+        }
       })
       .subscribe()
     return () => { sb.removeChannel(ch) }
-  }, [selectedId, incrementUnread])
+  }, [selectedId])
 
   function handleSend() {
     const t = text.trim()

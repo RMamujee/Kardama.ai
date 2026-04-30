@@ -137,7 +137,7 @@ export async function POST(request: Request) {
 
   // Fire n8n booking confirmation email (fire-and-forget)
   const n8nWebhook = process.env.N8N_BOOKING_WEBHOOK_URL
-  if (n8nWebhook && assignment) {
+  if (n8nWebhook) {
     fetch(n8nWebhook, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -153,12 +153,46 @@ export async function POST(request: Request) {
         cleaningFrequency: sanitized.cleaning_frequency || null,
         address: sanitized.address,
         notes: sanitized.notes,
-        cleanerNames: assignment.cleanerNames,
+        cleanerNames: assignment?.cleanerNames ?? [],
         manageUrl: `https://kardama-intake.vercel.app/?manage=${data.id}`,
         rescheduleUrl: `https://kardama-intake.vercel.app/?manage=${data.id}&action=reschedule`,
         cancelUrl: `https://kardama-intake.vercel.app/?manage=${data.id}&action=cancel`,
       }),
     }).catch(e => console.error('n8n webhook failed:', e))
+  }
+
+  // Fire n8n cleaner assignment notification — one call per assigned cleaner (fire-and-forget)
+  const n8nAssignWebhook = process.env.N8N_CLEANER_ASSIGNMENT_WEBHOOK_URL
+  if (n8nAssignWebhook && assignment?.cleanerIds.length) {
+    try {
+      const admin = getSupabaseAdminClient()
+      const { data: cleaners } = await admin
+        .from('cleaners')
+        .select('id, name, email, phone')
+        .in('id', assignment.cleanerIds)
+      if (cleaners?.length) {
+        for (const cleaner of cleaners) {
+          fetch(n8nAssignWebhook, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jobId: assignment.jobId,
+              cleanerName: cleaner.name,
+              cleanerEmail: cleaner.email,
+              cleanerPhone: cleaner.phone,
+              customerName: sanitized.customer_name,
+              serviceType: service_type,
+              scheduledDate: preferred_date,
+              scheduledTime: preferred_time,
+              address: sanitized.address,
+              jobUrl: `https://kardama-mobile.vercel.app/job/${assignment.jobId}`,
+            }),
+          }).catch(e => console.error('n8n cleaner assignment webhook failed:', e))
+        }
+      }
+    } catch (e) {
+      console.error('cleaner assignment webhook lookup failed:', e)
+    }
   }
 
   // Fire n8n unassigned alert if no team could be assigned (fire-and-forget)

@@ -41,7 +41,7 @@ async function generateWithOpenAI(theme: MarketingTheme, tone: PostTone): Promis
   if (!apiKey) return null
 
   const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
-  const system = `You are a marketing copywriter for Kardama, a home cleaning service operating in Long Beach, Torrance, El Segundo, and the broader South Bay LA area. Teams are 2 people, bonded and insured, with 1,200+ happy clients. Write Facebook posts that local homeowners would actually engage with. Keep posts under 120 words, use 1–3 relevant emojis, end with a clear call to action ("DM us", "Comment below", "Text us"), and include 3–5 hashtags on the final line.`
+  const system = `You are a marketing copywriter for Kardama, a home cleaning service operating in Long Beach, Torrance, El Segundo, and the broader South Bay LA area. Teams are 2 people, bonded and insured. Write Facebook posts that local homeowners would actually engage with. Keep posts under 120 words, use 1–3 relevant emojis, end with a clear call to action ("DM us", "Comment below", "Text us"), and include 3–5 hashtags on the final line. Do not invent specific client counts, dollar amounts, or named testimonials.`
 
   const user = `Write one Facebook post.\nTheme: ${THEME_BRIEFS[theme]}\nTone: ${TONE_BLURBS[tone]}\nReturn just the post text — no preamble, no explanation, no surrounding quotes.`
 

@@ -89,9 +89,9 @@ function hasConflict(cleanerId: string, date: string, time: string, allJobs: Job
 /**
  * @param customerId   Customer requesting the booking
  * @param extraJobs    Additional confirmed bookings to account for (from booking store)
- * @param customers    Customer list (defaults to mock for dev/demo)
- * @param cleaners     Cleaner list (defaults to mock for dev/demo)
- * @param jobs         Job list (defaults to mock for dev/demo)
+ * @param customers    Customer list (defaults to empty)
+ * @param cleaners     Cleaner list (defaults to empty)
+ * @param jobs         Job list (defaults to empty)
  */
 export function getAvailableSlots(
   customerId: string,

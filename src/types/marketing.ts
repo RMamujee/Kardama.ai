@@ -14,7 +14,7 @@ export interface MarketingPost {
   status: PostStatus
   targetGroupIds: string[]
   theme: MarketingTheme
-  engagementEstimate: number
+  engagementEstimate: number | null
 }
 
 export interface FacebookGroup {

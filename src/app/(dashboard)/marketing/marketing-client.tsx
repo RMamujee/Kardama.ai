@@ -122,8 +122,7 @@ function OverviewTab() {
                                   <span key={h} className="text-mint-500 text-[12px]">{h}</span>
                                 ))}
                               </div>
-                              <div className="mt-3 flex items-center justify-between text-ink-400 text-[12px]">
-                                <span>Est. engagement: {post.engagementEstimate} interactions</span>
+                              <div className="mt-3 flex items-center justify-end text-ink-400 text-[12px]">
                                 <span>{post.targetGroupIds.length} groups</span>
                               </div>
                             </div>

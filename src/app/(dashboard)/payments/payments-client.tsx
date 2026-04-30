@@ -12,7 +12,7 @@ import { usePaymentStore } from '@/store/usePaymentStore'
 import { LogPaymentModal } from '@/components/payments/LogPaymentModal'
 import { RevenueChart } from '@/components/payments/RevenueChart'
 import { formatCurrency } from '@/lib/utils'
-import { getMtdRevenue, getYtdRevenue } from '@/lib/payment-utils'
+import { getMtdRevenue, getYtdRevenue, getMtdTrend, getYtdTrend } from '@/lib/payment-utils'
 import type { Cleaner, Customer, Job, Payment } from '@/types'
 
 type PaymentsData = {
@@ -52,11 +52,13 @@ export function PaymentsClient({ customers, jobs, payments: serverPayments }: Pa
   const filtered = getFiltered()
   const mtd = getMtdRevenue(payments)
   const ytd = getYtdRevenue(payments)
+  const mtdTrend = getMtdTrend(payments)
+  const ytdTrend = getYtdTrend(payments)
   const pending = jobs.filter(j => !j.paid && j.status === 'completed').reduce((s, j) => s + j.price, 0)
 
   const stats = [
-    { label: 'Month Revenue', value: formatCurrency(mtd), icon: DollarSign, tone: 'mint' as const, trend: '+14%' },
-    { label: 'Year Revenue', value: formatCurrency(ytd), icon: TrendingUp, tone: 'emerald' as const, trend: '+21%' },
+    { label: 'Month Revenue', value: formatCurrency(mtd), icon: DollarSign, tone: 'mint' as const, trend: mtdTrend },
+    { label: 'Year Revenue', value: formatCurrency(ytd), icon: TrendingUp, tone: 'emerald' as const, trend: ytdTrend },
     { label: 'Pending', value: formatCurrency(pending), icon: AlertCircle, tone: 'amber' as const, trend: null },
   ]
 

@@ -138,7 +138,7 @@ export function generatePost(weekNumber: number, year: number = new Date().getFu
     status: status as any,
     targetGroupIds: FACEBOOK_GROUPS.slice(0, 20).map(g => g.id),
     theme,
-    engagementEstimate: 45 + ((weekNumber * 7) % 120),
+    engagementEstimate: null,
   }
 }
 

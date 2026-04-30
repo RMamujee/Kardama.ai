@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createSupabaseAnonClient } from '@/lib/supabase/server'
+import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { autoAssignBookingRequest } from '@/lib/auto-assign'
 import { SERVICE_PRICES, VALID_SERVICE_TYPES, VALID_TIMES } from '@/lib/services'
 
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     notes: notes ? String(notes).trim().slice(0, 500) : '',
   }
 
-  const supabase = createSupabaseAnonClient()
+  const supabase = getSupabaseAdminClient()
   const { data, error } = await supabase
     .from('booking_requests')
     .insert({

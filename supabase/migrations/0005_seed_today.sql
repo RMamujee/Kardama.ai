@@ -8,57 +8,57 @@ INSERT INTO public.cleaners (
   current_lat, current_lng, home_area_name, home_area_lat, home_area_lng,
   status, available_hours, specialties, reliability_score, team_id, color
 ) VALUES
-  -- Bigfoot — Redondo Beach
-  ('c1','Bigfoot 1','BF1','(310) 555-0101','bigfoot1@kardama.ai',4.9,187,
+  -- Team A — Redondo Beach
+  ('c1','Cleaner 1','C1','(310) 555-0101','cleaner1@kardama.ai',4.9,187,
    33.8490,-118.3880,'Redondo Beach',33.8490,-118.3880,
    'available','{"Mon":{"start":"07:30","end":"17:30"},"Tue":{"start":"07:30","end":"17:30"},"Wed":{"start":"07:30","end":"17:30"},"Thu":{"start":"07:30","end":"17:30"},"Fri":{"start":"07:30","end":"17:30"},"Sat":{"start":"07:30","end":"17:30"},"Sun":null}',
    ARRAY['standard','deep-clean']::public.service_specialty[],98,'team-a','#5EEAD4'),
 
-  ('c2','Bigfoot 2','BF2','(310) 555-0102','bigfoot2@kardama.ai',4.8,143,
+  ('c2','Cleaner 2','C2','(310) 555-0102','cleaner2@kardama.ai',4.8,143,
    33.8530,-118.3840,'Redondo Beach',33.8530,-118.3840,
    'available','{"Mon":{"start":"07:30","end":"17:30"},"Tue":{"start":"07:30","end":"17:30"},"Wed":{"start":"07:30","end":"17:30"},"Thu":{"start":"07:30","end":"17:30"},"Fri":{"start":"07:30","end":"17:30"},"Sat":{"start":"07:30","end":"17:30"},"Sun":null}',
    ARRAY['standard','airbnb']::public.service_specialty[],96,'team-a','#34D399'),
 
-  -- Profane — Long Beach
-  ('c3','Profane 1','P1','(562) 555-0103','profane1@kardama.ai',4.7,112,
+  -- Team B — Long Beach
+  ('c3','Cleaner 3','C3','(562) 555-0103','cleaner3@kardama.ai',4.7,112,
    33.7700,-118.1930,'Long Beach',33.7700,-118.1930,
    'available','{"Mon":{"start":"07:30","end":"17:30"},"Tue":{"start":"07:30","end":"17:30"},"Wed":{"start":"07:30","end":"17:30"},"Thu":{"start":"07:30","end":"17:30"},"Fri":{"start":"07:30","end":"17:30"},"Sat":{"start":"07:30","end":"17:30"},"Sun":null}',
    ARRAY['standard','move-out']::public.service_specialty[],94,'team-b','#F472B6'),
 
-  ('c4','Profane 2','P2','(562) 555-0104','profane2@kardama.ai',4.9,156,
+  ('c4','Cleaner 4','C4','(562) 555-0104','cleaner4@kardama.ai',4.9,156,
    33.7730,-118.1970,'Long Beach',33.7730,-118.1970,
    'available','{"Mon":{"start":"07:30","end":"17:30"},"Tue":{"start":"07:30","end":"17:30"},"Wed":{"start":"07:30","end":"17:30"},"Thu":{"start":"07:30","end":"17:30"},"Fri":{"start":"07:30","end":"17:30"},"Sat":{"start":"07:30","end":"17:30"},"Sun":null}',
    ARRAY['deep-clean','post-construction']::public.service_specialty[],97,'team-b','#60A5FA'),
 
-  -- Gypsy — Hawthorne/Lawndale
-  ('c5','Gypsy 1','GY1','(310) 555-0105','gypsy1@kardama.ai',4.6,89,
+  -- Team C — Hawthorne/Lawndale
+  ('c5','Cleaner 5','C5','(310) 555-0105','cleaner5@kardama.ai',4.6,89,
    33.8360,-118.3400,'Hawthorne',33.8360,-118.3400,
    'available','{"Mon":{"start":"07:30","end":"17:30"},"Tue":{"start":"07:30","end":"17:30"},"Wed":{"start":"07:30","end":"17:30"},"Thu":{"start":"07:30","end":"17:30"},"Fri":{"start":"07:30","end":"17:30"},"Sat":{"start":"07:30","end":"17:30"},"Sun":null}',
    ARRAY['standard','airbnb']::public.service_specialty[],91,'team-c','#A78BFA'),
 
-  ('c6','Gypsy 2','GY2','(310) 555-0106','gypsy2@kardama.ai',4.8,134,
+  ('c6','Cleaner 6','C6','(310) 555-0106','cleaner6@kardama.ai',4.8,134,
    33.8400,-118.3440,'Hawthorne',33.8400,-118.3440,
    'available','{"Mon":{"start":"07:30","end":"17:30"},"Tue":{"start":"07:30","end":"17:30"},"Wed":{"start":"07:30","end":"17:30"},"Thu":{"start":"07:30","end":"17:30"},"Fri":{"start":"07:30","end":"17:30"},"Sat":{"start":"07:30","end":"17:30"},"Sun":null}',
    ARRAY['standard','deep-clean']::public.service_specialty[],95,'team-c','#FB923C'),
 
-  -- Angle — Inglewood
-  ('c7','Angle 1','AN1','(310) 555-0107','angle1@kardama.ai',4.7,98,
+  -- Team D — Inglewood
+  ('c7','Cleaner 7','C7','(310) 555-0107','cleaner7@kardama.ai',4.7,98,
    33.9617,-118.3531,'Inglewood',33.9617,-118.3531,
    'available','{"Mon":{"start":"07:30","end":"17:30"},"Tue":{"start":"07:30","end":"17:30"},"Wed":{"start":"07:30","end":"17:30"},"Thu":{"start":"07:30","end":"17:30"},"Fri":{"start":"07:30","end":"17:30"},"Sat":{"start":"07:30","end":"17:30"},"Sun":null}',
    ARRAY['standard','move-out']::public.service_specialty[],93,'team-d','#F87171'),
 
-  ('c8','Angle 2','AN2','(310) 555-0108','angle2@kardama.ai',4.9,201,
+  ('c8','Cleaner 8','C8','(310) 555-0108','cleaner8@kardama.ai',4.9,201,
    33.9553,-118.3477,'Inglewood',33.9553,-118.3477,
    'available','{"Mon":{"start":"07:30","end":"17:30"},"Tue":{"start":"07:30","end":"17:30"},"Wed":{"start":"07:30","end":"17:30"},"Thu":{"start":"07:30","end":"17:30"},"Fri":{"start":"07:30","end":"17:30"},"Sat":{"start":"07:30","end":"17:30"},"Sun":null}',
    ARRAY['deep-clean','airbnb']::public.service_specialty[],99,'team-d','#4ADE80'),
 
-  -- Gamma — El Segundo
-  ('c9','Gamma 1','GM1','(310) 555-0109','gamma1@kardama.ai',4.8,167,
+  -- Team E — El Segundo
+  ('c9','Cleaner 9','C9','(310) 555-0109','cleaner9@kardama.ai',4.8,167,
    33.9192,-118.4165,'El Segundo',33.9192,-118.4165,
    'available','{"Mon":{"start":"07:30","end":"17:30"},"Tue":{"start":"07:30","end":"17:30"},"Wed":{"start":"07:30","end":"17:30"},"Thu":{"start":"07:30","end":"17:30"},"Fri":{"start":"07:30","end":"17:30"},"Sat":{"start":"07:30","end":"17:30"},"Sun":null}',
    ARRAY['standard','post-construction']::public.service_specialty[],96,'team-e','#38BDF8'),
 
-  ('c10','Gamma 2','GM2','(310) 555-0110','gamma2@kardama.ai',4.7,122,
+  ('c10','Cleaner 10','C10','(310) 555-0110','cleaner10@kardama.ai',4.7,122,
    33.9256,-118.4102,'El Segundo',33.9256,-118.4102,
    'available','{"Mon":{"start":"07:30","end":"17:30"},"Tue":{"start":"07:30","end":"17:30"},"Wed":{"start":"07:30","end":"17:30"},"Thu":{"start":"07:30","end":"17:30"},"Fri":{"start":"07:30","end":"17:30"},"Sat":{"start":"07:30","end":"17:30"},"Sun":null}',
    ARRAY['standard','airbnb']::public.service_specialty[],92,'team-e','#E879F9')

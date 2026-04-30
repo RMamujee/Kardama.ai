@@ -1,6 +1,5 @@
--- Anonymize all cleaner and customer PII in the live DB.
--- Safe to re-run — updates are idempotent by ID.
-
+-- Rename cleaners from old codenames (Bigfoot/Profane/Gypsy/Angle/Gamma)
+-- to neutral Cleaner 1-10. Safe to re-run.
 UPDATE public.cleaners SET name='Cleaner 1',  initials='C1',  email='cleaner1@kardama.ai'  WHERE id='c1';
 UPDATE public.cleaners SET name='Cleaner 2',  initials='C2',  email='cleaner2@kardama.ai'  WHERE id='c2';
 UPDATE public.cleaners SET name='Cleaner 3',  initials='C3',  email='cleaner3@kardama.ai'  WHERE id='c3';
@@ -11,15 +10,3 @@ UPDATE public.cleaners SET name='Cleaner 7',  initials='C7',  email='cleaner7@ka
 UPDATE public.cleaners SET name='Cleaner 8',  initials='C8',  email='cleaner8@kardama.ai'  WHERE id='c8';
 UPDATE public.cleaners SET name='Cleaner 9',  initials='C9',  email='cleaner9@kardama.ai'  WHERE id='c9';
 UPDATE public.cleaners SET name='Cleaner 10', initials='C10', email='cleaner10@kardama.ai' WHERE id='c10';
-
--- Anonymize customer PII (sequential numbers by creation order)
-WITH numbered AS (
-  SELECT id, ROW_NUMBER() OVER (ORDER BY created_at, id) AS rn FROM public.customers
-)
-UPDATE public.customers c
-SET
-  name  = 'Customer ' || n.rn,
-  email = 'customer' || n.rn || '@private.local',
-  phone = '(000) 000-' || LPAD(n.rn::text, 4, '0')
-FROM numbered n
-WHERE c.id = n.id;

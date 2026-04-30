@@ -21,7 +21,7 @@ const TEST_ACCOUNTS = [
   {
     email: 'cleaner@kardama.test',
     role: 'cleaner' as const,
-    displayName: 'Test Cleaner (Bigfoot 1)',
+    displayName: 'Test Cleaner (Cleaner 1)',
     cleanerId: 'c1',
   },
 ]

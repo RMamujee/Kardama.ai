@@ -111,6 +111,27 @@ export async function POST(request: Request) {
     }
   }
 
+  // Fire n8n booking confirmation email (fire-and-forget)
+  const n8nWebhook = process.env.N8N_BOOKING_WEBHOOK_URL
+  if (n8nWebhook && assignment) {
+    fetch(n8nWebhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        bookingId: data.id,
+        customerName: sanitized.customer_name,
+        customerEmail: sanitized.customer_email,
+        customerPhone: sanitized.customer_phone,
+        serviceType: service_type,
+        preferredDate: preferred_date,
+        preferredTime: preferred_time,
+        address: sanitized.address,
+        notes: sanitized.notes,
+        cleanerNames: assignment.cleanerNames,
+      }),
+    }).catch(e => console.error('n8n webhook failed:', e))
+  }
+
   return NextResponse.json({
     id: data.id,
     ...(assignment && { jobId: assignment.jobId, cleanerNames: assignment.cleanerNames }),

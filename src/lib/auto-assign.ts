@@ -1,5 +1,6 @@
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { estimateDriveMinutes } from './drive-time'
+import { SERVICE_PRICES, SERVICE_DURATIONS } from './services'
 import type { Cleaner, Job } from '@/types'
 
 // Approximate coordinates for common service-area cities
@@ -39,21 +40,6 @@ function getDayName(dateStr: string): string {
   return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(dateStr + 'T12:00:00').getDay()]
 }
 
-const DURATION_BY_SERVICE: Record<string, number> = {
-  standard: 150,
-  deep: 240,
-  'move-out': 300,
-  'post-construction': 240,
-  airbnb: 180,
-}
-
-const PRICE_BY_SERVICE: Record<string, number> = {
-  standard: 175,
-  deep: 275,
-  'move-out': 325,
-  'post-construction': 325,
-  airbnb: 200,
-}
 
 // 'deep' in service_type maps to 'deep-clean' in cleaner specialties
 function serviceToSpecialty(s: string): string {
@@ -121,7 +107,7 @@ export async function autoAssignBookingRequest(params: {
   if (cleaners.length === 0) return null
 
   const [jobLat, jobLng] = approxCoords(params.city)
-  const duration = DURATION_BY_SERVICE[params.serviceType] ?? 150
+  const duration = SERVICE_DURATIONS[params.serviceType] ?? 150
   const slotStart = parseMinutes(params.preferredTime)
   const slotEnd = slotStart + duration + 30
   const day = getDayName(params.preferredDate)
@@ -231,7 +217,7 @@ export async function autoAssignBookingRequest(params: {
     actual_duration: null,
     status: 'scheduled',
     service_type: serviceType,
-    price: PRICE_BY_SERVICE[params.serviceType] ?? 175,
+    price: SERVICE_PRICES[params.serviceType] ?? 165,
     paid: false,
     payment_method: null,
     payment_confirmation_id: null,

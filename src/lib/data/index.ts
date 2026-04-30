@@ -1,6 +1,6 @@
 import 'server-only'
 import { cache } from 'react'
-import type { Cleaner, Customer, Job, Payment, Team } from '@/types'
+import type { Cleaner, Customer, Job, Payment, Team, SocialLead } from '@/types'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 
 // ─────────── row → domain mappers ───────────
@@ -281,6 +281,33 @@ export async function getRevenueHistory(months = 6): Promise<{ month: string; to
   }
   return result
 }
+
+export const getSocialLeads = cache(async (): Promise<SocialLead[]> => {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('social_leads')
+    .select('id,platform,author,author_initials,group_or_page,content,posted_at,status,location,urgency,responded_at,response_used,captured_at,likes,comments_count')
+    .order('posted_at', { ascending: false })
+    .limit(100)
+  if (error || !data) return []
+  return data.map(r => ({
+    id: r.id,
+    platform: r.platform as SocialLead['platform'],
+    author: r.author,
+    authorInitials: r.author_initials,
+    groupOrPage: r.group_or_page,
+    content: r.content,
+    postedAt: r.posted_at,
+    status: r.status as SocialLead['status'],
+    location: r.location,
+    urgency: r.urgency as SocialLead['urgency'],
+    respondedAt: r.responded_at ?? undefined,
+    responseUsed: r.response_used ?? undefined,
+    capturedAt: r.captured_at ?? undefined,
+    likes: r.likes,
+    comments: r.comments_count,
+  }))
+})
 
 export async function getTeamSchedule(
   teamId: string,

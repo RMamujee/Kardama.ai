@@ -228,6 +228,21 @@ export const getBookingRequests = cache(async (): Promise<BookingRequest[]> => {
   return (data as unknown as BookingRequestRow[]).map(mapBookingRequest)
 })
 
+// Fetches non-declined booking requests that have a linked customer, used to
+// show a pending next-cleaning date on the customers page when no job exists yet.
+export const getCustomerBookingRequests = cache(async (): Promise<BookingRequest[]> => {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('booking_requests')
+    .select('*')
+    .not('converted_customer_id', 'is', null)
+    .in('status', ['pending', 'accepted'])
+    .not('preferred_date', 'is', null)
+    .order('preferred_date')
+  if (error || !data) return []
+  return (data as unknown as BookingRequestRow[]).map(mapBookingRequest)
+})
+
 export const getAcceptedBookings = cache(async (): Promise<BookingRequest[]> => {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase

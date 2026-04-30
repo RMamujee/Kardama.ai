@@ -16,8 +16,9 @@ import { AddCustomerDialog } from '@/components/customers/AddCustomerDialog'
 import { sendBookingLink, deleteCustomer } from '@/app/actions/customers'
 import { formatCurrency, getServiceLabel, customerCode, cn } from '@/lib/utils'
 import type { Customer, Cleaner, Job, Payment } from '@/types'
+import type { BookingRequest } from '@/lib/data'
 
-type CustomersData = { customers: Customer[]; jobs: Job[]; cleaners: Cleaner[]; payments: Payment[] }
+type CustomersData = { customers: Customer[]; jobs: Job[]; cleaners: Cleaner[]; payments: Payment[]; bookingRequests: BookingRequest[] }
 
 const SOURCE_BADGE: Record<string, 'default' | 'success' | 'warning' | 'neutral'> = {
   facebook: 'default',
@@ -35,7 +36,7 @@ const AVATAR_COLORS = [
 const today = new Date().toISOString().split('T')[0]
 const thisMonth = today.slice(0, 7)
 
-export function CustomersClient({ customers, jobs, cleaners, payments }: CustomersData) {
+export function CustomersClient({ customers, jobs, cleaners, payments, bookingRequests }: CustomersData) {
   const router = useRouter()
   const params = useSearchParams()
   const [search, setSearch] = useState('')
@@ -80,6 +81,24 @@ export function CustomersClient({ customers, jobs, cleaners, payments }: Custome
     }
     return map
   }, [jobs])
+
+  // Fallback: booking requests not yet converted to a job (pending/unassigned)
+  const pendingBookingByCustomer = useMemo(() => {
+    const map = new Map<string, { date: string; time: string | null; serviceType: string; isPending: boolean }>()
+    for (const br of bookingRequests) {
+      if (!br.convertedCustomerId || !br.preferredDate) continue
+      if (br.preferredDate <= today) continue
+      if (!map.has(br.convertedCustomerId)) {
+        map.set(br.convertedCustomerId, {
+          date: br.preferredDate,
+          time: br.preferredTime,
+          serviceType: br.serviceType,
+          isPending: br.status === 'pending',
+        })
+      }
+    }
+    return map
+  }, [bookingRequests])
 
   // Per-customer all jobs
   const jobsByCustomer = useMemo(() => {
@@ -276,9 +295,17 @@ export function CustomersClient({ customers, jobs, cleaners, payments }: Custome
                           <p className="num text-[12.5px] font-medium text-ink-900">{nextJob.scheduledDate}</p>
                           <p className="mt-0.5 text-[11.5px] text-ink-500">{getServiceLabel(nextJob.serviceType)}</p>
                         </div>
-                      ) : (
-                        <span className="text-[12px] text-ink-400">—</span>
-                      )}
+                      ) : (() => {
+                        const pending = pendingBookingByCustomer.get(customer.id)
+                        return pending ? (
+                          <div>
+                            <p className="num text-[12.5px] font-medium text-ink-900">{pending.date}</p>
+                            <p className="mt-0.5 text-[11px] text-amber-500">{pending.isPending ? 'Unassigned' : getServiceLabel(pending.serviceType)}</p>
+                          </div>
+                        ) : (
+                          <span className="text-[12px] text-ink-400">—</span>
+                        )
+                      })()}
                     </td>
 
                     {/* Revenue */}
@@ -327,6 +354,7 @@ export function CustomersClient({ customers, jobs, cleaners, payments }: Custome
             jobs={jobsByCustomer.get(selected.id) ?? []}
             confirmedRevenue={confirmedRevenueByCustomer.get(selected.id) ?? 0}
             color={AVATAR_COLORS[customers.indexOf(selected) % AVATAR_COLORS.length]}
+            pendingBooking={pendingBookingByCustomer.get(selected.id)}
             onClose={() => setSelected(null)}
           />
         )}
@@ -390,13 +418,14 @@ export function CustomersClient({ customers, jobs, cleaners, payments }: Custome
 // ═══════════════════════════════════════════════════════════════════════════
 
 function DetailPanel({
-  customer, cleaners, jobs, confirmedRevenue, color, onClose,
+  customer, cleaners, jobs, confirmedRevenue, color, pendingBooking, onClose,
 }: {
   customer: Customer
   cleaners: Cleaner[]
   jobs: Job[]
   confirmedRevenue: number
   color: string
+  pendingBooking?: { date: string; time: string | null; serviceType: string; isPending: boolean }
   onClose: () => void
 }) {
   const [isPending, startTransition] = useTransition()
@@ -406,6 +435,7 @@ function DetailPanel({
   const preferred = cleaners.filter(c => customer.preferredCleanerIds.includes(c.id))
   const sortedJobs = [...jobs].sort((a, b) => b.scheduledDate.localeCompare(a.scheduledDate))
   const nextJob = jobs.filter(j => j.scheduledDate > today && j.status !== 'cancelled').sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))[0]
+  const nextDate = nextJob?.scheduledDate ?? pendingBooking?.date ?? null
 
   function handleSendLink() {
     setFeedback(null)
@@ -470,10 +500,13 @@ function DetailPanel({
             </div>
             <div className="px-4 py-4">
               <span className="eyebrow">Next</span>
-              {nextJob ? (
-                <p className="num mt-2.5 text-[13px] font-semibold text-ink-900 leading-tight">
-                  {nextJob.scheduledDate}
-                </p>
+              {nextDate ? (
+                <div className="mt-2.5">
+                  <p className="num text-[13px] font-semibold text-ink-900 leading-tight">{nextDate}</p>
+                  {!nextJob && pendingBooking?.isPending && (
+                    <p className="text-[10.5px] text-amber-500 mt-0.5">Unassigned</p>
+                  )}
+                </div>
               ) : (
                 <p className="mt-2.5 text-[13px] text-ink-400">—</p>
               )}

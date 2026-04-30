@@ -14,9 +14,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          'bg-mint-400 text-black shadow-[0_2px_14px_-3px_rgba(29,185,84,0.5)] hover:bg-mint-500 hover:scale-[1.03] active:scale-[0.97]',
+          'bg-mint-500 text-white shadow-[0_2px_14px_-3px_rgba(139,133,242,0.55),0_1px_0_rgba(255,255,255,0.14)_inset] hover:bg-mint-400 hover:scale-[1.03] active:scale-[0.97]',
         secondary:
-          'bg-soft text-ink-700 border border-line-strong hover:bg-hover hover:text-ink-900',
+          'bg-elev text-ink-700 border border-line-strong hover:bg-hover hover:text-ink-900',
         outline:
           'bg-transparent text-ink-700 border border-line-strong hover:bg-soft hover:text-ink-900',
         ghost:
@@ -24,9 +24,9 @@ const buttonVariants = cva(
         danger:
           'bg-rose-500/10 text-rose-500 border border-rose-500/20 hover:bg-rose-500/[0.15]',
         success:
-          'bg-mint-500/10 text-mint-500 border border-mint-500/20 hover:bg-mint-500/[0.15]',
+          'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500/[0.15]',
         glow:
-          'bg-mint-400 text-black shadow-[0_2px_14px_-3px_rgba(29,185,84,0.5)] hover:bg-mint-500 hover:scale-[1.03] active:scale-[0.97]',
+          'bg-mint-500 text-white shadow-[0_2px_14px_-3px_rgba(139,133,242,0.55),0_1px_0_rgba(255,255,255,0.14)_inset] hover:bg-mint-400 hover:scale-[1.03] active:scale-[0.97]',
       },
       size: {
         sm:        'h-8 px-4 text-[13px] rounded-[7px]',

@@ -1,50 +1,50 @@
 @import "tailwindcss";
 
 /* ═════════════════════════════════════════════════════════════════════════
-   KARDAMA — Obsidian
-   Brand-tinted (green) dark surfaces. DM Serif Display for hero moments.
-   Tinted shadows. Grain texture. One accent, used sparingly.
+   KARDAMA — Indigo
+   Navy-dark surfaces, violet accent (#8B85F2), emerald for revenue.
+   Tabular numbers throughout. Grain texture. Clean motion.
    ═════════════════════════════════════════════════════════════════════════ */
 
 @theme {
-  /* ── Surfaces (brand-tinted darks — subtle green cohesion) ──────────── */
-  --color-page:    #080B09;
-  --color-rail:    #0D1410;
-  --color-card:    #131A14;
-  --color-soft:    #19231B;
-  --color-hover:   #1F2C22;
-  --color-elev:    #1F2C22;
-  --color-line:    #232E27;
-  --color-line-strong: #2D3C33;
+  /* ── Surfaces (navy-tinted darks) ──────────────────────────────────── */
+  --color-page:    #0A0E1A;
+  --color-rail:    #0D1322;
+  --color-card:    #111827;
+  --color-soft:    #161D2E;
+  --color-hover:   #1A2236;
+  --color-elev:    #1B2336;
+  --color-line:    #1A2034;
+  --color-line-strong: #232B40;
 
-  /* ── Ink (green-tinted near-whites for brand cohesion) ──────────────── */
-  --color-ink-50:  #161D18;
-  --color-ink-100: #222B24;
-  --color-ink-200: #323D35;
-  --color-ink-300: #4E5E52;
-  --color-ink-400: #738077;
-  --color-ink-500: #99A89D;
-  --color-ink-600: #BECDC2;
-  --color-ink-700: #E0EDE5;
-  --color-ink-900: #F2FDF5;
+  /* ── Ink (navy-tinted near-whites) ─────────────────────────────────── */
+  --color-ink-50:  #1A2034;
+  --color-ink-100: #232B40;
+  --color-ink-200: #3A4258;
+  --color-ink-300: #535B70;
+  --color-ink-400: #6E778C;
+  --color-ink-500: #9099AE;
+  --color-ink-600: #B0BAD4;
+  --color-ink-700: #D7DCE8;
+  --color-ink-900: #F2F5FA;
 
-  /* ── Brand accent (Kardama green) ───────────────────────────────────── */
-  --color-mint-50:  #052914;
-  --color-mint-100: #0A3A1E;
-  --color-mint-200: #0F4F2C;
-  --color-mint-300: #169C46;
-  --color-mint-400: #1DB954;
-  --color-mint-500: #1ED760;
-  --color-mint-600: #1DB954;
-  --color-mint-700: #169C46;
+  /* ── Brand accent — violet ──────────────────────────────────────────── */
+  --color-mint-50:  #1D1B3A;
+  --color-mint-100: #2B2A5C;
+  --color-mint-200: #3F3D8A;
+  --color-mint-300: #6360D0;
+  --color-mint-400: #7A75E0;
+  --color-mint-500: #8B85F2;
+  --color-mint-600: #6F69E5;
+  --color-mint-700: #524CCB;
 
   /* ── Status ─────────────────────────────────────────────────────────── */
-  --color-emerald-500: #1ED760;
-  --color-amber-500:   #FFB020;
-  --color-rose-500:    #FF5C5A;
-  --color-down:        #FF5C5A;
-  --color-up:          #1DB954;
-  --color-blue-glow:   #4FA8E5;
+  --color-emerald-500: #34D399;
+  --color-amber-500:   #FBBF24;
+  --color-rose-500:    #F87171;
+  --color-down:        #F87171;
+  --color-up:          #34D399;
+  --color-blue-glow:   #8B85F2;
 
   /* ── Legacy compat ──────────────────────────────────────────────────── */
   --color-violet-50:  var(--color-mint-50);
@@ -55,25 +55,24 @@
   --color-violet-600: var(--color-mint-600);
   --color-violet-700: var(--color-mint-700);
   --color-purple-500: var(--color-mint-500);
-  --color-teal-500:   var(--color-mint-500);
-  --color-pink-500:   var(--color-amber-500);
+  --color-teal-500:   #2DD4BF;
+  --color-pink-500:   #F472B6;
 
-  /* ── Geometry ─────────────────────────────────────────────────────── */
-  --radius-card:   10px;
-  --radius-tile:   8px;
-  --radius-input:  7px;
-  --radius-button: 7px;
+  /* ── Geometry ───────────────────────────────────────────────────────── */
+  --radius-card:   12px;
+  --radius-tile:   10px;
+  --radius-input:  9px;
+  --radius-button: 9px;
   --radius-pill:   999px;
 
-  /* ── Shadows (brand-tinted — never pure black) ───────────────────────
-     Per color-and-contrast skill: tint shadows toward background hue.    */
-  --shadow-card:    none;
-  --shadow-elev:    0 1px 0 0 rgba(255,255,255,0.04) inset;
-  --shadow-pop:     0 32px 80px -8px rgba(2,8,4,0.92), 0 0 0 1px rgba(255,255,255,0.04);
-  --shadow-mint:    0 0 0 3px rgba(29,185,84,0.3);
+  /* ── Shadows ────────────────────────────────────────────────────────── */
+  --shadow-card:    0 1px 0 rgba(255,255,255,0.025) inset;
+  --shadow-elev:    0 1px 0 rgba(255,255,255,0.03) inset, 0 4px 12px rgba(0,0,0,0.45);
+  --shadow-pop:     0 24px 64px rgba(0,0,0,0.70), 0 0 0 1px rgba(255,255,255,0.04);
+  --shadow-mint:    0 0 0 3px rgba(139,133,242,0.35);
 
   /* ── Type ──────────────────────────────────────────────────────────── */
-  --font-sans:    var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-sans:    var(--font-geist-sans), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono:    var(--font-geist-mono), 'JetBrains Mono', 'SF Mono', monospace;
   --font-display: var(--font-dm-serif), 'DM Serif Display', Georgia, serif;
 }
@@ -82,13 +81,13 @@
    Legacy CSS variable aliases
    ═════════════════════════════════════════════════════════════════════════ */
 :root {
-  --bg-page:        var(--color-page);
-  --bg-rail:        var(--color-rail);
-  --bg-card:        var(--color-card);
-  --bg-soft:        var(--color-soft);
-  --bg-hover:       var(--color-hover);
-  --bg-elev:        var(--color-elev);
-  --bg-line:        var(--color-line);
+  --bg-page:  var(--color-page);
+  --bg-rail:  var(--color-rail);
+  --bg-card:  var(--color-card);
+  --bg-soft:  var(--color-soft);
+  --bg-hover: var(--color-hover);
+  --bg-elev:  var(--color-elev);
+  --bg-line:  var(--color-line);
 
   --ink-50:  var(--color-ink-50);
   --ink-100: var(--color-ink-100);
@@ -108,27 +107,27 @@
   --blue-600: var(--color-mint-600);
   --blue-700: var(--color-mint-700);
 
-  --green-500: var(--color-emerald-500);
-  --green-50:  #042312;
-  --amber-500: var(--color-amber-500);
-  --amber-50:  #2A1B05;
-  --red-500:   var(--color-rose-500);
-  --red-50:    #2A0E0E;
+  --green-500:  var(--color-emerald-500);
+  --green-50:   #0F2B22;
+  --amber-500:  var(--color-amber-500);
+  --amber-50:   #2B2210;
+  --red-500:    var(--color-rose-500);
+  --red-50:     #2A1518;
   --violet-500: var(--color-mint-500);
   --violet-50:  var(--color-mint-50);
-  --teal-500:  var(--color-mint-500);
-  --teal-50:   var(--color-mint-50);
-  --pink-500:  var(--color-amber-500);
-  --pink-50:   #2A1B05;
+  --teal-500:   #2DD4BF;
+  --teal-50:    #0E2A28;
+  --pink-500:   #F472B6;
+  --pink-50:    #2A1422;
 
-  --r-sm: 5px;
-  --r-md: 7px;
-  --r-lg: 10px;
-  --r-xl: 14px;
+  --r-sm: 7px;
+  --r-md: 9px;
+  --r-lg: 12px;
+  --r-xl: 16px;
 
-  --shadow-sm: 0 1px 2px 0 rgba(0,4,2,0.08);
-  --shadow-md: var(--shadow-card);
-  --shadow-lg: var(--shadow-elev);
+  --shadow-sm: 0 1px 0 rgba(255,255,255,0.025) inset, 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-md: 0 1px 0 rgba(255,255,255,0.03) inset, 0 4px 12px rgba(0,0,0,0.45);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.55);
 }
 
 /* ═════════════════════════════════════════════════════════════════════════
@@ -149,34 +148,21 @@ body {
   font-feature-settings: 'cv11', 'ss01', 'ss03';
 }
 
-/* Grain texture overlay — breaks digital flatness per redesign skill */
+/* Subtle grain — breaks flat digital look */
 body::after {
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 9999;
-  opacity: 0.028;
+  opacity: 0.022;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 256px 256px;
 }
 
 /* ═════════════════════════════════════════════════════════════════════════
-   Type scale — use these sizes consistently. Nothing below 11px in UI.
-   ─────────────────────────────────────────────────────────────────────────
-   11px  →  eyebrow / kbd / tiny meta
-   12px  →  captions, badge text, section labels
-   13px  →  body text, list items, input values
-   14px  →  card titles, nav labels, topbar title
-   16px  →  section headings (h2)
-   18px  →  prominent section titles
-   22px  →  small stat numbers
-   28px  →  secondary stat tiles
-   36px  →  stat tile hero values
-   48–56px →  .hero-num (DM Serif Display)
+   Type utilities
    ═════════════════════════════════════════════════════════════════════════ */
-
-/* ── Typography utilities ───────────────────────────────────────────────── */
 
 .tnum, .num {
   font-variant-numeric: tabular-nums;
@@ -184,11 +170,11 @@ body::after {
 }
 
 .eyebrow {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: var(--color-ink-500);
+  color: var(--color-ink-400);
 }
 
 .kbd {
@@ -206,11 +192,11 @@ body::after {
 }
 
 .grid-label {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--color-ink-500);
+  color: var(--color-ink-400);
 }
 
 /* ── Scrollbar ─────────────────────────────────────────────────────────── */
@@ -224,7 +210,7 @@ body::after {
 
 /* ── Selection ─────────────────────────────────────────────────────────── */
 ::selection {
-  background: rgba(29,185,84,0.3);
+  background: rgba(139,133,242,0.28);
   color: var(--color-ink-900);
 }
 
@@ -235,7 +221,7 @@ body::after {
 }
 
 /* ── Google Maps overrides ────────────────────────────────────────────── */
-.gm-style .gm-style-iw-c { border-radius: 12px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important; }
+.gm-style .gm-style-iw-c { border-radius: 12px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important; }
 .gm-style .gm-style-iw-d { overflow: hidden !important; }
 
 /* ═════════════════════════════════════════════════════════════════════════
@@ -250,12 +236,11 @@ body::after {
   transition: border-color 180ms ease, box-shadow 180ms ease;
 }
 .card:hover {
-  border-color: #3A4E40;
-  /* Tinted shadow — green hue, not plain black */
-  box-shadow: 0 8px 28px rgba(2,8,4,0.55), 0 0 0 1px rgba(29,185,84,0.04);
+  border-color: var(--color-mint-200);
+  box-shadow: 0 8px 28px rgba(0,0,12,0.55), 0 0 0 1px rgba(139,133,242,0.06);
 }
 
-/* Hero card — the revenue widget centerpiece */
+/* Hero card — top accent line */
 .hero-card {
   background: var(--color-card);
   border: 1px solid var(--color-line-strong);
@@ -274,9 +259,9 @@ body::after {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(29,185,84,0.45) 30%,
-    rgba(29,185,84,0.55) 50%,
-    rgba(29,185,84,0.45) 70%,
+    rgba(139,133,242,0.5) 30%,
+    rgba(139,133,242,0.65) 50%,
+    rgba(139,133,242,0.5) 70%,
     transparent 100%
   );
 }
@@ -294,8 +279,8 @@ body::after {
   transition: border-color 180ms ease, box-shadow 180ms ease;
 }
 .stat-tile:hover {
-  border-color: #3A4E40;
-  box-shadow: 0 6px 20px rgba(2,8,4,0.5);
+  border-color: var(--color-mint-200);
+  box-shadow: 0 6px 20px rgba(0,0,12,0.5);
 }
 
 .section-header {
@@ -303,7 +288,7 @@ body::after {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 22px 28px 18px;
+  padding: 18px 22px 14px;
   border-bottom: 1px solid var(--color-line);
 }
 
@@ -311,14 +296,13 @@ body::after {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 18px 24px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--color-line);
   transition: background-color 100ms ease;
 }
 .data-row:last-child { border-bottom: none; }
 .data-row:hover { background: var(--color-soft); }
 
-/* Hero number — DM Serif Display for landmark moments */
 .hero-num {
   font-family: var(--font-display);
   font-size: 46px;
@@ -343,12 +327,12 @@ body::after {
   transition: border-color 180ms ease, box-shadow 180ms ease;
 }
 .card-tile:hover {
-  border-color: #3A4E40;
-  box-shadow: 0 6px 20px rgba(2,8,4,0.5);
+  border-color: var(--color-mint-200);
+  box-shadow: 0 6px 20px rgba(0,0,12,0.5);
 }
 
 /* ═════════════════════════════════════════════════════════════════════════
-   Sidebar active indicator system
+   Sidebar nav indicator
    ═════════════════════════════════════════════════════════════════════════ */
 
 .nav-indicator {
@@ -358,8 +342,8 @@ body::after {
   transform: translateY(-50%);
   width: 3px;
   border-radius: 0 3px 3px 0;
-  background: var(--color-mint-400);
-  box-shadow: 0 0 10px rgba(29,185,84,0.55);
+  background: var(--color-mint-500);
+  box-shadow: 0 0 10px rgba(139,133,242,0.6);
   transition: height 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -367,22 +351,22 @@ body::after {
    Animations
    ═════════════════════════════════════════════════════════════════════════ */
 
-@keyframes pulse-mint {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(29,185,84,0.5); }
-  50%      { box-shadow: 0 0 0 6px rgba(29,185,84,0); }
+@keyframes pulse-violet {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(139,133,242,0.5); }
+  50%      { box-shadow: 0 0 0 6px rgba(139,133,242,0); }
 }
-.pulse-dot { animation: pulse-mint 2s infinite; }
+.pulse-dot { animation: pulse-violet 2s infinite; }
 
 @keyframes gps-ring {
-  0%   { box-shadow: 0 0 0 0 rgba(29,185,84,0.6); }
-  70%  { box-shadow: 0 0 0 14px rgba(29,185,84,0); }
-  100% { box-shadow: 0 0 0 0 rgba(29,185,84,0); }
+  0%   { box-shadow: 0 0 0 0 rgba(139,133,242,0.6); }
+  70%  { box-shadow: 0 0 0 14px rgba(139,133,242,0); }
+  100% { box-shadow: 0 0 0 0 rgba(139,133,242,0); }
 }
 .gps-dot { animation: gps-ring 1.8s infinite; }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(29,185,84,0.35); }
-  50%      { box-shadow: 0 0 0 6px rgba(29,185,84,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(139,133,242,0.35); }
+  50%      { box-shadow: 0 0 0 6px rgba(139,133,242,0); }
 }
 .pulse-glow { animation: pulse-glow 2s infinite; }
 
@@ -408,7 +392,6 @@ body::after {
 }
 .anim-fade-in { animation: fade-in 200ms ease-out both; }
 
-/* Staggered reveal for dashboard sections */
 @keyframes reveal-up {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -425,18 +408,18 @@ body::after {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 5px 10px 5px 8px;
+  padding: 4px 10px 4px 8px;
   border-radius: var(--radius-pill);
-  background: rgba(29,185,84,0.08);
-  border: 1px solid rgba(29,185,84,0.2);
-  color: var(--color-mint-500);
+  background: linear-gradient(135deg, rgba(139,133,242,0.14), rgba(45,212,191,0.10));
+  border: 1px solid rgba(139,133,242,0.30);
+  color: var(--color-mint-400);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.01em;
 }
 .ai-pill .pulse {
   width: 6px; height: 6px; border-radius: var(--radius-pill);
-  background: var(--color-mint-400);
-  box-shadow: 0 0 6px rgba(29,185,84,0.7);
-  animation: pulse-mint 2s infinite;
+  background: var(--color-mint-500);
+  box-shadow: 0 0 8px rgba(139,133,242,0.8);
+  animation: pulse-violet 2s infinite;
 }

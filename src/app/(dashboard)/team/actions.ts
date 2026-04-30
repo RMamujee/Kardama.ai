@@ -36,21 +36,19 @@ export async function inviteCleanerAction(_prev: InviteState, formData: FormData
   const admin = getSupabaseAdminClient()
   const mobileUrl = process.env.NEXT_PUBLIC_MOBILE_APP_URL ?? 'https://kardama-mobile.vercel.app'
 
-  // 1. Generate invite link without letting Supabase send its generic email.
-  //    generateLink creates the auth.users row and returns the magic link so
-  //    the n8n workflow can embed it in a branded onboarding email.
-  const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
-    type: 'invite',
-    email,
-    options: { redirectTo: `${mobileUrl}/auth/callback` },
+  // 1. Invite the cleaner — Supabase sends the invite email immediately.
+  //    redirectTo points to the mobile app so the link in the email drops them
+  //    straight into kardama-mobile after they click it.
+  const { data: invite, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(email, {
+    redirectTo: `${mobileUrl}/auth/callback`,
   })
-  if (linkErr || !linkData.user) {
-    return { error: linkErr?.message ?? 'Failed to generate invite link' }
+  if (inviteErr || !invite.user) {
+    return { error: inviteErr?.message ?? 'Failed to send invite' }
   }
-  const inviteUrl = linkData.properties.action_link
+  const userId = invite.user.id
 
   // Flag the user so the mobile app prompts them to set a password on first login.
-  await admin.auth.admin.updateUserById(linkData.user.id, {
+  await admin.auth.admin.updateUserById(userId, {
     user_metadata: { needs_password_setup: true },
   })
 
@@ -80,25 +78,24 @@ export async function inviteCleanerAction(_prev: InviteState, formData: FormData
     color,
   })
   if (cleanerErr) {
-    await admin.auth.admin.deleteUser(linkData.user.id)
+    await admin.auth.admin.deleteUser(userId)
     return { error: `Failed to create cleaner row: ${cleanerErr.message}` }
   }
 
   // 3. Create profile linking auth user → cleaner row.
   const { error: profileErr } = await admin.from('profiles').insert({
-    user_id: linkData.user.id,
+    user_id: userId,
     role: 'cleaner',
     cleaner_id: cleanerId,
     display_name: name,
   })
   if (profileErr) {
     await admin.from('cleaners').delete().eq('id', cleanerId)
-    await admin.auth.admin.deleteUser(linkData.user.id)
+    await admin.auth.admin.deleteUser(userId)
     return { error: `Failed to create profile: ${profileErr.message}` }
   }
 
-  // 4. Fire n8n onboarding email webhook (fire-and-forget).
-  //    The n8n workflow receives the invite URL and sends the branded welcome email.
+  // 4. Optional: fire n8n webhook for CRM / branded follow-up notifications.
   const n8nWelcomeWebhook = process.env.N8N_CLEANER_WELCOME_WEBHOOK_URL
   if (n8nWelcomeWebhook) {
     fetch(n8nWelcomeWebhook, {
@@ -109,11 +106,8 @@ export async function inviteCleanerAction(_prev: InviteState, formData: FormData
         cleanerEmail: email,
         cleanerPhone: phone,
         mobileAppUrl: mobileUrl,
-        inviteUrl,
       }),
     }).catch(e => console.error('n8n cleaner welcome webhook failed:', e))
-  } else {
-    console.warn('N8N_CLEANER_WELCOME_WEBHOOK_URL not set — onboarding email not sent for', email)
   }
 
   revalidatePath('/team')

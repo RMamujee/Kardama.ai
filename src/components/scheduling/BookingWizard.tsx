@@ -96,10 +96,10 @@ export function BookingWizard({ cleaners, customers }: Props) {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative w-full max-w-2xl rounded-2xl bg-card border border-line-strong shadow-[0_20px_60px_-8px_rgba(0,0,0,0.14),0_8px_24px_-4px_rgba(0,0,0,0.08)] overflow-hidden"
+        className="relative w-full max-w-3xl rounded-2xl bg-card border border-line-strong shadow-[0_20px_60px_-8px_rgba(0,0,0,0.14),0_8px_24px_-4px_rgba(0,0,0,0.08)] overflow-hidden"
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-ink-200 px-7 py-5">
+        <div className="flex items-center justify-between border-b border-ink-200 px-9 py-6">
           <div>
             <h2 className="text-[19px] font-semibold text-ink-900 tracking-[-0.01em]">New Job</h2>
             <p className="text-[13px] text-ink-500 mt-0.5">Step {bookingStep + 1} of 4: {STEPS[bookingStep]}</p>
@@ -118,7 +118,7 @@ export function BookingWizard({ cleaners, customers }: Props) {
         </div>
 
         {/* Steps */}
-        <div className="px-7 py-6">
+        <div className="px-9 py-7">
           <AnimatePresence mode="wait">
             <motion.div key={bookingStep} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
 
@@ -284,20 +284,20 @@ export function BookingWizard({ cleaners, customers }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between gap-3 border-t border-ink-200 px-7 py-5">
-          <Button variant="outline" onClick={bookingStep === 0 ? closeBooking : prevStep} disabled={isPending}>
+        <div className="flex items-center justify-between gap-3 border-t border-ink-200 px-9 py-6">
+          <Button size="lg" variant="outline" onClick={bookingStep === 0 ? closeBooking : prevStep} disabled={isPending} className="min-w-[120px]">
             {bookingStep === 0 ? <><X className="h-4 w-4" /> Cancel</> : <><ChevronLeft className="h-4 w-4" /> Back</>}
           </Button>
           {bookingStep === 1 ? (
-            <Button onClick={handleComputeRecommendations}>
+            <Button size="lg" onClick={handleComputeRecommendations} className="min-w-[220px]">
               <Sparkles className="h-4 w-4" /> Get AI Recommendations
             </Button>
           ) : bookingStep === 3 ? (
-            <Button onClick={handleConfirm} disabled={!selectedTeam || isPending}>
+            <Button size="lg" onClick={handleConfirm} disabled={!selectedTeam || isPending} className="min-w-[180px]">
               <CheckCircle className="h-4 w-4" /> {isPending ? 'Saving…' : 'Schedule Job'}
             </Button>
           ) : (
-            <Button onClick={nextStep} disabled={bookingStep === 2 && !selectedTeam}>
+            <Button size="lg" onClick={nextStep} disabled={bookingStep === 2 && !selectedTeam} className="min-w-[150px]">
               {bookingStep === 2 && !selectedTeam ? 'Select a Team' : <>Next <ChevronRight className="h-4 w-4" /></>}
             </Button>
           )}

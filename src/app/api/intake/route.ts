@@ -5,31 +5,52 @@ import { SERVICE_PRICES, VALID_SERVICE_TYPES, VALID_TIMES } from '@/lib/services
 
 const VALID_TIMES_SET = new Set(VALID_TIMES)
 
+const CORS = {
+  'Access-Control-Allow-Origin': 'https://kardama-intake.vercel.app',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: CORS })
+}
+
+function to24h(t: string): string {
+  const m = t.match(/^(\d{1,2}):(\d{2})(am|pm)$/i)
+  if (!m) return t
+  let h = parseInt(m[1]), min = parseInt(m[2])
+  const period = m[3].toLowerCase()
+  if (period === 'pm' && h !== 12) h += 12
+  if (period === 'am' && h === 12) h = 0
+  return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`
+}
+
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null)
-  if (!body) return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  if (!body) return NextResponse.json({ error: 'Invalid JSON' }, { status: 400, headers: CORS })
 
   const {
     customer_name, customer_phone, customer_email,
     address, city, service_type,
-    preferred_date, preferred_time, notes,
+    preferred_date, preferred_time: rawTime, notes,
   } = body
+  const preferred_time = rawTime ? to24h(String(rawTime)) : rawTime
 
   if (!customer_name || !customer_phone || !customer_email || !address || !service_type || !preferred_date || !preferred_time) {
-    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    return NextResponse.json({ error: 'Missing required fields' }, { status: 400, headers: CORS })
   }
 
   if (!VALID_SERVICE_TYPES.has(service_type)) {
-    return NextResponse.json({ error: 'Invalid service type' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid service type' }, { status: 400, headers: CORS })
   }
 
   if (!VALID_TIMES_SET.has(preferred_time)) {
-    return NextResponse.json({ error: 'Invalid time slot' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid time slot' }, { status: 400, headers: CORS })
   }
 
   const today = new Date().toISOString().split('T')[0]
   if (preferred_date <= today) {
-    return NextResponse.json({ error: 'Date must be in the future' }, { status: 400 })
+    return NextResponse.json({ error: 'Date must be in the future' }, { status: 400, headers: CORS })
   }
 
   const sanitized = {
@@ -56,7 +77,7 @@ export async function POST(request: Request) {
 
   if (error) {
     console.error('intake insert error', error)
-    return NextResponse.json({ error: 'Failed to submit request' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to submit request' }, { status: 500, headers: CORS })
   }
 
   // Auto-assign — find best available team, create customer + job records
@@ -135,5 +156,5 @@ export async function POST(request: Request) {
   return NextResponse.json({
     id: data.id,
     ...(assignment && { jobId: assignment.jobId, cleanerNames: assignment.cleanerNames }),
-  }, { status: 201 })
+  }, { status: 201, headers: CORS })
 }

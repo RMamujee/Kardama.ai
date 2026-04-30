@@ -139,7 +139,7 @@ type BookingRequestRow = {
   cleaning_frequency: string | null
   has_pets_allergies: string | null
   notes: string
-  status: 'pending' | 'accepted' | 'declined' | 'converted'
+  status: 'pending' | 'accepted' | 'declined' | 'converted' | 'cancelled'
   source: string | null
   converted_customer_id: string | null
   converted_job_id: string | null

@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { VALID_TIMES } from '@/lib/services'
 
-const VALID_TIMES_SET = new Set(VALID_TIMES)
+type ValidTime = typeof VALID_TIMES[number]
+const VALID_TIMES_SET = new Set<string>(VALID_TIMES)
 
 const CORS = {
   'Access-Control-Allow-Origin': 'https://kardama-intake.vercel.app',
@@ -64,7 +65,7 @@ export async function POST(
 
   const { error } = await admin
     .from('booking_requests')
-    .update({ preferred_date, preferred_time, status: 'pending' })
+    .update({ preferred_date, preferred_time: preferred_time as ValidTime, status: 'pending' })
     .eq('id', id)
 
   if (error) {

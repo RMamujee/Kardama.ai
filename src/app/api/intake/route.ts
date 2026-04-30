@@ -54,6 +54,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Date must be in the future' }, { status: 400, headers: CORS })
   }
 
+  // Block emergency / special-service numbers
+  const rawDigits = String(customer_phone).replace(/\D/g, '')
+  const checkDigits = rawDigits.length === 11 && rawDigits.startsWith('1') ? rawDigits.slice(1) : rawDigits
+  const BLOCKED_PREFIXES = ['911', '112', '999', '000', '411', '611', '711', '811']
+  if (BLOCKED_PREFIXES.some(p => checkDigits === p || checkDigits.startsWith(p))) {
+    return NextResponse.json({ error: 'Please enter a valid phone number.' }, { status: 400, headers: CORS })
+  }
+
   const sanitized = {
     customer_name: String(customer_name).trim().slice(0, 120),
     customer_phone: String(customer_phone).trim().slice(0, 30),
@@ -66,6 +74,25 @@ export async function POST(request: Request) {
   }
 
   const supabase = getSupabaseAdminClient()
+
+  // Prevent double-booking the same address at the same date + time
+  const { data: dupCheck } = await supabase
+    .from('booking_requests')
+    .select('id')
+    .ilike('address', sanitized.address)
+    .eq('preferred_date', preferred_date)
+    .eq('preferred_time', preferred_time)
+    .neq('status', 'cancelled')
+    .limit(1)
+    .maybeSingle()
+
+  if (dupCheck) {
+    return NextResponse.json(
+      { error: 'A booking already exists for this address at that date and time. Please choose a different time slot.' },
+      { status: 409, headers: CORS }
+    )
+  }
+
   const { data, error } = await supabase
     .from('booking_requests')
     .insert({

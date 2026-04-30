@@ -249,8 +249,21 @@ function formatWhen(date: string, time: string): string {
 export async function declineBookingRequest(requestId: string): Promise<void> {
   await requireOwner()
   const supabase = await createSupabaseServerClient()
+
+  // If a job was already created (auto-assign or manual accept), delete it too
+  const { data: req } = await supabase
+    .from('booking_requests')
+    .select('converted_job_id')
+    .eq('id', requestId)
+    .maybeSingle()
+  if (req?.converted_job_id) {
+    await supabase.from('jobs').delete().eq('id', req.converted_job_id)
+  }
+
   await supabase.from('booking_requests').update({ status: 'declined' as const }).eq('id', requestId)
   revalidatePath('/scheduling')
+  revalidatePath('/dashboard')
+  revalidatePath('/map')
 }
 
 export async function deleteJob(jobId: string): Promise<void> {

@@ -132,6 +132,8 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
   const [acceptError, setAcceptError] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [confirmDeclineBooking, setConfirmDeclineBooking] = useState(false)
+  const [isDecliningBooking, setIsDecliningBooking] = useState(false)
   const [selectedTeams, setSelectedTeams] = useState<Set<string>>(new Set())
   const [scheduleTarget, setScheduleTarget] = useState<string | null>(null)
   const [pickedTeamId, setPickedTeamId] = useState<string | null>(null)
@@ -288,6 +290,23 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
     })
   }
 
+  function handleDeclineBooking() {
+    if (!selectedBooking) return
+    setIsDecliningBooking(true)
+    startTransition(async () => {
+      try {
+        await declineBookingRequest(selectedBooking.id)
+        setSelectedBooking(null)
+        setConfirmDeclineBooking(false)
+      } catch (e) {
+        setAcceptError(e instanceof Error ? e.message : 'Failed to decline booking')
+      } finally {
+        setIsDecliningBooking(false)
+        setConfirmDeclineBooking(false)
+      }
+    })
+  }
+
   function openEdit(job: Job) {
     setDraft({
       scheduledDate: job.scheduledDate,
@@ -348,6 +367,7 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
     setSelectedJob(null)
     setEditMode(false)
     setDraft(null)
+    setConfirmDeclineBooking(false)
   }
 
   const monthLabel = currentMonthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
@@ -1117,8 +1137,10 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
           <div className="card">
             <div className="flex items-center justify-between border-b border-line px-5 py-4">
               <div className="flex items-center gap-2.5">
-                <h2 className="text-[14.5px] font-semibold text-ink-900 tracking-[-0.01em]">Confirmed Booking</h2>
-                {selectedBooking.assignedTeam && (() => {
+                <h2 className="text-[14.5px] font-semibold text-ink-900 tracking-[-0.01em]">
+                  {confirmDeclineBooking ? 'Decline Booking?' : 'Confirmed Booking'}
+                </h2>
+                {!confirmDeclineBooking && selectedBooking.assignedTeam && (() => {
                   const tc = TEAM_COLORS[selectedBooking.assignedTeam]
                   return tc ? (
                     <span className={cn('rounded-full border px-2.5 py-0.5 text-[11px] font-semibold', tc.bg, tc.text, tc.border)}>
@@ -1127,59 +1149,101 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
                   ) : null
                 })()}
               </div>
-              <button
-                onClick={() => setSelectedBooking(null)}
-                className="text-[12px] text-ink-400 hover:text-ink-700 bg-transparent border-0 cursor-pointer transition-colors"
-              >
-                Close
-              </button>
-            </div>
-            <div className="p-5">
-              <div className="grid grid-cols-2 gap-5">
-                <div>
-                  <p className="text-[12px] font-medium text-ink-500 mb-1.5">Customer</p>
-                  <p className="text-[13px] font-semibold text-ink-900">{selectedBooking.customerName}</p>
-                </div>
-                <div>
-                  <p className="text-[12px] font-medium text-ink-500 mb-1.5">Phone</p>
-                  <a href={`tel:${selectedBooking.customerPhone}`} className="text-[13px] font-medium text-mint-500 hover:text-mint-600">
-                    {selectedBooking.customerPhone}
-                  </a>
-                </div>
-                <div>
-                  <p className="text-[12px] font-medium text-ink-500 mb-1.5">Address</p>
-                  <p className="text-[13px] font-medium text-ink-900">{selectedBooking.address}</p>
-                </div>
-                <div>
-                  <p className="text-[12px] font-medium text-ink-500 mb-1.5">Service</p>
-                  <p className="text-[13px] font-medium text-ink-900">{getServiceLabel(selectedBooking.serviceType)}</p>
-                </div>
-                <div>
-                  <p className="text-[12px] font-medium text-ink-500 mb-1.5">Date</p>
-                  <p className="text-[13px] font-medium text-ink-900">{fmtDisplayDate(selectedBooking.preferredDate ?? '')}</p>
-                </div>
-                <div>
-                  <p className="text-[12px] font-medium text-ink-500 mb-1.5">Time</p>
-                  <p className="text-[13px] font-medium text-ink-900">
-                    {selectedBooking.preferredTime ? fmtDisplayTime(selectedBooking.preferredTime) : '8:00 AM – 4:00 PM'}
-                  </p>
-                </div>
-                {selectedBooking.customerEmail && (
-                  <div className="col-span-2">
-                    <p className="text-[12px] font-medium text-ink-500 mb-1.5">Email</p>
-                    <a href={`mailto:${selectedBooking.customerEmail}`} className="text-[13px] font-medium text-mint-500 hover:text-mint-600">
-                      {selectedBooking.customerEmail}
-                    </a>
-                  </div>
-                )}
-                {selectedBooking.notes && (
-                  <div className="col-span-2">
-                    <p className="text-[12px] font-medium text-ink-500 mb-1.5">Notes</p>
-                    <p className="text-[13px] text-ink-700">{selectedBooking.notes}</p>
-                  </div>
+              <div className="flex items-center gap-2">
+                {!confirmDeclineBooking ? (
+                  <>
+                    <button
+                      onClick={() => setConfirmDeclineBooking(true)}
+                      className="flex items-center gap-1.5 rounded-lg border border-rose-500/30 px-3 py-1.5 text-[12px] font-medium text-rose-500 hover:bg-rose-500/10 transition-colors"
+                    >
+                      <XCircle className="h-3 w-3" />
+                      Decline
+                    </button>
+                    <button
+                      onClick={() => { setSelectedBooking(null); setConfirmDeclineBooking(false) }}
+                      className="text-[12px] text-ink-400 hover:text-ink-700 bg-transparent border-0 cursor-pointer transition-colors ml-1"
+                    >
+                      Close
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-[12px] text-ink-500 mr-1">This cannot be undone.</p>
+                    <button
+                      onClick={() => setConfirmDeclineBooking(false)}
+                      disabled={isDecliningBooking}
+                      className="rounded-lg border border-line px-3 py-1.5 text-[12px] font-medium text-ink-500 hover:text-ink-700 disabled:opacity-40 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleDeclineBooking}
+                      disabled={isDecliningBooking}
+                      className="rounded-lg bg-rose-500 px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-rose-600 disabled:opacity-50 transition-colors"
+                    >
+                      {isDecliningBooking ? 'Declining…' : 'Yes, decline'}
+                    </button>
+                  </>
                 )}
               </div>
             </div>
+
+            {confirmDeclineBooking ? (
+              <div className="p-5 text-center space-y-3">
+                <p className="text-[13px] text-ink-700">
+                  Decline the booking for <span className="font-semibold text-ink-900">{selectedBooking.customerName}</span> on{' '}
+                  <span className="font-semibold text-ink-900">{fmtDisplayDate(selectedBooking.preferredDate ?? '')}</span>?
+                </p>
+                <p className="text-[12px] text-ink-400">This will remove it from the schedule and cancel the assigned job.</p>
+              </div>
+            ) : (
+              <div className="p-5">
+                <div className="grid grid-cols-2 gap-5">
+                  <div>
+                    <p className="text-[12px] font-medium text-ink-500 mb-1.5">Customer</p>
+                    <p className="text-[13px] font-semibold text-ink-900">{selectedBooking.customerName}</p>
+                  </div>
+                  <div>
+                    <p className="text-[12px] font-medium text-ink-500 mb-1.5">Phone</p>
+                    <a href={`tel:${selectedBooking.customerPhone}`} className="text-[13px] font-medium text-mint-500 hover:text-mint-600">
+                      {selectedBooking.customerPhone}
+                    </a>
+                  </div>
+                  <div>
+                    <p className="text-[12px] font-medium text-ink-500 mb-1.5">Address</p>
+                    <p className="text-[13px] font-medium text-ink-900">{selectedBooking.address}</p>
+                  </div>
+                  <div>
+                    <p className="text-[12px] font-medium text-ink-500 mb-1.5">Service</p>
+                    <p className="text-[13px] font-medium text-ink-900">{getServiceLabel(selectedBooking.serviceType)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[12px] font-medium text-ink-500 mb-1.5">Date</p>
+                    <p className="text-[13px] font-medium text-ink-900">{fmtDisplayDate(selectedBooking.preferredDate ?? '')}</p>
+                  </div>
+                  <div>
+                    <p className="text-[12px] font-medium text-ink-500 mb-1.5">Time</p>
+                    <p className="text-[13px] font-medium text-ink-900">
+                      {selectedBooking.preferredTime ? fmtDisplayTime(selectedBooking.preferredTime) : '8:00 AM – 4:00 PM'}
+                    </p>
+                  </div>
+                  {selectedBooking.customerEmail && (
+                    <div className="col-span-2">
+                      <p className="text-[12px] font-medium text-ink-500 mb-1.5">Email</p>
+                      <a href={`mailto:${selectedBooking.customerEmail}`} className="text-[13px] font-medium text-mint-500 hover:text-mint-600">
+                        {selectedBooking.customerEmail}
+                      </a>
+                    </div>
+                  )}
+                  {selectedBooking.notes && (
+                    <div className="col-span-2">
+                      <p className="text-[12px] font-medium text-ink-500 mb-1.5">Notes</p>
+                      <p className="text-[13px] text-ink-700">{selectedBooking.notes}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </motion.div>
       )}

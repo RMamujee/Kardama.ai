@@ -1,4 +1,5 @@
 'use client'
+import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { DollarSign, TrendingUp, AlertCircle, Plus, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -31,8 +32,20 @@ const STATUS_VARIANT = {
   pending: 'warning', received: 'default', confirmed: 'success',
 } as const
 
-export function PaymentsClient({ customers, jobs }: PaymentsData) {
-  const { payments, filterMethod, filterStatus, searchQuery, logModalOpen, setFilterMethod, setFilterStatus, setSearchQuery, openLogModal, confirmPayment, getFiltered } = usePaymentStore()
+export function PaymentsClient({ customers, jobs, payments: serverPayments }: PaymentsData) {
+  const {
+    payments, setPayments,
+    filterMethod, filterStatus, searchQuery, logModalOpen,
+    setFilterMethod, setFilterStatus, setSearchQuery,
+    openLogModal, markReceived, confirmPayment, getFiltered,
+  } = usePaymentStore()
+
+  // Hydrate store from server-fetched data on mount
+  useEffect(() => {
+    setPayments(serverPayments)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const filtered = getFiltered()
   const mtd = getMtdRevenue(payments)
   const ytd = getYtdRevenue(payments)
@@ -116,7 +129,7 @@ export function PaymentsClient({ customers, jobs }: PaymentsData) {
                   )}
                   {filtered.map((p) => {
                     const customer = customers.find(c => c.id === p.customerId)
-                    const methodVariant = METHOD_BADGE[p.method] || 'neutral'
+                    const methodVariant = p.method ? (METHOD_BADGE[p.method] || 'neutral') : 'neutral'
                     return (
                       <tr
                         key={p.id}
@@ -126,17 +139,36 @@ export function PaymentsClient({ customers, jobs }: PaymentsData) {
                         <td className="px-4 py-3.5 text-[13px] font-medium text-ink-900">{customer?.name || 'Unknown'}</td>
                         <td className="px-4 py-3.5 num text-[13px] font-semibold text-emerald-500">{formatCurrency(p.amount)}</td>
                         <td className="px-4 py-3.5">
-                          <Badge variant={methodVariant} dot>
-                            {p.method.charAt(0).toUpperCase() + p.method.slice(1)}
-                          </Badge>
+                          {p.method ? (
+                            <Badge variant={methodVariant} dot>
+                              {p.method.charAt(0).toUpperCase() + p.method.slice(1)}
+                            </Badge>
+                          ) : (
+                            <span className="text-[12px] text-ink-400">—</span>
+                          )}
                         </td>
                         <td className="px-4 py-3.5">
                           <Badge variant={STATUS_VARIANT[p.status] || 'neutral'}>{p.status}</Badge>
                         </td>
                         <td className="px-4 py-3.5 max-w-[180px] truncate text-[12px] text-ink-400">{p.confirmationNote}</td>
                         <td className="px-4 py-3.5">
-                          {p.status !== 'confirmed' && (
-                            <Button variant="ghost" size="sm" onClick={() => confirmPayment(p.id)} className="text-emerald-500 hover:text-emerald-500">
+                          {p.status === 'pending' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => markReceived(p.id)}
+                              className="text-amber-500 hover:text-amber-500"
+                            >
+                              Mark Received
+                            </Button>
+                          )}
+                          {p.status === 'received' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => confirmPayment(p.id)}
+                              className="text-emerald-500 hover:text-emerald-500"
+                            >
                               Confirm
                             </Button>
                           )}
@@ -157,7 +189,7 @@ export function PaymentsClient({ customers, jobs }: PaymentsData) {
         </Tabs>
       </div>
 
-      {logModalOpen && <LogPaymentModal />}
+      {logModalOpen && <LogPaymentModal customers={customers} jobs={jobs} />}
     </div>
   )
 }

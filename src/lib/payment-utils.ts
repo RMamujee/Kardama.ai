@@ -13,7 +13,7 @@ export function groupPaymentsByMonth(payments: Payment[]): MonthlyRevenue[] {
   payments.forEach(p => {
     if (!map[p.month]) map[p.month] = { month: p.month, total: 0, zelle: 0, venmo: 0, cash: 0 }
     map[p.month].total += p.amount
-    map[p.month][p.method] += p.amount
+    if (p.method) map[p.month][p.method] += p.amount
   })
   return Object.values(map).sort((a, b) => a.month.localeCompare(b.month))
 }

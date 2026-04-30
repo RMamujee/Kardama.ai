@@ -101,6 +101,19 @@ type PaymentRow = {
   received_at: string
   month: string
 }
+type PaymentInsert = {
+  id: string
+  job_id?: string | null
+  booking_ref?: string | null
+  customer_id: string
+  cleaner_ids?: string[]
+  amount: number
+  method?: 'zelle' | 'venmo' | 'cash' | null
+  status?: 'pending' | 'received' | 'confirmed'
+  confirmation_note?: string
+  received_at?: string
+  month: string
+}
 type PaymentUpdate = Partial<PaymentRow>
 
 type BookingRequestRow = {
@@ -217,7 +230,7 @@ export type Database = {
       cleaners: { Row: CleanerRow; Insert: CleanerInsert; Update: CleanerUpdate; Relationships: [] }
       customers: { Row: CustomerRow; Insert: CustomerInsert; Update: CustomerUpdate; Relationships: [] }
       jobs: { Row: JobRow; Insert: JobInsert; Update: JobUpdate; Relationships: [] }
-      payments: { Row: PaymentRow; Insert: PaymentRow; Update: PaymentUpdate; Relationships: [] }
+      payments: { Row: PaymentRow; Insert: PaymentInsert; Update: PaymentUpdate; Relationships: [] }
       booking_requests: { Row: BookingRequestRow; Insert: BookingRequestInsert; Update: BookingRequestUpdate; Relationships: [] }
       social_leads: { Row: SocialLeadRow; Insert: SocialLeadInsert; Update: SocialLeadUpdate; Relationships: [] }
       messages: { Row: MessageRow; Insert: MessageInsert; Update: MessageUpdate; Relationships: [] }

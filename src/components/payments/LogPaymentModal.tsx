@@ -1,39 +1,75 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Dialog } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { usePaymentStore } from '@/store/usePaymentStore'
-import { JOBS, CUSTOMERS } from '@/lib/mock-data'
+import type { Customer, Job } from '@/types'
+import type { PaymentMethod } from '@/types/payment'
 
-export function LogPaymentModal() {
+interface Props {
+  customers: Customer[]
+  jobs: Job[]
+}
+
+export function LogPaymentModal({ customers, jobs }: Props) {
+  const router = useRouter()
   const { logModalOpen, closeLogModal, addPayment } = usePaymentStore()
+  const unpaidJobs = jobs.filter(j => !j.paid || j.status === 'completed')
+  const firstUnpaid = unpaidJobs.find(j => !j.paid && j.status === 'completed') ?? unpaidJobs[0] ?? jobs[0]
+
   const [form, setForm] = useState({
-    jobId: JOBS.find(j => !j.paid && j.status === 'completed')?.id || JOBS[0].id,
+    jobId: firstUnpaid?.id ?? '',
     amount: '',
-    method: 'zelle' as 'zelle' | 'venmo' | 'cash',
+    method: 'zelle' as PaymentMethod,
     note: '',
   })
+  const [submitting, setSubmitting] = useState(false)
 
-  const unpaidJobs = JOBS.filter(j => !j.paid || j.status === 'completed')
-  const selectedJob = JOBS.find(j => j.id === form.jobId)
-  const customer = CUSTOMERS.find(c => c.id === selectedJob?.customerId)
+  const selectedJob = jobs.find(j => j.id === form.jobId)
+  const customer = customers.find(c => c.id === selectedJob?.customerId)
 
-  function handleSubmit() {
-    if (!selectedJob) return
-    addPayment({
-      jobId: form.jobId,
-      customerId: selectedJob.customerId,
-      cleanerIds: selectedJob.cleanerIds,
-      amount: form.amount ? parseFloat(form.amount) : selectedJob.price,
-      method: form.method,
-      status: 'confirmed',
-      confirmationNote: form.note || `${form.method.charAt(0).toUpperCase() + form.method.slice(1)} from ${customer?.name}`,
-      receivedAt: new Date().toISOString(),
-      month: new Date().toISOString().slice(0, 7),
+  async function handleSubmit() {
+    if (!selectedJob || !customer) return
+    setSubmitting(true)
+    const amount = form.amount ? parseFloat(form.amount) : selectedJob.price
+    const confirmationNote = form.note || `${form.method.charAt(0).toUpperCase() + form.method.slice(1)} from ${customer.name}`
+
+    const res = await fetch('/api/payments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jobId: selectedJob.id,
+        customerId: selectedJob.customerId,
+        cleanerIds: selectedJob.cleanerIds,
+        amount,
+        method: form.method,
+        confirmationNote,
+      }),
     })
+
+    if (res.ok) {
+      const { payment } = await res.json()
+      addPayment({
+        id: payment.id,
+        jobId: payment.job_id ?? '',
+        bookingRef: payment.booking_ref ?? undefined,
+        customerId: payment.customer_id,
+        cleanerIds: payment.cleaner_ids,
+        amount: Number(payment.amount),
+        method: payment.method ?? undefined,
+        status: payment.status,
+        confirmationNote: payment.confirmation_note,
+        receivedAt: payment.received_at,
+        month: payment.month,
+      })
+      router.refresh()
+    }
+
+    setSubmitting(false)
     closeLogModal()
   }
 
@@ -43,8 +79,8 @@ export function LogPaymentModal() {
         <div>
           <Label className="text-ink-700">Job</Label>
           <Select value={form.jobId} onChange={e => setForm(f => ({ ...f, jobId: e.target.value }))} className="mt-1.5">
-            {JOBS.map(j => {
-              const c = CUSTOMERS.find(cu => cu.id === j.customerId)
+            {jobs.map(j => {
+              const c = customers.find(cu => cu.id === j.customerId)
               return (
                 <option key={j.id} value={j.id}>
                   {c?.name} — {j.address.split(',')[0]} (${j.price})
@@ -66,7 +102,7 @@ export function LogPaymentModal() {
           </div>
           <div>
             <Label className="text-ink-700">Method</Label>
-            <Select value={form.method} onChange={e => setForm(f => ({ ...f, method: e.target.value as any }))} className="mt-1.5">
+            <Select value={form.method} onChange={e => setForm(f => ({ ...f, method: e.target.value as PaymentMethod }))} className="mt-1.5">
               <option value="zelle">Zelle</option>
               <option value="venmo">Venmo</option>
               <option value="cash">Cash</option>
@@ -83,8 +119,10 @@ export function LogPaymentModal() {
           />
         </div>
         <div className="flex justify-end gap-3 pt-2">
-          <Button variant="outline" onClick={closeLogModal}>Cancel</Button>
-          <Button onClick={handleSubmit}>Log Payment</Button>
+          <Button variant="outline" onClick={closeLogModal} disabled={submitting}>Cancel</Button>
+          <Button onClick={handleSubmit} disabled={submitting || !selectedJob}>
+            {submitting ? 'Saving…' : 'Log Payment'}
+          </Button>
         </div>
       </div>
     </Dialog>

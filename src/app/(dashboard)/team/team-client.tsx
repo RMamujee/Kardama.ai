@@ -13,9 +13,35 @@ import { formatCurrency, cn } from '@/lib/utils'
 import type { Cleaner, Job, Team } from '@/types'
 import { InviteCleanerForm } from './invite-form'
 import { CreateTeamForm } from './create-team-form'
-import { deleteCleanerAction } from './actions'
+import { deleteCleanerAction, assignCleanerToTeamAction } from './actions'
 
 type TeamData = { cleaners: Cleaner[]; jobs: Job[]; teams: Team[] }
+
+function TeamSelect({ cleanerId, currentTeamId, teams }: { cleanerId: string; currentTeamId: string; teams: Team[] }) {
+  const [isPending, startTransition] = useTransition()
+  return (
+    <select
+      value={currentTeamId}
+      disabled={isPending}
+      onChange={e => {
+        const val = e.target.value
+        startTransition(async () => { await assignCleanerToTeamAction(cleanerId, val) })
+      }}
+      className="text-[11.5px] rounded-md border px-1.5 py-0.5 mt-0.5"
+      style={{
+        background: 'var(--bg-soft)',
+        borderColor: 'var(--ink-200)',
+        color: 'var(--ink-500)',
+        opacity: isPending ? 0.5 : 1,
+      }}
+    >
+      <option value="">No team</option>
+      {teams.map(t => (
+        <option key={t.id} value={t.id}>{t.name}</option>
+      ))}
+    </select>
+  )
+}
 
 type StatusKey = 'available' | 'en-route' | 'cleaning' | 'off-duty'
 
@@ -263,7 +289,11 @@ export function TeamClient({ cleaners, jobs, teams: teamsProp }: TeamData) {
                         <Avatar initials={cleaner.initials} color={cleaner.color} size="md" />
                         <div>
                           <p className="text-[13.5px] font-semibold text-ink-900">{cleaner.name}</p>
-                          <p className="text-[11.5px] text-ink-400 mt-0.5">{teamNameById[cleaner.teamId] ?? '—'}</p>
+                          <TeamSelect
+                            cleanerId={cleaner.id}
+                            currentTeamId={cleaner.teamId}
+                            teams={teamsProp.filter(t => !t.archived)}
+                          />
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5">

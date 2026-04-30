@@ -45,6 +45,7 @@ export function CustomersClient({ customers, jobs, cleaners, payments, bookingRe
   const [selected, setSelected] = useState<Customer | null>(null)
   const [addOpen, setAddOpen] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isDeleting, startDeleteTransition] = useTransition()
 
   useEffect(() => {
@@ -364,11 +365,11 @@ export function CustomersClient({ customers, jobs, cleaners, payments, bookingRe
 
       <Dialog
         open={!!deleteId}
-        onClose={() => { if (!isDeleting) setDeleteId(null) }}
+        onClose={() => { if (!isDeleting) { setDeleteId(null); setDeleteError(null) } }}
         title="Delete customer?"
-        description="Their profile will be permanently removed. Jobs and payments linked to them will remain in history."
+        description="This will permanently delete the customer and all their jobs and payments."
       >
-        <DialogBody className="pt-2">
+        <DialogBody className="pt-2 space-y-3">
           {deleteId && (() => {
             const c = customers.find(x => x.id === deleteId)
             if (!c) return null
@@ -387,9 +388,14 @@ export function CustomersClient({ customers, jobs, cleaners, payments, bookingRe
               </div>
             )
           })()}
+          {deleteError && (
+            <p className="rounded-[8px] border border-red-500/30 bg-red-500/10 px-3 py-2 text-[12px] text-red-400">
+              {deleteError}
+            </p>
+          )}
         </DialogBody>
         <DialogFooter>
-          <Button variant="ghost" size="sm" onClick={() => setDeleteId(null)} disabled={isDeleting}>
+          <Button variant="ghost" size="sm" onClick={() => { setDeleteId(null); setDeleteError(null) }} disabled={isDeleting}>
             Cancel
           </Button>
           <Button
@@ -398,8 +404,13 @@ export function CustomersClient({ customers, jobs, cleaners, payments, bookingRe
             disabled={isDeleting}
             onClick={() => {
               if (!deleteId) return
+              setDeleteError(null)
               startDeleteTransition(async () => {
-                await deleteCustomer(deleteId)
+                const result = await deleteCustomer(deleteId)
+                if (!result.ok) {
+                  setDeleteError(result.error)
+                  return
+                }
                 setDeleteId(null)
                 setSelected(null)
               })

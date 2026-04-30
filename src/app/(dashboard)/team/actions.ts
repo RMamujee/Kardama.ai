@@ -170,6 +170,20 @@ export async function createTeamAction(
   return { ok: true }
 }
 
+// ─────────────── Assign cleaner to team ───────────────
+
+export async function assignCleanerToTeamAction(
+  cleanerId: string,
+  teamId: string,
+): Promise<{ error?: string }> {
+  await requireOwner()
+  const admin = getSupabaseAdminClient()
+  const { error } = await admin.from('cleaners').update({ team_id: teamId || null }).eq('id', cleanerId)
+  if (error) return { error: error.message }
+  revalidatePath('/team')
+  return {}
+}
+
 // ─────────────── Delete cleaner ───────────────
 
 export async function deleteCleanerAction(cleanerId: string): Promise<{ error?: string }> {

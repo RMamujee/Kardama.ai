@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { requireOwner } from '@/lib/supabase/dal'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { signToken } from '@/lib/booking-tokens'
 import { sendSms } from '@/lib/twilio'
 import { geocodeAddress } from '@/lib/geocode'
@@ -80,9 +81,23 @@ export async function addCustomer(input: AddCustomerInput): Promise<ActionResult
 export async function deleteCustomer(customerId: string): Promise<ActionResult<null>> {
   await requireOwner()
 
-  const supabase = await createSupabaseServerClient()
-  const { error } = await supabase.from('customers').delete().eq('id', customerId)
+  const admin = getSupabaseAdminClient()
 
+  // Delete payments first (FK to both customer and job)
+  const { error: paymentsErr } = await admin.from('payments').delete().eq('customer_id', customerId)
+  if (paymentsErr) {
+    console.error('[deleteCustomer] payments delete failed:', paymentsErr)
+    return { ok: false, error: paymentsErr.message }
+  }
+
+  // Delete jobs next (NOT NULL FK to customer, cannot be nulled)
+  const { error: jobsErr } = await admin.from('jobs').delete().eq('customer_id', customerId)
+  if (jobsErr) {
+    console.error('[deleteCustomer] jobs delete failed:', jobsErr)
+    return { ok: false, error: jobsErr.message }
+  }
+
+  const { error } = await admin.from('customers').delete().eq('id', customerId)
   if (error) {
     console.error('[deleteCustomer]', error)
     return { ok: false, error: error.message }
@@ -90,6 +105,7 @@ export async function deleteCustomer(customerId: string): Promise<ActionResult<n
 
   revalidatePath('/customers')
   revalidatePath('/dashboard')
+  revalidatePath('/payments')
   return { ok: true, data: null }
 }
 

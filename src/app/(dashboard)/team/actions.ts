@@ -36,11 +36,12 @@ export async function inviteCleanerAction(_prev: InviteState, formData: FormData
   const admin = getSupabaseAdminClient()
 
   // 1. Send Supabase auth invite (creates auth.users row + emails the cleaner an invite link).
-  const redirectTo = process.env.NEXT_PUBLIC_SITE_URL
-    ? `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
-    : undefined
+  // Redirect to the mobile app so the invite link drops the cleaner straight into kardama-mobile.
+  const mobileUrl = process.env.NEXT_PUBLIC_MOBILE_APP_URL ?? 'https://kardama-mobile.vercel.app'
+  const redirectTo = `${mobileUrl}/auth/callback`
   const { data: invite, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(email, {
     redirectTo,
+    data: { mobile_app_url: mobileUrl },
   })
   if (inviteErr || !invite.user) {
     return { error: inviteErr?.message ?? 'Failed to send invite' }

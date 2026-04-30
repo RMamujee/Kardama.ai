@@ -25,7 +25,7 @@ export function InviteCleanerForm() {
 
       {state?.ok ? (
         <p className="mt-2 text-xs" style={{ color: 'var(--color-emerald-500)' }}>
-          Invite sent. The cleaner will receive an email to set their password.
+          Invite sent. The cleaner will receive an email — clicking the link takes them directly into the Kardama mobile app to set their password and log in.
         </p>
       ) : null}
 

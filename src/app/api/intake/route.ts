@@ -33,6 +33,7 @@ export async function POST(request: Request) {
     customer_name, customer_phone, customer_email,
     address, city, service_type,
     preferred_date, preferred_time: rawTime, notes,
+    home_size, cleaning_frequency,
   } = body
   const preferred_time = rawTime ? to24h(String(rawTime)) : rawTime
 
@@ -60,6 +61,8 @@ export async function POST(request: Request) {
     address: String(address).trim().slice(0, 300),
     city: city ? String(city).trim().slice(0, 80) : null,
     notes: notes ? String(notes).trim().slice(0, 500) : '',
+    home_size: home_size ? String(home_size).trim().slice(0, 60) : '',
+    cleaning_frequency: cleaning_frequency ? String(cleaning_frequency).trim().slice(0, 60) : '',
   }
 
   const supabase = getSupabaseAdminClient()
@@ -146,11 +149,34 @@ export async function POST(request: Request) {
         serviceType: service_type,
         preferredDate: preferred_date,
         preferredTime: preferred_time,
+        homeSize: sanitized.home_size || null,
+        cleaningFrequency: sanitized.cleaning_frequency || null,
         address: sanitized.address,
         notes: sanitized.notes,
         cleanerNames: assignment.cleanerNames,
+        manageUrl: `https://kardama-intake.vercel.app/?manage=${data.id}`,
       }),
     }).catch(e => console.error('n8n webhook failed:', e))
+  }
+
+  // Fire n8n unassigned alert if no team could be assigned (fire-and-forget)
+  const n8nUnassignedWebhook = process.env.N8N_UNASSIGNED_ALERT_WEBHOOK_URL
+  if (n8nUnassignedWebhook && !assignment) {
+    fetch(n8nUnassignedWebhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        bookingId: data.id,
+        customerName: sanitized.customer_name,
+        customerEmail: sanitized.customer_email,
+        customerPhone: sanitized.customer_phone,
+        serviceType: service_type,
+        preferredDate: preferred_date,
+        preferredTime: preferred_time,
+        address: sanitized.address,
+        reason: 'No team available for this date/time — check cleaner availability and hours',
+      }),
+    }).catch(e => console.error('n8n unassigned alert webhook failed:', e))
   }
 
   return NextResponse.json({

@@ -128,14 +128,24 @@ function RoutePolylines({ routes, realRoutes, selectedTeamId }: {
         }
       } else {
         // ── Haversine straight-line fallback (loading estimate) ───────────────
+        // White casing for contrast
+        polysRef.current.push(new google.maps.Polyline({
+          path: route.polyline.map(([lat, lng]) => ({ lat, lng })),
+          strokeColor: '#ffffff',
+          strokeOpacity: highlighted ? 0.6 : 0.08,
+          strokeWeight: isSelected ? 8 : 6,
+          zIndex: 0,
+          map,
+        }))
+        // Coloured dashed line
         polysRef.current.push(new google.maps.Polyline({
           path: route.polyline.map(([lat, lng]) => ({ lat, lng })),
           strokeOpacity: 0,
           icons: [{
-            icon: { path: 'M 0,-1 0,1', strokeColor: route.color, strokeOpacity: highlighted ? 0.4 : 0.1, scale: 3 },
-            offset: '0', repeat: '18px',
+            icon: { path: 'M 0,-1 0,1', strokeColor: route.color, strokeOpacity: highlighted ? (isSelected ? 0.85 : 0.6) : 0.12, scale: isSelected ? 4 : 3 },
+            offset: '0', repeat: '16px',
           }],
-          zIndex: 0,
+          zIndex: 1,
           map,
         }))
       }
@@ -359,6 +369,7 @@ export function LiveMapView({ cleaners, allJobs, customers }: LiveMapViewProps) 
   const [realRoutes, setRealRoutes]       = useState<Record<string, RealRoute | null>>({})
   const [loadingRoutes, setLoadingRoutes] = useState(false)
   const [routeSource, setRouteSource]     = useState<'cache' | 'computed' | null>(null)
+  const [seedingDemo, setSeedingDemo]     = useState(false)
   const [flyTarget, setFlyTarget]         = useState<{ lat: number; lng: number } | null>(null)
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null)
   const [selectedDate, setSelectedDate]   = useState(() => todayStr())
@@ -427,6 +438,36 @@ export function LiveMapView({ cleaners, allJobs, customers }: LiveMapViewProps) 
       })
       .finally(() => setLoadingRoutes(false))
   }, [mounted, selectedDate])
+
+  const hasGoogleData = useMemo(
+    () => Object.values(realRoutes).some(r => r && r.segments.length > 0),
+    [realRoutes]
+  )
+
+  async function handleSeedDemo() {
+    setSeedingDemo(true)
+    try {
+      await fetch('/api/admin/seed-today', { method: 'POST' })
+      // Force recompute with fresh Google directions data
+      setLoadingRoutes(true)
+      setRealRoutes({})
+      const data = await fetch('/api/routes/compute', {
+        method: 'POST',
+        headers: { 'x-force': '1', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: selectedDate }),
+      }).then(r => r.ok ? r.json() : null) as { routes: Array<{ teamId: string; segments: RealRoute['segments']; legs: RealRoute['legs'] }> } | null
+      if (data?.routes) {
+        const map: Record<string, RealRoute | null> = {}
+        data.routes.forEach(r => { map[r.teamId] = { teamId: r.teamId, segments: r.segments, legs: r.legs } })
+        setRealRoutes(map)
+      }
+      // Reload page so allJobs (from Server Component) picks up the new seed jobs
+      window.location.reload()
+    } catch {
+      setSeedingDemo(false)
+      setLoadingRoutes(false)
+    }
+  }
 
   function handleDateChange(date: string) {
     setSelectedDate(date)
@@ -519,6 +560,10 @@ export function LiveMapView({ cleaners, allJobs, customers }: LiveMapViewProps) 
         onFocusTeam={id => setSelectedTeamId(prev => prev === id ? null : id)}
         selectedDate={selectedDate}
         isToday={isToday}
+        hasGoogleData={hasGoogleData}
+        loadingRoutes={loadingRoutes}
+        onSeedDemo={isToday ? handleSeedDemo : undefined}
+        seedingDemo={seedingDemo}
       />
 
       <div className="relative flex-1 overflow-hidden">

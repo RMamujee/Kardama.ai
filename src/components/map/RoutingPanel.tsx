@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 import {
   WifiOff, Wifi, Clock, ChevronDown, ChevronUp,
   MessageSquare, X, AlertTriangle, RotateCcw, Send, CheckCircle,
-  MapPin, DollarSign, Undo2, UserX, UserCheck,
+  MapPin, DollarSign, Undo2, UserX, UserCheck, RefreshCw,
 } from 'lucide-react'
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -372,6 +372,10 @@ interface Props {
   onFocusTeam: (teamId: string) => void
   selectedDate: string
   isToday: boolean
+  hasGoogleData: boolean
+  loadingRoutes: boolean
+  onSeedDemo?: () => void
+  seedingDemo?: boolean
 }
 
 // ─── RoutingPanel ─────────────────────────────────────────────────────────────
@@ -380,6 +384,7 @@ export function RoutingPanel({
   overrides, onSetStopStatus,
   gpsTracking, trackedCleaner, onStartGPS, onStopGPS, onFlyTo,
   selectedTeamId, onFocusTeam, selectedDate, isToday,
+  hasGoogleData, loadingRoutes, onSeedDemo, seedingDemo,
 }: Props) {
   const dateLabel = isToday
     ? 'Today'
@@ -406,7 +411,16 @@ export function RoutingPanel({
       <div className="border-b border-ink-200 p-4">
         <div className="flex items-center justify-between">
           <h2 className="text-[14px] font-semibold text-ink-900">Dispatch</h2>
-          <span className="text-[12px] text-ink-500">{dateLabel}</span>
+          <div className="flex items-center gap-1.5">
+            {routes.length > 0 && (
+              loadingRoutes
+                ? <span className="text-[10px] text-ink-400 animate-pulse">Routing…</span>
+                : hasGoogleData
+                  ? <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold bg-emerald-500/10 text-emerald-500">Google</span>
+                  : <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold bg-amber-500/10 text-amber-500">Estimated</span>
+            )}
+            <span className="text-[12px] text-ink-500">{dateLabel}</span>
+          </div>
         </div>
         <div className="flex items-center gap-3 mt-1.5">
           <div className="flex items-center gap-1">
@@ -476,10 +490,27 @@ export function RoutingPanel({
 
       <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
         {routes.length === 0 && unavailableTeamGroups.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-40 text-center">
-            <MapPin className="h-8 w-8 text-ink-300 mb-2" />
-            <p className="text-[12px] text-ink-400">No routes for {dateLabel}</p>
-            <p className="text-[11px] text-ink-400 mt-1">Jobs scheduled for this day will appear here</p>
+          <div className="flex flex-col items-center justify-center h-48 text-center gap-3">
+            <MapPin className="h-8 w-8 text-ink-300" />
+            <div>
+              <p className="text-[12px] text-ink-400">No routes for {dateLabel}</p>
+              <p className="text-[11px] text-ink-400 mt-1">Jobs scheduled for this day will appear here</p>
+            </div>
+            {onSeedDemo && (
+              <button
+                onClick={onSeedDemo}
+                disabled={seedingDemo}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[11px] font-semibold transition-colors',
+                  seedingDemo
+                    ? 'border-ink-200 text-ink-400 cursor-not-allowed'
+                    : 'border-violet-500/30 bg-violet-500/10 text-violet-400 hover:bg-violet-500/20'
+                )}
+              >
+                <RefreshCw className={cn('h-3 w-3', seedingDemo && 'animate-spin')} />
+                {seedingDemo ? 'Loading…' : 'Load demo routes'}
+              </button>
+            )}
           </div>
         ) : (
           <>

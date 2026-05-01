@@ -25,7 +25,7 @@ const SCRAPERS: ScraperConfig[] = [
   {
     source: 'google-maps',
     label: 'Google Maps',
-    description: 'Property managers, realtors, Airbnb hosts in a city',
+    description: 'Local businesses by city + keyword (Google Places API)',
     Icon: MapPin,
     color: 'text-blue-400',
     bg: 'bg-blue-500/15',
@@ -36,7 +36,7 @@ const SCRAPERS: ScraperConfig[] = [
   {
     source: 'yelp',
     label: 'Yelp',
-    description: 'Competitor cleaning services + their reviewers',
+    description: 'Competitor cleaners & businesses (Yelp Fusion API)',
     Icon: Globe2,
     color: 'text-rose-500',
     bg: 'bg-rose-500/15',
@@ -47,7 +47,7 @@ const SCRAPERS: ScraperConfig[] = [
   {
     source: 'instagram',
     label: 'Instagram',
-    description: 'Posts by hashtag (e.g. realtorlife, airbnbhost)',
+    description: 'Posts by hashtag, e.g. airbnbhost (Apify)',
     Icon: Camera,
     color: 'text-pink-500',
     bg: 'bg-pink-500/15',
@@ -58,7 +58,7 @@ const SCRAPERS: ScraperConfig[] = [
   {
     source: 'facebook-pages',
     label: 'Facebook Pages',
-    description: 'Local property management & real estate pages',
+    description: 'Property mgmt & real estate pages (Apify)',
     Icon: Globe2,
     color: 'text-violet-400',
     bg: 'bg-violet-500/15',
@@ -114,7 +114,7 @@ export function ScraperPanel() {
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/20">
             <Zap className="h-3.5 w-3.5 text-amber-500" />
           </div>
-          <CardTitle>Apify Scrapers</CardTitle>
+          <CardTitle>Lead Sources</CardTitle>
           <span className="text-[11px] text-ink-400">— runs in n8n, results land in Lead Monitor</span>
         </div>
       </CardHeader>

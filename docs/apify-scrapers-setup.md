@@ -1,57 +1,62 @@
-# Apify scrapers — setup guide
+# Lead source scrapers — setup guide
 
-Four n8n workflows scrape leads from Apify and POST them into the dashboard's `social_leads` table. They show up in **Marketing → Lead Monitor** alongside the existing Vercel-cron Facebook Groups scanner.
+Four n8n workflows pull leads from external sources and POST them into the dashboard's `social_leads` table. They show up in **Marketing → Lead Monitor** alongside the existing Vercel-cron Facebook Groups scanner.
+
+Two use **official APIs** (cheaper, more stable). Two use **Apify** (no API exists for keyword/hashtag discovery on those platforms).
 
 ## What got built
 
 **n8n workflows (in the Kardama project — `U0Uez4IOfJBxS1Hf`):**
 
-| Workflow | ID | Webhook path | Cron |
-|---|---|---|---|
-| Google Maps | `Km05IXoa9DGrBrNT` | `/webhook/kardama/scraper/google-maps` | daily 8:00 |
-| Yelp | `JKHiZBPebpUMhP4I` | `/webhook/kardama/scraper/yelp` | daily 8:15 |
-| Instagram | `QkzmYEp96klWAadB` | `/webhook/kardama/scraper/instagram` | daily 8:30 |
-| Facebook Pages | `sTfL9ybMCF67GFjt` | `/webhook/kardama/scraper/facebook-pages` | daily 8:45 |
+| Workflow | Source | Workflow ID | Webhook path | Cron |
+|---|---|---|---|---|
+| Google Maps | Google Places API v1 | `Km05IXoa9DGrBrNT` | `/webhook/kardama/scraper/google-maps` | daily 8:00 |
+| Yelp | Yelp Fusion API | `JKHiZBPebpUMhP4I` | `/webhook/kardama/scraper/yelp` | daily 8:15 |
+| Instagram | Apify `apify/instagram-hashtag-scraper` | `QkzmYEp96klWAadB` | `/webhook/kardama/scraper/instagram` | daily 8:30 |
+| Facebook Pages | Apify `apify/facebook-pages-scraper` | `sTfL9ybMCF67GFjt` | `/webhook/kardama/scraper/facebook-pages` | daily 8:45 |
 
 Each workflow has the same shape:
 
 ```
 Schedule (daily) ─┐
-                  ├─► Defaults → Run Apify Actor → Build Lead Payloads → POST /api/leads
+                  ├─► Defaults → Call API/actor → Build Lead Payloads → POST /api/leads
 Webhook ──────────┘
 ```
 
 **Dashboard:**
 
-- `supabase/migrations/0015_extend_lead_platforms.sql` — adds `google-maps` and `yelp` to the platform check constraint
-- `src/types/social.ts` — extended `LeadPlatform`
+- `supabase/migrations/0015_extend_lead_platforms.sql` — adds `google-maps` and `yelp` to the platform check
+- `src/types/social.ts` + `database.types.ts` — extended `LeadPlatform`
 - `src/components/marketing/LeadMonitor.tsx` — added platform config + filter pills
-- `src/components/marketing/ScraperPanel.tsx` — new "Run now" UI
+- `src/components/marketing/ScraperPanel.tsx` — new "Run now" UI on the Lead Monitor tab
 - `src/app/api/leads/trigger/route.ts` — owner-only proxy that fires the matching n8n webhook
+- `src/app/api/leads/route.ts` — POST upgraded to upsert on `external_id` so daily reruns don't 500
 
 ## One-time setup
 
-### 1. Apply the migration
+### 1. Get API keys
 
-Paste `supabase/migrations/0015_extend_lead_platforms.sql` into the Supabase SQL editor (project `ovjarxyxkjfochokhmwo`).
+| Source | Where | Cost |
+|---|---|---|
+| **Google Places API** | https://console.cloud.google.com → APIs & Services → enable "Places API (New)" → Credentials → Create API key. Restrict to "Places API". | $200/mo free credit covers ~6k Text Search calls |
+| **Yelp Fusion API** | https://docs.developer.yelp.com → Create App → API Key | Free up to 5K calls/day |
+| **Apify token** | https://apify.com/account/integrations → Personal API tokens | Pay-as-you-go (~$0.06–0.15 per run) |
 
-### 2. Configure n8n credentials (one of each, reused across all 4 workflows)
+### 2. Configure n8n credentials
 
-In n8n → **Credentials → Add credential**:
+In n8n → **Credentials → Add credential** (one of each, reused across the matching workflows):
 
-**Apify Token (token query param)** — type **Query Auth**
-- Name: `token`
-- Value: `<your Apify API token>` (from `apify.com/account/integrations`)
+**Google Places API Key (X-Goog-Api-Key)** — type **Header Auth** → name `X-Goog-Api-Key`, value `<your Places key>`. Used by the Google Maps workflow.
 
-**Kardama CRON_SECRET (Authorization: Bearer ...)** — type **Header Auth**
-- Name: `Authorization`
-- Value: `Bearer <CRON_SECRET>` (must match `CRON_SECRET` in Vercel env on `kardama-ai`)
+**Yelp Fusion API Key (Bearer)** — type **Bearer Auth** → value `<your Yelp Fusion key>`. Used by the Yelp workflow.
 
-Open each of the 4 workflows. The two HTTP Request nodes ("Run Apify ..." and "POST /api/leads") will show "Select credential" — pick the matching credential above, then save and toggle the workflow **Active**.
+**Apify Token (token query param)** — type **Query Auth** → name `token`, value `<your Apify token>`. Used by the Instagram + Facebook Pages workflows.
 
-### 3. Set Vercel env vars on `kardama-ai`
+**Kardama CRON_SECRET (Authorization: Bearer ...)** — type **Header Auth** → name `Authorization`, value `Bearer <CRON_SECRET>` (must match the dashboard's `CRON_SECRET` env). Used by **all four** workflows for the final POST to `/api/leads`.
 
-Add these 4 env vars (production + preview):
+Open each workflow → click each HTTP Request node → pick the matching credential → save → toggle **Active**.
+
+### 3. Vercel env vars (already set on `kardama-ai` production)
 
 ```
 N8N_SCRAPER_GOOGLE_MAPS_WEBHOOK_URL    = https://kardama.app.n8n.cloud/webhook/kardama/scraper/google-maps
@@ -60,28 +65,27 @@ N8N_SCRAPER_INSTAGRAM_WEBHOOK_URL      = https://kardama.app.n8n.cloud/webhook/k
 N8N_SCRAPER_FACEBOOK_PAGES_WEBHOOK_URL = https://kardama.app.n8n.cloud/webhook/kardama/scraper/facebook-pages
 ```
 
-`CRON_SECRET` is already set on the dashboard (used by `/api/leads/scan`). The same value goes into the n8n Header Auth credential above.
+`CRON_SECRET` is already set on the dashboard (also used by `/api/leads/scan`). The same value goes into the n8n Header Auth credential above.
 
 ### 4. Smoke test
 
-1. Open `kardama-ai.vercel.app/marketing`. Lead Monitor tab → "Apify Scrapers" panel.
+1. Open `kardama-ai.vercel.app/marketing` → Lead Monitor → "Lead Sources" panel.
 2. Type a city + keyword, hit **Run now** on Google Maps.
 3. Watch the n8n execution; results post to `/api/leads`.
 4. Click **Refresh** on the lead monitor — new rows with platform `google-maps` should appear.
 
-## Cost expectations (Apify)
+## Cost expectations
 
-Each manual run pulls up to 30 results by default. At Apify's typical pricing:
+- **Google Maps (Places API)**: ~$32 per 1k Text Search calls; 30 results per call. With $200/mo free credit, ~6k searches free.
+- **Yelp (Fusion API)**: free up to 5K calls/day.
+- **Instagram (Apify)**: ~$0.06 per run @ 30 posts.
+- **Facebook Pages (Apify)**: ~$0.15 per run @ 30 pages.
 
-- Google Maps (`compass/crawler-google-places`) — ~$0.005 / place → ~$0.15 per run
-- Yelp (`yin/yelp-scraper`) — ~$0.006 / business → ~$0.18 per run
-- Instagram hashtag — ~$0.002 / post → ~$0.06 per run
-- Facebook Pages — ~$0.005 / page → ~$0.15 per run
-
-Daily schedules run all four = ~$0.55/day = ~$17/month + manual runs. Pay-as-you-go on the Apify side; n8n's own metered usage is separate.
+Daily schedules + occasional manual runs ≈ ~$5–10/month total at low volume.
 
 ## Known limits
 
-- **Apify run-sync timeout.** The HTTP Request nodes use `timeout=120` on the Apify side and 130s client timeout. Big runs (limit > 50) on slow actors may exceed that — for those, split into smaller webhook calls or change to `runs` + dataset polling.
-- **Facebook Pages without cookies.** Public pages work; private pages return less. If you need full data, add a `cookies` input to the actor request body using a Facebook session export.
-- **Dedup is by `external_id`.** The existing `/api/leads` POST does not upsert (`/api/leads/scan` does). If a scraper posts the same place twice, you'll get duplicate `social_leads` rows. Consider switching the n8n POST to call a future `/api/leads/upsert` if dedup matters.
+- **Yelp Fusion** caps at 50 results per query and doesn't return reviews (use the GraphQL endpoint if you need richer data later).
+- **Google Places Text Search** returns up to 20 by default, 60 max via paging — current workflow uses a single page.
+- **Facebook Pages without cookies** — public pages work; private return less. If needed, add `cookies` JSON to the actor input via env or workflow input.
+- **Dedup is by `external_id`.** `/api/leads` POST upserts on conflict, so daily reruns are safe.

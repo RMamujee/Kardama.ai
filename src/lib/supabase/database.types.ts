@@ -244,8 +244,11 @@ type DailyRouteUpdate = Partial<DailyRouteInsert>
 
 type SmsConversationRow = {
   id: string
-  customer_phone: string
+  customer_phone: string | null
   customer_id: string | null
+  channel: 'sms' | 'messenger' | 'instagram'
+  external_user_id: string | null
+  external_user_handle: string | null
   mode: 'auto' | 'human' | 'escalated'
   human_takeover_at: string | null
   escalation_reason: string | null
@@ -256,8 +259,11 @@ type SmsConversationRow = {
 }
 type SmsConversationInsert = {
   id?: string
-  customer_phone: string
+  customer_phone?: string | null
   customer_id?: string | null
+  channel?: SmsConversationRow['channel']
+  external_user_id?: string | null
+  external_user_handle?: string | null
   mode?: SmsConversationRow['mode']
   human_takeover_at?: string | null
   escalation_reason?: string | null
@@ -273,6 +279,7 @@ type SmsMessageRow = {
   sender: 'customer' | 'ai' | 'owner'
   body: string
   twilio_sid: string | null
+  provider_message_id: string | null
   ai_tools_used: object | null
   created_at: string
 }
@@ -283,6 +290,7 @@ type SmsMessageInsert = {
   sender: SmsMessageRow['sender']
   body: string
   twilio_sid?: string | null
+  provider_message_id?: string | null
   ai_tools_used?: object | null
   created_at?: string
 }

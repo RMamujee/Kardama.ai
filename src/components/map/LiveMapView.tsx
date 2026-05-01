@@ -409,17 +409,27 @@ function DirectionsLoader({ routes, date, onLoaded, onStatus }: {
           onStatusRef.current(route.teamId, status)
           if (status === google.maps.DirectionsStatus.OK && result?.routes?.[0]) {
             const gRoute = result.routes[0]
-            const segments = gRoute.legs.map(leg => ({
-              positions: leg.steps.flatMap(step =>
+            // overview_path is guaranteed non-empty on OK; step.path can be empty
+            const overviewPositions = (gRoute.overview_path ?? []).map(
+              (p: google.maps.LatLng) => [p.lat(), p.lng()] as [number, number]
+            )
+            // Build one segment per leg — fall back to slicing overview_path if steps have no geometry
+            const legFractions = gRoute.legs.map(leg => {
+              const pts = leg.steps.flatMap(step =>
                 (step.path ?? []).map((p: google.maps.LatLng) => [p.lat(), p.lng()] as [number, number])
-              ),
-              congestion: 'clear' as const,
-            }))
+              )
+              return pts.length > 1 ? pts : null
+            })
+            const allStepsHavePaths = legFractions.every(f => f !== null)
+            const segments = allStepsHavePaths
+              ? legFractions.map(pts => ({ positions: pts!, congestion: 'clear' as const }))
+              : [{ positions: overviewPositions, congestion: 'clear' as const }]
             const legs = gRoute.legs.map(leg => ({
               durationMin: ((leg.duration_in_traffic ?? leg.duration)?.value ?? 0) / 60,
               distanceKm: (leg.distance?.value ?? 0) / 1000,
               traffic: 'clear' as const,
             }))
+            console.log(`[DirectionsLoader] ${route.teamId}: OK — ${segments.length} seg(s), ${segments.reduce((a, s) => a + s.positions.length, 0)} pts`)
             results[route.teamId] = { teamId: route.teamId, segments, legs }
           } else {
             console.error(`[DirectionsLoader] ${route.teamId}: status=${status}`, { startLat: route.startLat, startLng: route.startLng, dest: { lat: dest.lat, lng: dest.lng } })

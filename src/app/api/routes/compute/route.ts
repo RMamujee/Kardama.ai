@@ -47,24 +47,35 @@ type DailyRoute = {
 }
 
 async function fetchGoogleDirections(waypoints: Waypoint[]) {
-  const apiKey = process.env.GOOGLE_MAPS_API_KEY
-  if (!apiKey || waypoints.length < 2) return null
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY ?? process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+  if (!apiKey || waypoints.length < 2) {
+    console.warn('[routes/compute] No Google Maps API key — skipping Directions call')
+    return null
+  }
 
   const origin = `${waypoints[0].lat},${waypoints[0].lng}`
   const destination = `${waypoints[waypoints.length - 1].lat},${waypoints[waypoints.length - 1].lng}`
-  const params = new URLSearchParams({ origin, destination, departure_time: 'now', traffic_model: 'best_guess', key: apiKey })
+  // Use basic Directions API (no departure_time/traffic_model) — works on
+  // any billing tier and returns accurate real-road geometry + distances.
+  const params = new URLSearchParams({ origin, destination, key: apiKey })
   if (waypoints.length > 2) {
     params.set('waypoints', `optimize:false|${waypoints.slice(1, -1).map(w => `${w.lat},${w.lng}`).join('|')}`)
   }
 
   try {
     const res = await fetch(`https://maps.googleapis.com/maps/api/directions/json?${params}`, { cache: 'no-store' })
-    if (!res.ok) return null
-    const data = await res.json()
-    if (data.status !== 'OK' || !data.routes?.[0]) return null
+    if (!res.ok) {
+      console.error('[routes/compute] Google Directions HTTP error', res.status)
+      return null
+    }
+    const data = await res.json() as { status: string; error_message?: string; routes?: unknown[] }
+    if (data.status !== 'OK' || !data.routes?.[0]) {
+      console.error('[routes/compute] Google Directions status:', data.status, data.error_message ?? '')
+      return null
+    }
 
     type GLeg = { duration: { value: number }; duration_in_traffic?: { value: number }; distance: { value: number }; steps: Array<{ polyline: { points: string } }> }
-    const apiLegs = data.routes[0].legs as GLeg[]
+    const apiLegs = (data.routes[0] as { legs: GLeg[] }).legs
 
     const segments = apiLegs.map(leg => {
       const positions = leg.steps.flatMap(s => decodePolyline(s.polyline.points))
@@ -78,7 +89,8 @@ async function fetchGoogleDirections(waypoints: Waypoint[]) {
     }))
 
     return { segments, legs }
-  } catch {
+  } catch (err) {
+    console.error('[routes/compute] Google Directions exception:', err)
     return null
   }
 }
@@ -100,7 +112,7 @@ export async function POST(req: Request) {
 
   const forceRecompute = req.headers.get('x-force') === '1'
 
-  // Return cached routes if fresh (unless dispatcher forced a refresh)
+  // Return cached routes if fresh and have real Google geometry (unless forced)
   if (!forceRecompute) {
     const { data: existing } = await admin
       .from('daily_routes')
@@ -111,7 +123,11 @@ export async function POST(req: Request) {
       const rows = existing as unknown as DailyRoute[]
       const staleThreshold = new Date(Date.now() - STALE_AFTER_MS).toISOString()
       const allFresh = rows.every(r => r.computed_at > staleThreshold)
-      if (allFresh) {
+      // Only serve from cache if every row has real Google segment data.
+      // If any row has empty segments it means Google failed last time —
+      // always recompute so we retry the Directions API call.
+      const allHaveSegments = rows.every(r => Array.isArray(r.segments) && r.segments.length > 0)
+      if (allFresh && allHaveSegments) {
         return NextResponse.json({
           routes: rows.map(r => ({ teamId: r.team_id, segments: r.segments, legs: r.legs })),
           source: 'cache',

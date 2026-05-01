@@ -98,7 +98,9 @@ function RoutePolylines({ routes, realRoutes, selectedTeamId }: {
 
     for (const route of routes) {
       const isSelected  = selectedTeamId === route.teamId
-      const highlighted = !selectedTeamId || isSelected
+      // When any team is focused, only draw that team's route — hide others completely
+      if (selectedTeamId && !isSelected) continue
+      const highlighted = true
       const real = realRoutes[route.teamId]
 
       if (real && real.segments.length > 0) {
@@ -360,15 +362,17 @@ function CustomersLayer({ customers, visible }: { customers: Customer[]; visible
 // browser sends the page URL as the HTTP referrer — required when the API key
 // has HTTP referrer restrictions (server-side calls have no referrer).
 
-function DirectionsLoader({ routes, date, onLoaded, onStatus }: {
+function DirectionsLoader({ routes, date, onLoaded, onStatus, onLoadingChange }: {
   routes: TeamRoute[]
   date: string
   onLoaded: (data: Record<string, RealRoute>) => void
   onStatus: (teamId: string, status: string) => void
+  onLoadingChange: (loading: boolean) => void
 }) {
   const onLoadedRef = useRef(onLoaded)
   const onStatusRef = useRef(onStatus)
-  useEffect(() => { onLoadedRef.current = onLoaded; onStatusRef.current = onStatus })
+  const onLoadingRef = useRef(onLoadingChange)
+  useEffect(() => { onLoadedRef.current = onLoaded; onStatusRef.current = onStatus; onLoadingRef.current = onLoadingChange })
 
   const routeKey = `${date}:${routes.map(r =>
     `${r.teamId}:${r.stops.filter(s => s.status !== 'cancelled').length}:${r.startLat.toFixed(4)},${r.startLng.toFixed(4)}`
@@ -379,6 +383,7 @@ function DirectionsLoader({ routes, date, onLoaded, onStatus }: {
     if (!routeKey || routeKey === lastKeyRef.current) return
     lastKeyRef.current = routeKey
 
+    onLoadingRef.current(true)
     const service = new google.maps.DirectionsService()
     const results: Record<string, RealRoute> = {}
 
@@ -441,6 +446,7 @@ function DirectionsLoader({ routes, date, onLoaded, onStatus }: {
 
     Promise.all(promises).then(() => {
       if (Object.keys(results).length > 0) onLoadedRef.current(results)
+      onLoadingRef.current(false)
     })
   }, [routeKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -460,7 +466,6 @@ export function LiveMapView({ cleaners, allJobs, customers }: LiveMapViewProps) 
   const [unavailableTeamIds, setUnavailableTeamIds] = useState<Set<string>>(new Set())
   const [realRoutes, setRealRoutes]       = useState<Record<string, RealRoute | null>>({})
   const [loadingRoutes, setLoadingRoutes] = useState(false)
-  const [routeSource, setRouteSource]     = useState<'cache' | 'computed' | null>(null)
   const [diagData, setDiagData]           = useState<Record<string, unknown> | null>(null)
   const [diagLoading, setDiagLoading]     = useState(false)
   const [flyTarget, setFlyTarget]         = useState<{ lat: number; lng: number } | null>(null)
@@ -515,31 +520,6 @@ export function LiveMapView({ cleaners, allJobs, customers }: LiveMapViewProps) 
     return () => { supabase.removeChannel(cleanerCh); supabase.removeChannel(routeCh) }
   }, [mounted])
 
-  useEffect(() => {
-    if (!mounted) return
-    setLoadingRoutes(true)
-    setRealRoutes({})
-    fetch('/api/routes/compute', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date: selectedDate }),
-    })
-      .then(r => r.ok ? r.json() : null)
-      .then((data: { routes: Array<{ teamId: string; segments: RealRoute['segments']; legs: RealRoute['legs'] }>; source: 'cache' | 'computed' } | null) => {
-        if (!data?.routes) return
-        setRouteSource(data.source)
-        // Only apply server segments if they have real Google geometry — skip
-        // empty-segment results so browser-side DirectionsLoader data is not overwritten.
-        const withSegments: Record<string, RealRoute> = {}
-        data.routes.forEach(r => {
-          if (r.segments?.length > 0)
-            withSegments[r.teamId] = { teamId: r.teamId, segments: r.segments, legs: r.legs }
-        })
-        if (Object.keys(withSegments).length > 0) setRealRoutes(prev => ({ ...prev, ...withSegments }))
-      })
-      .finally(() => setLoadingRoutes(false))
-  }, [mounted, selectedDate])
-
   const [directionsStatuses, setDirectionsStatuses] = useState<Record<string, string>>({})
   const handleDirectionsLoaded = useCallback((data: Record<string, RealRoute>) => {
     setRealRoutes(prev => ({ ...prev, ...data }))
@@ -547,6 +527,12 @@ export function LiveMapView({ cleaners, allJobs, customers }: LiveMapViewProps) 
   const handleDirectionsStatus = useCallback((teamId: string, status: string) => {
     setDirectionsStatuses(prev => ({ ...prev, [teamId]: status }))
   }, [])
+
+  // Clear route geometry when switching dates so stale data doesn't flash
+  useEffect(() => {
+    setRealRoutes({})
+    setDirectionsStatuses({})
+  }, [selectedDate])
 
   const hasGoogleData = useMemo(
     () => Object.values(realRoutes).some(r => r && r.segments.length > 0),
@@ -671,7 +657,7 @@ export function LiveMapView({ cleaners, allJobs, customers }: LiveMapViewProps) 
             styles={satellite ? [] : MAP_STYLES}
             style={{ width: '100%', height: '100%' }}
           >
-            <DirectionsLoader routes={haversineRoutes} date={selectedDate} onLoaded={handleDirectionsLoaded} onStatus={handleDirectionsStatus} />
+            <DirectionsLoader routes={haversineRoutes} date={selectedDate} onLoaded={handleDirectionsLoaded} onStatus={handleDirectionsStatus} onLoadingChange={setLoadingRoutes} />
             <RoutePolylines routes={routes} realRoutes={realRoutes} selectedTeamId={selectedTeamId} />
             <TrafficLayer show={showTraffic} />
             <CustomersLayer customers={customers} visible={showCustomers} />
@@ -769,29 +755,11 @@ export function LiveMapView({ cleaners, allJobs, customers }: LiveMapViewProps) 
 
         {/* Controls */}
         <div className="absolute bottom-6 right-4 z-[1000] flex flex-col items-end gap-2">
-          {loadingRoutes
-            ? <div className="flex items-center gap-2 rounded-xl px-3 py-2 bg-card border border-ink-200 text-[12px] text-ink-400"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Routing…</div>
-            : <button onClick={() => {
-                setLoadingRoutes(true)
-                fetch('/api/routes/compute', {
-                  method: 'POST',
-                  headers: { 'x-force': '1', 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ date: selectedDate }),
-                })
-                  .then(r => r.ok ? r.json() : null)
-                  .then((data: { routes: Array<{ teamId: string; segments: RealRoute['segments']; legs: RealRoute['legs'] }> } | null) => {
-                    if (!data?.routes) return
-                    const map: Record<string, RealRoute | null> = {}
-                    data.routes.forEach(r => { map[r.teamId] = { teamId: r.teamId, segments: r.segments, legs: r.legs } })
-                    setRealRoutes(map)
-                  })
-                  .finally(() => setLoadingRoutes(false))
-              }}
-              className="px-[14px] py-[7px] text-[12px] font-semibold cursor-pointer rounded-xl border border-ink-200 bg-card text-ink-400 hover:text-ink-700 shadow-md transition-colors"
-              title={routeSource ? `Routes from ${routeSource}` : 'Refresh routes'}>
-              ↺ Routes
-            </button>
-          }
+          {loadingRoutes && (
+            <div className="flex items-center gap-2 rounded-xl px-3 py-2 bg-card border border-ink-200 text-[12px] text-ink-400">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Routing…
+            </div>
+          )}
           <button
             onClick={() => {
               setDiagLoading(true)

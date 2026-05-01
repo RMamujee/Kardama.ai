@@ -95,31 +95,52 @@ function RoutePolylines({ routes, realRoutes, selectedTeamId }: {
     if (!map) return
     polysRef.current.forEach(p => p.setMap(null))
     polysRef.current = []
+
     for (const route of routes) {
-      const highlighted = !selectedTeamId || route.teamId === selectedTeamId
-      const iconOpacity = highlighted ? 1 : 0.2
+      const isSelected  = selectedTeamId === route.teamId
+      const highlighted = !selectedTeamId || isSelected
       const real = realRoutes[route.teamId]
+
       if (real && real.segments.length > 0) {
-        // Dashed lines following real road geometry from Google Directions
+        // ── Real Google road geometry ──────────────────────────────────────────
+        // Draw a slightly wider white "casing" underneath for contrast on dark maps
+        const allPositions = real.segments.flatMap(s => s.positions.map(([lat, lng]) => ({ lat, lng })))
+        polysRef.current.push(new google.maps.Polyline({
+          path: allPositions,
+          strokeColor: '#ffffff',
+          strokeOpacity: highlighted ? 0.5 : 0.08,
+          strokeWeight: isSelected ? 10 : 8,
+          zIndex: highlighted ? 1 : 0,
+          map,
+        }))
+
+        // Solid coloured line per segment — congestion colour coding
         for (const seg of real.segments) {
           const color = CONGESTION_COLOR[seg.congestion] ?? route.color
           polysRef.current.push(new google.maps.Polyline({
             path: seg.positions.map(([lat, lng]) => ({ lat, lng })),
-            strokeOpacity: 0,
-            icons: [{ icon: { path: 'M 0,-1 0,1', strokeColor: color, strokeOpacity: iconOpacity, scale: highlighted ? 4 : 3 }, offset: '0', repeat: '14px' }],
+            strokeColor: color,
+            strokeOpacity: highlighted ? (isSelected ? 0.92 : 0.75) : 0.12,
+            strokeWeight: isSelected ? 7 : highlighted ? 5 : 3,
+            zIndex: highlighted ? 3 : 1,
             map,
           }))
         }
       } else {
-        // Straight-line fallback until Google data arrives
+        // ── Haversine straight-line fallback (loading estimate) ───────────────
         polysRef.current.push(new google.maps.Polyline({
           path: route.polyline.map(([lat, lng]) => ({ lat, lng })),
           strokeOpacity: 0,
-          icons: [{ icon: { path: 'M 0,-1 0,1', strokeColor: route.color, strokeOpacity: highlighted ? 0.35 : 0.1, scale: 3 }, offset: '0', repeat: '20px' }],
+          icons: [{
+            icon: { path: 'M 0,-1 0,1', strokeColor: route.color, strokeOpacity: highlighted ? 0.4 : 0.1, scale: 3 },
+            offset: '0', repeat: '18px',
+          }],
+          zIndex: 0,
           map,
         }))
       }
     }
+
     return () => { polysRef.current.forEach(p => p.setMap(null)) }
   }, [map, routes, realRoutes, selectedTeamId])
 

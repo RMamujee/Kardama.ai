@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { APIProvider, Map, useMap } from '@vis.gl/react-google-maps'
 import type { Cleaner, CleanerStatus, Customer, Job } from '@/types'
 import { buildOptimizedRoutes, TeamRoute, RouteStop, RealLegOverrides } from '@/lib/routing-engine'
@@ -355,6 +355,73 @@ function CustomersLayer({ customers, visible }: { customers: Customer[]; visible
   return null
 }
 
+// ─── Browser-side Directions loader ──────────────────────────────────────────
+// Runs inside <Map> so google.maps JS API is guaranteed loaded and the
+// browser sends the page URL as the HTTP referrer — required when the API key
+// has HTTP referrer restrictions (server-side calls have no referrer).
+
+function DirectionsLoader({ routes, date, onLoaded }: {
+  routes: TeamRoute[]
+  date: string
+  onLoaded: (data: Record<string, RealRoute>) => void
+}) {
+  const onLoadedRef = useRef(onLoaded)
+  useEffect(() => { onLoadedRef.current = onLoaded })
+
+  const routeKey = `${date}:${routes.map(r =>
+    `${r.teamId}:${r.stops.filter(s => s.status !== 'cancelled').length}`
+  ).join(',')}`
+  const lastKeyRef = useRef('')
+
+  useEffect(() => {
+    if (!routeKey || routeKey === lastKeyRef.current) return
+    lastKeyRef.current = routeKey
+
+    const service = new google.maps.DirectionsService()
+    const results: Record<string, RealRoute> = {}
+
+    const promises = routes.map(route => {
+      const active = route.stops.filter(s => s.status !== 'cancelled')
+      if (active.length === 0) return Promise.resolve()
+
+      return new Promise<void>(resolve => {
+        service.route({
+          origin: { lat: route.startLat, lng: route.startLng },
+          destination: { lat: active[active.length - 1].job.lat, lng: active[active.length - 1].job.lng },
+          waypoints: active.slice(0, -1).map(s => ({
+            location: new google.maps.LatLng(s.job.lat, s.job.lng),
+            stopover: true,
+          })),
+          travelMode: google.maps.TravelMode.DRIVING,
+        }, (result, status) => {
+          if (status === google.maps.DirectionsStatus.OK && result?.routes?.[0]) {
+            const gRoute = result.routes[0]
+            const segments = gRoute.legs.map(leg => ({
+              positions: leg.steps.flatMap(step =>
+                (step.path ?? []).map((p: google.maps.LatLng) => [p.lat(), p.lng()] as [number, number])
+              ),
+              congestion: 'clear' as const,
+            }))
+            const legs = gRoute.legs.map(leg => ({
+              durationMin: ((leg.duration_in_traffic ?? leg.duration)?.value ?? 0) / 60,
+              distanceKm: (leg.distance?.value ?? 0) / 1000,
+              traffic: 'clear' as const,
+            }))
+            results[route.teamId] = { teamId: route.teamId, segments, legs }
+          }
+          resolve()
+        })
+      })
+    })
+
+    Promise.all(promises).then(() => {
+      if (Object.keys(results).length > 0) onLoadedRef.current(results)
+    })
+  }, [routeKey]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  return null
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 interface LiveMapViewProps { cleaners: Cleaner[]; allJobs: Job[]; customers: Customer[] }
@@ -435,13 +502,22 @@ export function LiveMapView({ cleaners, allJobs, customers }: LiveMapViewProps) 
       .then(r => r.ok ? r.json() : null)
       .then((data: { routes: Array<{ teamId: string; segments: RealRoute['segments']; legs: RealRoute['legs'] }>; source: 'cache' | 'computed' } | null) => {
         if (!data?.routes) return
-        const map: Record<string, RealRoute | null> = {}
-        data.routes.forEach(r => { map[r.teamId] = { teamId: r.teamId, segments: r.segments, legs: r.legs } })
-        setRealRoutes(map)
         setRouteSource(data.source)
+        // Only apply server segments if they have real Google geometry — skip
+        // empty-segment results so browser-side DirectionsLoader data is not overwritten.
+        const withSegments: Record<string, RealRoute> = {}
+        data.routes.forEach(r => {
+          if (r.segments?.length > 0)
+            withSegments[r.teamId] = { teamId: r.teamId, segments: r.segments, legs: r.legs }
+        })
+        if (Object.keys(withSegments).length > 0) setRealRoutes(prev => ({ ...prev, ...withSegments }))
       })
       .finally(() => setLoadingRoutes(false))
   }, [mounted, selectedDate])
+
+  const handleDirectionsLoaded = useCallback((data: Record<string, RealRoute>) => {
+    setRealRoutes(prev => ({ ...prev, ...data }))
+  }, [])
 
   const hasGoogleData = useMemo(
     () => Object.values(realRoutes).some(r => r && r.segments.length > 0),
@@ -566,6 +642,7 @@ export function LiveMapView({ cleaners, allJobs, customers }: LiveMapViewProps) 
             styles={satellite ? [] : MAP_STYLES}
             style={{ width: '100%', height: '100%' }}
           >
+            <DirectionsLoader routes={haversineRoutes} date={selectedDate} onLoaded={handleDirectionsLoaded} />
             <RoutePolylines routes={routes} realRoutes={realRoutes} selectedTeamId={selectedTeamId} />
             <TrafficLayer show={showTraffic} />
             <CustomersLayer customers={customers} visible={showCustomers} />

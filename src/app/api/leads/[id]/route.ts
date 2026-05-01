@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { requireOwner } from '@/lib/supabase/dal'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 
 type SocialLeadStatus = 'new' | 'responded' | 'captured' | 'dismissed'
@@ -16,6 +17,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  await requireOwner()
   const { id } = await params
 
   let body: PatchBody

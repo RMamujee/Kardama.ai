@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
+import { requireOwner } from '@/lib/supabase/dal'
 import { signToken } from '@/lib/booking-tokens'
 import { getCustomers } from '@/lib/data'
 
 export async function POST(request: Request) {
+  await requireOwner()
   const body = await request.json().catch(() => ({})) as { customerId?: string }
   const { customerId } = body
 

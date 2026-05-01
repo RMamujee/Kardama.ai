@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 import {
   WifiOff, Wifi, Clock, ChevronDown, ChevronUp,
   MessageSquare, X, AlertTriangle, RotateCcw, Send, CheckCircle,
-  MapPin, DollarSign, Undo2, UserX, UserCheck, Navigation,
+  MapPin, DollarSign, Undo2, UserX, UserCheck,
 } from 'lucide-react'
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -273,18 +273,6 @@ function StopRow({ stop, teamColor, teamName, isCancelled, onCancel, onUncancel,
   )
 }
 
-// ─── Google Maps directions URL ───────────────────────────────────────────────
-function buildGoogleMapsUrl(route: TeamRoute): string {
-  const active = route.stops.filter(s => s.status !== 'cancelled')
-  if (active.length === 0) return ''
-  const origin = `${route.startLat},${route.startLng}`
-  const destination = `${active[active.length - 1].job.lat},${active[active.length - 1].job.lng}`
-  const middle = active.slice(0, -1).map(s => `${s.job.lat},${s.job.lng}`)
-  const params = new URLSearchParams({ api: '1', origin, destination, travelmode: 'driving' })
-  if (middle.length) params.set('waypoints', middle.join('|'))
-  return `https://www.google.com/maps/dir/?${params}`
-}
-
 // ─── Team card ────────────────────────────────────────────────────────────────
 function TeamCard({ route, overrides, onSetStopStatus, onFlyTo, onMarkUnavailable, isSelected, onFocus }: {
   route: TeamRoute
@@ -320,16 +308,6 @@ function TeamCard({ route, overrides, onSetStopStatus, onFlyTo, onMarkUnavailabl
           </div>
         </button>
         <div className="flex items-center gap-1 flex-shrink-0 mt-0.5">
-          <a
-            href={buildGoogleMapsUrl(route)}
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Open route in Google Maps with traffic"
-            onClick={e => { if (!buildGoogleMapsUrl(route)) e.preventDefault() }}
-            className="h-6 w-6 flex items-center justify-center rounded border border-ink-200 text-ink-400 hover:text-emerald-500 hover:border-emerald-500/30 transition-colors"
-          >
-            <Navigation className="h-2.5 w-2.5" />
-          </a>
           <button
             onClick={onMarkUnavailable}
             title="Mark team unavailable — jobs will be redistributed"
@@ -549,7 +527,7 @@ export function RoutingPanel({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1 text-[11px] text-ink-400">
             <DollarSign className="h-2.5 w-2.5" />
-            <span>Tap ① to fly · ➤ to navigate · 💬 to notify · × to cancel</span>
+            <span>Tap ① to fly to stop · 💬 to notify client · × to cancel</span>
           </div>
         </div>
       </div>

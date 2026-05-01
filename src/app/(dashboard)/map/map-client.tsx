@@ -1,6 +1,6 @@
 'use client'
 import dynamic from 'next/dynamic'
-import type { Cleaner, Job } from '@/types'
+import type { Cleaner, Customer, Job } from '@/types'
 
 const LiveMapView = dynamic(
   () => import('@/components/map/LiveMapView').then(m => m.LiveMapView),
@@ -20,12 +20,13 @@ const LiveMapView = dynamic(
 interface Props {
   cleaners: Cleaner[]
   allJobs: Job[]
+  customers: Customer[]
 }
 
-export function MapClient({ cleaners, allJobs }: Props) {
+export function MapClient({ cleaners, allJobs, customers }: Props) {
   return (
     <div className="h-[calc(100vh-60px)] -mx-5 -my-6 md:-mx-8 md:-my-7 lg:-mx-10 lg:-my-8">
-      <LiveMapView cleaners={cleaners} allJobs={allJobs} />
+      <LiveMapView cleaners={cleaners} allJobs={allJobs} customers={customers} />
     </div>
   )
 }

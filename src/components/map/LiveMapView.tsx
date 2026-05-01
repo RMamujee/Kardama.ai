@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { APIProvider, Map, useMap } from '@vis.gl/react-google-maps'
-import type { Cleaner, CleanerStatus, Job } from '@/types'
+import type { Cleaner, CleanerStatus, Customer, Job } from '@/types'
 import { buildOptimizedRoutes, TeamRoute, RouteStop, RealLegOverrides } from '@/lib/routing-engine'
 import { RealRoute, CONGESTION_COLOR } from '@/lib/google-routing'
 import { RoutingPanel } from './RoutingPanel'
@@ -268,14 +268,63 @@ function GpsTrail({ trail }: { trail: [number, number][] }) {
   return null
 }
 
+function customerPinIcon(): google.maps.Icon {
+  return svgIcon(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="28">
+      <path d="M11 0C5 0 0 5 0 11c0 8 11 17 11 17S22 19 22 11C22 5 17 0 11 0z" fill="#2DD4BF" stroke="white" stroke-width="2"/>
+      <circle cx="11" cy="11" r="4" fill="white" opacity="0.9"/>
+    </svg>`, 22)
+}
+
+function CustomersLayer({ customers, visible }: { customers: Customer[]; visible: boolean }) {
+  const map = useMap()
+  const markersRef = useRef<google.maps.Marker[]>([])
+  const infoRef    = useRef<google.maps.InfoWindow | null>(null)
+
+  useEffect(() => {
+    if (!map) return
+    markersRef.current.forEach(m => m.setMap(null))
+    markersRef.current = []
+    infoRef.current?.close()
+    if (!visible) return
+
+    infoRef.current ??= new google.maps.InfoWindow()
+    for (const c of customers) {
+      if (!c.lat || !c.lng) continue
+      const m = new google.maps.Marker({
+        position: { lat: c.lat, lng: c.lng },
+        map,
+        icon: customerPinIcon(),
+        title: c.name,
+      })
+      m.addListener('click', () => {
+        infoRef.current!.setContent(
+          `<div style="min-width:150px;font-family:system-ui;padding:4px">
+            <b style="font-size:13px">${c.name}</b>
+            <p style="font-size:11px;color:#888;margin:3px 0 0">${c.address.split(',')[0]}</p>
+            <p style="font-size:11px;color:#888;margin:2px 0 0">${c.city}</p>
+          </div>`
+        )
+        infoRef.current!.open({ map, anchor: m })
+      })
+      markersRef.current.push(m)
+    }
+
+    return () => { markersRef.current.forEach(m => m.setMap(null)); infoRef.current?.close() }
+  }, [map, customers, visible])
+
+  return null
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
-interface LiveMapViewProps { cleaners: Cleaner[]; allJobs: Job[] }
+interface LiveMapViewProps { cleaners: Cleaner[]; allJobs: Job[]; customers: Customer[] }
 
-export function LiveMapView({ cleaners, allJobs }: LiveMapViewProps) {
+export function LiveMapView({ cleaners, allJobs, customers }: LiveMapViewProps) {
   const [mounted, setMounted]             = useState(false)
   const [satellite, setSatellite]         = useState(false)
   const [showTraffic, setShowTraffic]     = useState(true)
+  const [showCustomers, setShowCustomers] = useState(false)
   const [overrides, setOverrides]         = useState<Record<string, RouteStop['status']>>({})
   const [unavailableTeamIds, setUnavailableTeamIds] = useState<Set<string>>(new Set())
   const [realRoutes, setRealRoutes]       = useState<Record<string, RealRoute | null>>({})
@@ -458,6 +507,7 @@ export function LiveMapView({ cleaners, allJobs }: LiveMapViewProps) {
           >
             <RoutePolylines routes={routes} realRoutes={realRoutes} selectedTeamId={selectedTeamId} />
             <TrafficLayer show={showTraffic} />
+            <CustomersLayer customers={customers} visible={showCustomers} />
             <MapFitBounds routes={routes} fitKey={selectedDate} />
             <FlyTo target={flyTarget} />
             <FlyToTeam routes={routes} teamId={selectedTeamId} />
@@ -504,6 +554,16 @@ export function LiveMapView({ cleaners, allJobs }: LiveMapViewProps) {
             className={cn('px-[14px] py-[7px] text-[12px] font-semibold cursor-pointer rounded-xl border shadow-md transition-colors',
               showTraffic ? 'bg-orange-500 text-white border-ink-200' : 'bg-card text-ink-400 border-ink-200 hover:text-ink-700')}>
             Traffic
+          </button>
+          <button
+            onClick={() => setShowCustomers(v => !v)}
+            className={cn('px-[14px] py-[7px] text-[12px] font-semibold cursor-pointer rounded-xl border shadow-md transition-colors flex items-center gap-1.5',
+              showCustomers ? 'bg-teal-500 text-white border-teal-500' : 'bg-card text-ink-400 border-ink-200 hover:text-ink-700')}
+            title="Toggle customer locations">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="14" viewBox="0 0 22 28" fill="currentColor" style={{ flexShrink: 0 }}>
+              <path d="M11 0C5 0 0 5 0 11c0 8 11 17 11 17S22 19 22 11C22 5 17 0 11 0z"/>
+            </svg>
+            Customers
           </button>
           <button onClick={() => gpsPos && setFlyTarget({ lat: gpsPos.lat, lng: gpsPos.lng })} disabled={!gpsPos}
             className={cn('h-9 w-9 rounded-[10px] border border-ink-200 flex items-center justify-center shadow-md transition-colors', gpsPos ? 'bg-violet-500 text-white cursor-pointer' : 'bg-card text-ink-300 cursor-not-allowed')}>

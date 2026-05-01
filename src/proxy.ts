@@ -19,7 +19,7 @@ function rateLimited(ip: string): boolean {
 
 // ───────────────────────── route classification ─────────────────────────
 const PUBLIC_PATHS = ['/login', '/auth/callback']
-const PUBLIC_PREFIXES = ['/book', '/request', '/api/bookings', '/api/intake', '/api/sms', '/api/webhooks', '/api/auth']
+const PUBLIC_PREFIXES = ['/book', '/request', '/api/bookings', '/api/intake', '/api/webhooks', '/api/auth', '/api/campaigns/scan']
 const OWNER_PREFIXES = [
   '/dashboard', '/customers', '/scheduling', '/payments', '/team',
   '/campaigns', '/marketing', '/messages', '/inbox', '/analytics', '/map',

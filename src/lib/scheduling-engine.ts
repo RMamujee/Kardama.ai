@@ -52,12 +52,16 @@ function scoreTeam(
   for (const c of teamCleaners) {
     if (!scheduleKnown(c, day)) return null
   }
+  // Hard block: any cleaner is explicitly off this day
+  for (const c of teamCleaners) {
+    if (c.availableHours?.[day] === null) return null
+  }
 
   const matchReasons: string[] = []
   const warnings: string[] = []
 
   const cleanerScores = teamCleaners.map(cleaner => {
-    const driveMin = estimateDriveMinutes(cleaner.currentLat, cleaner.currentLng, request.jobLat, request.jobLng)
+    const driveMin = estimateDriveMinutes(cleaner.homeAreaLat, cleaner.homeAreaLng, request.jobLat, request.jobLng)
     const proximityScore = Math.max(0, 100 - driveMin * 2)
 
     const hours = cleaner.availableHours[day]
@@ -92,7 +96,7 @@ function scoreTeam(
 
   const avgScore = cleanerScores.reduce((a, b) => a + b, 0) / cleanerScores.length
   const avgDrive =
-    teamCleaners.reduce((sum, c) => sum + estimateDriveMinutes(c.currentLat, c.currentLng, request.jobLat, request.jobLng), 0) /
+    teamCleaners.reduce((sum, c) => sum + estimateDriveMinutes(c.homeAreaLat, c.homeAreaLng, request.jobLat, request.jobLng), 0) /
     teamCleaners.length
 
   if (avgDrive <= 15) matchReasons.push(`Only ${Math.round(avgDrive)} min away`)

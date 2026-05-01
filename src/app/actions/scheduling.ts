@@ -48,7 +48,7 @@ async function findTeamConflict(
   if (!jobs || jobs.length === 0) return null
 
   const proposedStart = toMinutes(time)
-  const proposedEnd = proposedStart + durationMin
+  const proposedEnd = proposedStart + durationMin + 30
 
   for (const j of jobs) {
     if (excludeJobId && j.id === excludeJobId) continue

@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server'
+import { requireOwner } from '@/lib/supabase/dal'
 import { signToken } from '@/lib/booking-tokens'
 import { sendSms } from '@/lib/twilio'
 import { getCustomers } from '@/lib/data'
 import { flag } from '@/lib/flags'
 
 export async function POST(request: Request) {
+  await requireOwner()
   if (!(await flag('smsSendingEnabled'))) {
     return NextResponse.json({ error: 'SMS sending temporarily disabled' }, { status: 503 })
   }

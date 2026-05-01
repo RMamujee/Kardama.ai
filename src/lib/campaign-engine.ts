@@ -122,7 +122,7 @@ export function getAvailableSlots(
 
     for (const [teamId, teamCleaners] of teamMap.entries()) {
       const cleanerIds = teamCleaners.map(c => c.id)
-      if (teamCleaners.length < 2) continue
+      if (teamCleaners.length < 1) continue
 
       for (const time of SLOT_TIMES) {
         // Check both cleaners are available that day and time

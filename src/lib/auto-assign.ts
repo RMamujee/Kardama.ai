@@ -120,7 +120,8 @@ export async function autoAssignBookingRequest(params: {
     geocodeAddress(params.address, params.city),
     admin.from('cleaners').select('*'),
     admin.from('jobs').select('id,cleaner_ids,scheduled_date,scheduled_time,estimated_duration,status')
-      .in('status', ['scheduled', 'confirmed', 'in-progress']),
+      .in('status', ['scheduled', 'confirmed', 'in-progress'])
+      .eq('scheduled_date', params.preferredDate),
   ])
 
   const cleaners: Cleaner[] = (cleanersRes.data ?? []).map(r => mapCleaner(r as CleanerRow))
@@ -154,7 +155,7 @@ export async function autoAssignBookingRequest(params: {
     let totalScore = 0
 
     for (const c of teamCleaners) {
-      const hours = c.availableHours[day]
+      const hours = c.availableHours?.[day]
       if (!hours) { allAvailable = false; break }
 
       const avStart = parseMinutes(hours.start)

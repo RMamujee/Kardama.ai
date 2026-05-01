@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { waitUntil } from '@vercel/functions'
+
+export const maxDuration = 60
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { autoAssignBookingRequest } from '@/lib/auto-assign'
 import { SERVICE_PRICES, VALID_SERVICE_TYPES, VALID_TIMES } from '@/lib/services'
@@ -117,7 +119,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid time slot' }, { status: 400, headers: CORS })
   }
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date())
   if (preferred_date <= today) {
     return NextResponse.json({ error: 'Date must be in the future' }, { status: 400, headers: CORS })
   }

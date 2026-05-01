@@ -360,16 +360,18 @@ function CustomersLayer({ customers, visible }: { customers: Customer[]; visible
 // browser sends the page URL as the HTTP referrer — required when the API key
 // has HTTP referrer restrictions (server-side calls have no referrer).
 
-function DirectionsLoader({ routes, date, onLoaded }: {
+function DirectionsLoader({ routes, date, onLoaded, onStatus }: {
   routes: TeamRoute[]
   date: string
   onLoaded: (data: Record<string, RealRoute>) => void
+  onStatus: (teamId: string, status: string) => void
 }) {
   const onLoadedRef = useRef(onLoaded)
-  useEffect(() => { onLoadedRef.current = onLoaded })
+  const onStatusRef = useRef(onStatus)
+  useEffect(() => { onLoadedRef.current = onLoaded; onStatusRef.current = onStatus })
 
   const routeKey = `${date}:${routes.map(r =>
-    `${r.teamId}:${r.stops.filter(s => s.status !== 'cancelled').length}`
+    `${r.teamId}:${r.stops.filter(s => s.status !== 'cancelled').length}:${r.startLat.toFixed(4)},${r.startLng.toFixed(4)}`
   ).join(',')}`
   const lastKeyRef = useRef('')
 
@@ -382,18 +384,29 @@ function DirectionsLoader({ routes, date, onLoaded }: {
 
     const promises = routes.map(route => {
       const active = route.stops.filter(s => s.status !== 'cancelled')
-      if (active.length === 0) return Promise.resolve()
+      if (active.length === 0) { onStatusRef.current(route.teamId, 'NO_STOPS'); return Promise.resolve() }
+
+      const dest = active[active.length - 1].job
+      // If origin equals destination (no home/GPS set, fallback = first job), skip — would
+      // return a trivial zero-distance route with no meaningful geometry.
+      const samePoint = Math.abs(route.startLat - dest.lat) < 0.0001 && Math.abs(route.startLng - dest.lng) < 0.0001
+      if (samePoint && active.length === 1) {
+        console.warn(`[DirectionsLoader] ${route.teamId}: origin=destination, skipping (cleaner has no home/GPS set)`)
+        onStatusRef.current(route.teamId, 'SAME_ORIGIN_DEST')
+        return Promise.resolve()
+      }
 
       return new Promise<void>(resolve => {
         service.route({
           origin: { lat: route.startLat, lng: route.startLng },
-          destination: { lat: active[active.length - 1].job.lat, lng: active[active.length - 1].job.lng },
+          destination: { lat: dest.lat, lng: dest.lng },
           waypoints: active.slice(0, -1).map(s => ({
             location: new google.maps.LatLng(s.job.lat, s.job.lng),
             stopover: true,
           })),
           travelMode: google.maps.TravelMode.DRIVING,
         }, (result, status) => {
+          onStatusRef.current(route.teamId, status)
           if (status === google.maps.DirectionsStatus.OK && result?.routes?.[0]) {
             const gRoute = result.routes[0]
             const segments = gRoute.legs.map(leg => ({
@@ -408,6 +421,8 @@ function DirectionsLoader({ routes, date, onLoaded }: {
               traffic: 'clear' as const,
             }))
             results[route.teamId] = { teamId: route.teamId, segments, legs }
+          } else {
+            console.error(`[DirectionsLoader] ${route.teamId}: status=${status}`, { startLat: route.startLat, startLng: route.startLng, dest: { lat: dest.lat, lng: dest.lng } })
           }
           resolve()
         })
@@ -515,8 +530,12 @@ export function LiveMapView({ cleaners, allJobs, customers }: LiveMapViewProps) 
       .finally(() => setLoadingRoutes(false))
   }, [mounted, selectedDate])
 
+  const [directionsStatuses, setDirectionsStatuses] = useState<Record<string, string>>({})
   const handleDirectionsLoaded = useCallback((data: Record<string, RealRoute>) => {
     setRealRoutes(prev => ({ ...prev, ...data }))
+  }, [])
+  const handleDirectionsStatus = useCallback((teamId: string, status: string) => {
+    setDirectionsStatuses(prev => ({ ...prev, [teamId]: status }))
   }, [])
 
   const hasGoogleData = useMemo(
@@ -642,7 +661,7 @@ export function LiveMapView({ cleaners, allJobs, customers }: LiveMapViewProps) 
             styles={satellite ? [] : MAP_STYLES}
             style={{ width: '100%', height: '100%' }}
           >
-            <DirectionsLoader routes={haversineRoutes} date={selectedDate} onLoaded={handleDirectionsLoaded} />
+            <DirectionsLoader routes={haversineRoutes} date={selectedDate} onLoaded={handleDirectionsLoaded} onStatus={handleDirectionsStatus} />
             <RoutePolylines routes={routes} realRoutes={realRoutes} selectedTeamId={selectedTeamId} />
             <TrafficLayer show={showTraffic} />
             <CustomersLayer customers={customers} visible={showCustomers} />
@@ -678,6 +697,20 @@ export function LiveMapView({ cleaners, allJobs, customers }: LiveMapViewProps) 
                   </div>
                 )
               })()}
+              {/* Browser-side DirectionsService status */}
+              {Object.keys(directionsStatuses).length > 0 && (
+                <div className={cn('rounded-lg p-2 border', Object.values(directionsStatuses).every(s => s === 'OK') ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-rose-500/10 border-rose-500/20')}>
+                  <p className="font-bold text-ink-700">Browser DirectionsService</p>
+                  {Object.entries(directionsStatuses).map(([tid, st]) => (
+                    <p key={tid} className={st === 'OK' ? 'text-emerald-500' : st === 'SAME_ORIGIN_DEST' ? 'text-amber-500' : 'text-rose-500'}>
+                      {tid}: {st}
+                    </p>
+                  ))}
+                  {Object.values(directionsStatuses).some(s => s === 'SAME_ORIGIN_DEST') && (
+                    <p className="text-amber-400 mt-0.5">No home area set — add one on the Team page</p>
+                  )}
+                </div>
+              )}
               {/* DB state */}
               {(() => {
                 const db = diagData.db as Record<string, unknown>

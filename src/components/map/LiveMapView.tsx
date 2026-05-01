@@ -83,78 +83,130 @@ function gpsDotIcon(): google.maps.Icon {
 
 // ─── Map layer components (must live inside <Map>) ────────────────────────────
 
-function RoutePolylines({ routes, realRoutes, selectedTeamId }: {
+// ─── DirectionsLayer ──────────────────────────────────────────────────────────
+// Uses google.maps.DirectionsRenderer (canonical API) for road geometry, with
+// a haversine dashed fallback while the async Google request is in flight.
+// Replaces both the old RoutePolylines and DirectionsLoader components.
+
+function DirectionsLayer({ routes, date, selectedTeamId, onLegsLoaded, onLoadingChange, onStatus }: {
   routes: TeamRoute[]
-  realRoutes: Record<string, RealRoute | null>
+  date: string
   selectedTeamId: string | null
+  onLegsLoaded: (teamId: string, legs: RealRoute['legs']) => void
+  onLoadingChange: (loading: boolean) => void
+  onStatus: (teamId: string, status: string) => void
 }) {
   const map = useMap()
-  const polysRef = useRef<google.maps.Polyline[]>([])
+  const renderersRef = useRef<Record<string, google.maps.DirectionsRenderer>>({})
+  const fallbacksRef = useRef<Record<string, google.maps.Polyline[]>>({})
 
+  // Keep latest callbacks and selectedTeamId in a ref so async callbacks read current values
+  const live = useRef({ onLegsLoaded, onLoadingChange, onStatus, selectedTeamId })
+  useEffect(() => { live.current = { onLegsLoaded, onLoadingChange, onStatus, selectedTeamId } })
+
+  const routeKey = `${date}:${routes.map(r =>
+    `${r.teamId}:${r.stops.filter(s => s.status !== 'cancelled').length}:${r.startLat.toFixed(4)},${r.startLng.toFixed(4)}`
+  ).join(',')}`
+  const lastKeyRef = useRef('')
+
+  // Show/hide renderers when selection changes (no re-fetch needed)
   useEffect(() => {
     if (!map) return
-    polysRef.current.forEach(p => p.setMap(null))
-    polysRef.current = []
-
-    for (const route of routes) {
-      const isSelected  = selectedTeamId === route.teamId
-      // When any team is focused, only draw that team's route — hide others completely
-      if (selectedTeamId && !isSelected) continue
-      const highlighted = true
-      const real = realRoutes[route.teamId]
-
-      if (real && real.segments.length > 0) {
-        // ── Real Google road geometry ──────────────────────────────────────────
-        // Draw a slightly wider white "casing" underneath for contrast on dark maps
-        const allPositions = real.segments.flatMap(s => s.positions.map(([lat, lng]) => ({ lat, lng })))
-        polysRef.current.push(new google.maps.Polyline({
-          path: allPositions,
-          strokeColor: '#ffffff',
-          strokeOpacity: highlighted ? 0.5 : 0.08,
-          strokeWeight: isSelected ? 10 : 8,
-          zIndex: highlighted ? 1 : 0,
-          map,
-        }))
-
-        // Solid coloured line per segment — congestion colour coding
-        for (const seg of real.segments) {
-          const color = CONGESTION_COLOR[seg.congestion] ?? route.color
-          polysRef.current.push(new google.maps.Polyline({
-            path: seg.positions.map(([lat, lng]) => ({ lat, lng })),
-            strokeColor: color,
-            strokeOpacity: highlighted ? (isSelected ? 0.92 : 0.75) : 0.12,
-            strokeWeight: isSelected ? 7 : highlighted ? 5 : 3,
-            zIndex: highlighted ? 3 : 1,
-            map,
-          }))
-        }
-      } else {
-        // ── Haversine straight-line fallback (loading estimate) ───────────────
-        // White casing for contrast
-        polysRef.current.push(new google.maps.Polyline({
-          path: route.polyline.map(([lat, lng]) => ({ lat, lng })),
-          strokeColor: '#ffffff',
-          strokeOpacity: highlighted ? 0.6 : 0.08,
-          strokeWeight: isSelected ? 8 : 6,
-          zIndex: 0,
-          map,
-        }))
-        // Coloured dashed line
-        polysRef.current.push(new google.maps.Polyline({
-          path: route.polyline.map(([lat, lng]) => ({ lat, lng })),
-          strokeOpacity: 0,
-          icons: [{
-            icon: { path: 'M 0,-1 0,1', strokeColor: route.color, strokeOpacity: highlighted ? (isSelected ? 0.85 : 0.6) : 0.12, scale: isSelected ? 4 : 3 },
-            offset: '0', repeat: '16px',
-          }],
-          zIndex: 1,
-          map,
-        }))
+    for (const [teamId, renderer] of Object.entries(renderersRef.current)) {
+      renderer.setMap(!selectedTeamId || teamId === selectedTeamId ? map : null)
+    }
+    for (const [teamId, polys] of Object.entries(fallbacksRef.current)) {
+      const show = !selectedTeamId || teamId === selectedTeamId
+      polys[0]?.setOptions({ strokeOpacity: show ? 0.5 : 0 })
+      const icons = polys[1]?.get('icons') as google.maps.IconSequence[] | undefined
+      if (icons?.[0]) {
+        polys[1]?.set('icons', [{
+          ...icons[0],
+          icon: { ...(icons[0].icon as google.maps.Symbol), strokeOpacity: show ? 0.7 : 0 },
+        }])
       }
     }
+  }, [map, selectedTeamId])
 
-    return () => { polysRef.current.forEach(p => p.setMap(null)) }
-  }, [map, routes, realRoutes, selectedTeamId])
+  useEffect(() => {
+    if (!map || routeKey === lastKeyRef.current) return
+    lastKeyRef.current = routeKey
+
+    Object.values(renderersRef.current).forEach(r => r.setMap(null))
+    renderersRef.current = {}
+    Object.values(fallbacksRef.current).forEach(ps => ps.forEach(p => p.setMap(null)))
+    fallbacksRef.current = {}
+    if (routes.length === 0) return
+
+    live.current.onLoadingChange(true)
+    const service = new google.maps.DirectionsService()
+    let pending = 0
+
+    for (const route of routes) {
+      const active = route.stops.filter(s => s.status !== 'cancelled')
+      const show = !live.current.selectedTeamId || live.current.selectedTeamId === route.teamId
+
+      // Dashed haversine fallback shown while Google loads
+      fallbacksRef.current[route.teamId] = [
+        new google.maps.Polyline({
+          path: route.polyline.map(([lat, lng]) => ({ lat, lng })),
+          strokeColor: '#ffffff', strokeOpacity: show ? 0.5 : 0, strokeWeight: 7, zIndex: 0, map,
+        }),
+        new google.maps.Polyline({
+          path: route.polyline.map(([lat, lng]) => ({ lat, lng })),
+          strokeOpacity: 0,
+          icons: [{ icon: { path: 'M 0,-1 0,1', strokeColor: route.color, strokeOpacity: show ? 0.7 : 0, scale: 4 }, offset: '0', repeat: '16px' }],
+          zIndex: 1, map,
+        }),
+      ]
+
+      if (active.length === 0) continue
+
+      const renderer = new google.maps.DirectionsRenderer({
+        suppressMarkers: true,
+        preserveViewport: true,
+        polylineOptions: { strokeColor: route.color, strokeWeight: 6, strokeOpacity: 0.9, zIndex: 3 },
+      })
+      renderersRef.current[route.teamId] = renderer
+      pending++
+
+      service.route({
+        origin: { lat: route.startLat, lng: route.startLng },
+        destination: { lat: active[active.length - 1].job.lat, lng: active[active.length - 1].job.lng },
+        waypoints: active.slice(0, -1).map(s => ({
+          location: new google.maps.LatLng(s.job.lat, s.job.lng), stopover: true,
+        })),
+        travelMode: google.maps.TravelMode.DRIVING,
+      }, (result, status) => {
+        live.current.onStatus(route.teamId, status)
+        if (status === google.maps.DirectionsStatus.OK && result) {
+          // Remove haversine fallback, render real Google road geometry via DirectionsRenderer
+          fallbacksRef.current[route.teamId]?.forEach(p => p.setMap(null))
+          delete fallbacksRef.current[route.teamId]
+          const showNow = !live.current.selectedTeamId || live.current.selectedTeamId === route.teamId
+          if (showNow) renderer.setMap(map)
+          renderer.setDirections(result)
+          // Extract legs for timing display in the panel
+          const legs: RealRoute['legs'] = result.routes[0].legs.map(leg => ({
+            durationMin: ((leg.duration_in_traffic ?? leg.duration)?.value ?? 0) / 60,
+            distanceKm: (leg.distance?.value ?? 0) / 1000,
+            traffic: 'clear' as const,
+          }))
+          live.current.onLegsLoaded(route.teamId, legs)
+        } else {
+          console.warn(`[DirectionsLayer] ${route.teamId}: ${status}`)
+        }
+        if (--pending === 0) live.current.onLoadingChange(false)
+      })
+    }
+
+    if (pending === 0) live.current.onLoadingChange(false)
+
+    return () => {
+      Object.values(renderersRef.current).forEach(r => r.setMap(null))
+      Object.values(fallbacksRef.current).forEach(ps => ps.forEach(p => p.setMap(null)))
+    }
+  }, [map, routeKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return null
 }
@@ -357,102 +409,6 @@ function CustomersLayer({ customers, visible }: { customers: Customer[]; visible
   return null
 }
 
-// ─── Browser-side Directions loader ──────────────────────────────────────────
-// Runs inside <Map> so google.maps JS API is guaranteed loaded and the
-// browser sends the page URL as the HTTP referrer — required when the API key
-// has HTTP referrer restrictions (server-side calls have no referrer).
-
-function DirectionsLoader({ routes, date, onLoaded, onStatus, onLoadingChange }: {
-  routes: TeamRoute[]
-  date: string
-  onLoaded: (data: Record<string, RealRoute>) => void
-  onStatus: (teamId: string, status: string) => void
-  onLoadingChange: (loading: boolean) => void
-}) {
-  const onLoadedRef = useRef(onLoaded)
-  const onStatusRef = useRef(onStatus)
-  const onLoadingRef = useRef(onLoadingChange)
-  useEffect(() => { onLoadedRef.current = onLoaded; onStatusRef.current = onStatus; onLoadingRef.current = onLoadingChange })
-
-  const routeKey = `${date}:${routes.map(r =>
-    `${r.teamId}:${r.stops.filter(s => s.status !== 'cancelled').length}:${r.startLat.toFixed(4)},${r.startLng.toFixed(4)}`
-  ).join(',')}`
-  const lastKeyRef = useRef('')
-
-  useEffect(() => {
-    if (!routeKey || routeKey === lastKeyRef.current) return
-    lastKeyRef.current = routeKey
-
-    onLoadingRef.current(true)
-    const service = new google.maps.DirectionsService()
-    const results: Record<string, RealRoute> = {}
-
-    const promises = routes.map(route => {
-      const active = route.stops.filter(s => s.status !== 'cancelled')
-      if (active.length === 0) { onStatusRef.current(route.teamId, 'NO_STOPS'); return Promise.resolve() }
-
-      const dest = active[active.length - 1].job
-      // If origin equals destination (no home/GPS set, fallback = first job), skip — would
-      // return a trivial zero-distance route with no meaningful geometry.
-      const samePoint = Math.abs(route.startLat - dest.lat) < 0.0001 && Math.abs(route.startLng - dest.lng) < 0.0001
-      if (samePoint && active.length === 1) {
-        console.warn(`[DirectionsLoader] ${route.teamId}: origin=destination, skipping (cleaner has no home/GPS set)`)
-        onStatusRef.current(route.teamId, 'SAME_ORIGIN_DEST')
-        return Promise.resolve()
-      }
-
-      return new Promise<void>(resolve => {
-        service.route({
-          origin: { lat: route.startLat, lng: route.startLng },
-          destination: { lat: dest.lat, lng: dest.lng },
-          waypoints: active.slice(0, -1).map(s => ({
-            location: new google.maps.LatLng(s.job.lat, s.job.lng),
-            stopover: true,
-          })),
-          travelMode: google.maps.TravelMode.DRIVING,
-        }, (result, status) => {
-          onStatusRef.current(route.teamId, status)
-          if (status === google.maps.DirectionsStatus.OK && result?.routes?.[0]) {
-            const gRoute = result.routes[0]
-            // overview_path is guaranteed non-empty on OK; step.path can be empty
-            const overviewPositions = (gRoute.overview_path ?? []).map(
-              (p: google.maps.LatLng) => [p.lat(), p.lng()] as [number, number]
-            )
-            // Build one segment per leg — fall back to slicing overview_path if steps have no geometry
-            const legFractions = gRoute.legs.map(leg => {
-              const pts = leg.steps.flatMap(step =>
-                (step.path ?? []).map((p: google.maps.LatLng) => [p.lat(), p.lng()] as [number, number])
-              )
-              return pts.length > 1 ? pts : null
-            })
-            const allStepsHavePaths = legFractions.every(f => f !== null)
-            const segments = allStepsHavePaths
-              ? legFractions.map(pts => ({ positions: pts!, congestion: 'clear' as const }))
-              : [{ positions: overviewPositions, congestion: 'clear' as const }]
-            const legs = gRoute.legs.map(leg => ({
-              durationMin: ((leg.duration_in_traffic ?? leg.duration)?.value ?? 0) / 60,
-              distanceKm: (leg.distance?.value ?? 0) / 1000,
-              traffic: 'clear' as const,
-            }))
-            console.log(`[DirectionsLoader] ${route.teamId}: OK — ${segments.length} seg(s), ${segments.reduce((a, s) => a + s.positions.length, 0)} pts`)
-            results[route.teamId] = { teamId: route.teamId, segments, legs }
-          } else {
-            console.error(`[DirectionsLoader] ${route.teamId}: status=${status}`, { startLat: route.startLat, startLng: route.startLng, dest: { lat: dest.lat, lng: dest.lng } })
-          }
-          resolve()
-        })
-      })
-    })
-
-    Promise.all(promises).then(() => {
-      if (Object.keys(results).length > 0) onLoadedRef.current(results)
-      onLoadingRef.current(false)
-    })
-  }, [routeKey]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  return null
-}
-
 // ─── Main component ───────────────────────────────────────────────────────────
 
 interface LiveMapViewProps { cleaners: Cleaner[]; allJobs: Job[]; customers: Customer[] }
@@ -521,21 +477,24 @@ export function LiveMapView({ cleaners, allJobs, customers }: LiveMapViewProps) 
   }, [mounted])
 
   const [directionsStatuses, setDirectionsStatuses] = useState<Record<string, string>>({})
-  const handleDirectionsLoaded = useCallback((data: Record<string, RealRoute>) => {
-    setRealRoutes(prev => ({ ...prev, ...data }))
+
+  // DirectionsLayer calls this when Google returns legs for a team
+  const handleLegsLoaded = useCallback((teamId: string, legs: RealRoute['legs']) => {
+    setRealRoutes(prev => ({ ...prev, [teamId]: { teamId, segments: [], legs } }))
   }, [])
   const handleDirectionsStatus = useCallback((teamId: string, status: string) => {
     setDirectionsStatuses(prev => ({ ...prev, [teamId]: status }))
   }, [])
 
-  // Clear route geometry when switching dates so stale data doesn't flash
+  // Clear route data when switching dates so stale geometry doesn't flash
   useEffect(() => {
     setRealRoutes({})
     setDirectionsStatuses({})
   }, [selectedDate])
 
+  // hasGoogleData is true once any team has real legs from Google
   const hasGoogleData = useMemo(
-    () => Object.values(realRoutes).some(r => r && r.segments.length > 0),
+    () => Object.values(realRoutes).some(r => r !== null && r.legs.length > 0),
     [realRoutes]
   )
 
@@ -657,8 +616,10 @@ export function LiveMapView({ cleaners, allJobs, customers }: LiveMapViewProps) 
             styles={satellite ? [] : MAP_STYLES}
             style={{ width: '100%', height: '100%' }}
           >
-            <DirectionsLoader routes={haversineRoutes} date={selectedDate} onLoaded={handleDirectionsLoaded} onStatus={handleDirectionsStatus} onLoadingChange={setLoadingRoutes} />
-            <RoutePolylines routes={routes} realRoutes={realRoutes} selectedTeamId={selectedTeamId} />
+            <DirectionsLayer
+              routes={haversineRoutes} date={selectedDate} selectedTeamId={selectedTeamId}
+              onLegsLoaded={handleLegsLoaded} onLoadingChange={setLoadingRoutes} onStatus={handleDirectionsStatus}
+            />
             <TrafficLayer show={showTraffic} />
             <CustomersLayer customers={customers} visible={showCustomers} />
             <MapFitBounds routes={routes} fitKey={selectedDate} />

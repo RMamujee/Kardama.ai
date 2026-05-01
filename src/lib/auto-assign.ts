@@ -3,31 +3,21 @@ import { estimateDriveMinutes } from './drive-time'
 import { SERVICE_PRICES, SERVICE_DURATIONS } from './services'
 import type { Cleaner, Job } from '@/types'
 
-// Approximate coordinates for common service-area cities
-const CITY_COORDS: Record<string, [number, number]> = {
-  'long beach':      [33.7701, -118.1937],
-  'torrance':        [33.8358, -118.3406],
-  'redondo beach':   [33.8492, -118.3884],
-  'hawthorne':       [33.9164, -118.3525],
-  'inglewood':       [33.9617, -118.3531],
-  'el segundo':      [33.9192, -118.4165],
-  'manhattan beach': [33.8847, -118.4109],
-  'lawndale':        [33.8875, -118.3533],
-  'compton':         [33.8958, -118.2201],
-  'carson':          [33.8317, -118.2820],
-  'gardena':         [33.8883, -118.3089],
-  'lomita':          [33.7922, -118.3153],
-  'wilmington':      [33.7806, -118.2630],
-  'san pedro':       [33.7361, -118.2920],
-}
 const DEFAULT_COORDS: [number, number] = [33.85, -118.33]
 
-function approxCoords(city: string | null): [number, number] {
-  if (!city) return DEFAULT_COORDS
-  const key = city.toLowerCase().trim()
-  for (const [name, coords] of Object.entries(CITY_COORDS)) {
-    if (key.includes(name)) return coords
-  }
+async function geocodeAddress(address: string, city: string | null): Promise<[number, number]> {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY
+  if (!apiKey) return DEFAULT_COORDS
+  const query = [address, city].filter(Boolean).join(', ')
+  try {
+    const res = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}`,
+      { cache: 'no-store' }
+    )
+    const data = await res.json()
+    const loc = data.results?.[0]?.geometry?.location as { lat: number; lng: number } | undefined
+    if (loc) return [loc.lat, loc.lng]
+  } catch {}
   return DEFAULT_COORDS
 }
 
@@ -95,7 +85,8 @@ export async function autoAssignBookingRequest(params: {
 }): Promise<AutoAssignResult | null> {
   const admin = getSupabaseAdminClient()
 
-  const [cleanersRes, jobsRes] = await Promise.all([
+  const [[jobLat, jobLng], cleanersRes, jobsRes] = await Promise.all([
+    geocodeAddress(params.address, params.city),
     admin.from('cleaners').select('*'),
     admin.from('jobs').select('id,cleaner_ids,scheduled_date,scheduled_time,estimated_duration,status')
       .in('status', ['scheduled', 'confirmed', 'in-progress']),
@@ -105,8 +96,6 @@ export async function autoAssignBookingRequest(params: {
   const activeJobs: JobRow[] = (jobsRes.data ?? []) as JobRow[]
 
   if (cleaners.length === 0) return null
-
-  const [jobLat, jobLng] = approxCoords(params.city)
   const duration = SERVICE_DURATIONS[params.serviceType] ?? 150
   const slotStart = parseMinutes(params.preferredTime)
   const slotEnd = slotStart + duration + 30

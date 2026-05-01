@@ -169,7 +169,7 @@ type BookingRequestUpdate = Partial<BookingRequestRow>
 
 type SocialLeadRow = {
   id: string
-  platform: 'facebook-group' | 'facebook-page' | 'instagram' | 'nextdoor' | 'messenger'
+  platform: 'facebook-group' | 'facebook-page' | 'instagram' | 'nextdoor' | 'messenger' | 'google-maps' | 'yelp'
   author: string
   author_initials: string
   group_or_page: string
@@ -242,6 +242,66 @@ type DailyRouteRow = {
 type DailyRouteInsert = Omit<DailyRouteRow, 'id'>
 type DailyRouteUpdate = Partial<DailyRouteInsert>
 
+type SmsConversationRow = {
+  id: string
+  customer_phone: string
+  customer_id: string | null
+  mode: 'auto' | 'human' | 'escalated'
+  human_takeover_at: string | null
+  escalation_reason: string | null
+  last_message_at: string
+  unread_count: number
+  created_at: string
+  updated_at: string
+}
+type SmsConversationInsert = {
+  id?: string
+  customer_phone: string
+  customer_id?: string | null
+  mode?: SmsConversationRow['mode']
+  human_takeover_at?: string | null
+  escalation_reason?: string | null
+  last_message_at?: string
+  unread_count?: number
+}
+type SmsConversationUpdate = Partial<SmsConversationInsert>
+
+type SmsMessageRow = {
+  id: string
+  conversation_id: string
+  direction: 'inbound' | 'outbound'
+  sender: 'customer' | 'ai' | 'owner'
+  body: string
+  twilio_sid: string | null
+  ai_tools_used: object | null
+  created_at: string
+}
+type SmsMessageInsert = {
+  id?: string
+  conversation_id: string
+  direction: SmsMessageRow['direction']
+  sender: SmsMessageRow['sender']
+  body: string
+  twilio_sid?: string | null
+  ai_tools_used?: object | null
+  created_at?: string
+}
+type SmsMessageUpdate = Partial<SmsMessageInsert>
+
+type OwnerPushSubscriptionRow = {
+  id: string
+  user_id: string
+  subscription: object
+  created_at: string
+  updated_at: string
+}
+type OwnerPushSubscriptionInsert = {
+  id?: string
+  user_id: string
+  subscription: object
+}
+type OwnerPushSubscriptionUpdate = Partial<OwnerPushSubscriptionInsert>
+
 export type Database = {
   public: {
     Tables: {
@@ -256,6 +316,9 @@ export type Database = {
       push_subscriptions: { Row: PushSubscriptionRow; Insert: PushSubscriptionInsert; Update: PushSubscriptionUpdate; Relationships: [] }
       teams: { Row: TeamRow; Insert: TeamInsert; Update: TeamUpdate; Relationships: [] }
       daily_routes: { Row: DailyRouteRow; Insert: DailyRouteInsert; Update: DailyRouteUpdate; Relationships: [] }
+      sms_conversations: { Row: SmsConversationRow; Insert: SmsConversationInsert; Update: SmsConversationUpdate; Relationships: [] }
+      sms_messages: { Row: SmsMessageRow; Insert: SmsMessageInsert; Update: SmsMessageUpdate; Relationships: [] }
+      owner_push_subscriptions: { Row: OwnerPushSubscriptionRow; Insert: OwnerPushSubscriptionInsert; Update: OwnerPushSubscriptionUpdate; Relationships: [] }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

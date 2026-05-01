@@ -22,6 +22,8 @@ const PLATFORM_ICONS: Record<LeadPlatform, React.ElementType> = {
   'instagram': Camera,
   'nextdoor': MapPin,
   'messenger': MessageCircle,
+  'google-maps': MapPin,
+  'yelp': Globe2,
 }
 
 const CATEGORIES: { value: TemplateCategory | 'all'; label: string }[] = [

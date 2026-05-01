@@ -3,7 +3,14 @@ import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import type { SocialLead } from '@/types'
 
-type Platform = 'facebook-group' | 'facebook-page' | 'instagram' | 'nextdoor' | 'messenger'
+type Platform =
+  | 'facebook-group'
+  | 'facebook-page'
+  | 'instagram'
+  | 'nextdoor'
+  | 'messenger'
+  | 'google-maps'
+  | 'yelp'
 type LeadStatus = 'new' | 'responded' | 'captured' | 'dismissed'
 type Urgency = 'high' | 'medium' | 'low'
 
@@ -114,35 +121,39 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing required fields: content, platform, author' }, { status: 400 })
   }
 
+  const externalId = (body.external_id as string | null | undefined) ?? null
+  const row = {
+    platform: body.platform as Platform,
+    author: body.author as string,
+    author_initials: (body.author_initials as string | undefined) ?? getInitials(body.author as string),
+    group_or_page: (body.group_or_page as string | undefined) ?? '',
+    content: body.content as string,
+    posted_at: (body.posted_at as string | undefined) ?? new Date().toISOString(),
+    status: 'new' as LeadStatus,
+    location: (body.location as string | undefined) ?? '',
+    urgency: ((body.urgency as string | undefined) ?? 'medium') as Urgency,
+    likes: (body.likes as number | undefined) ?? 0,
+    comments_count: (body.comments_count as number | undefined) ?? 0,
+    responded_at: null,
+    response_used: null,
+    captured_at: null,
+    external_id: externalId,
+    messenger_psid: null,
+    raw_data: (body.raw_data as object | null | undefined) ?? null,
+  }
+
   const db = getSupabaseAdminClient()
-  const { data, error } = await db
-    .from('social_leads')
-    .insert({
-      platform: body.platform as Platform,
-      author: body.author as string,
-      author_initials: (body.author_initials as string | undefined) ?? getInitials(body.author as string),
-      group_or_page: (body.group_or_page as string | undefined) ?? '',
-      content: body.content as string,
-      posted_at: (body.posted_at as string | undefined) ?? new Date().toISOString(),
-      status: 'new' as LeadStatus,
-      location: (body.location as string | undefined) ?? '',
-      urgency: ((body.urgency as string | undefined) ?? 'medium') as Urgency,
-      likes: (body.likes as number | undefined) ?? 0,
-      comments_count: (body.comments_count as number | undefined) ?? 0,
-      responded_at: null,
-      response_used: null,
-      captured_at: null,
-      external_id: (body.external_id as string | null | undefined) ?? null,
-      messenger_psid: null,
-      raw_data: null,
-    })
-    .select('id')
-    .single()
+  const query = externalId
+    ? db.from('social_leads').upsert(row, { onConflict: 'external_id', ignoreDuplicates: true }).select('id')
+    : db.from('social_leads').insert(row).select('id').single()
+
+  const { data, error } = await query
 
   if (error) {
     console.error('[POST /api/leads]', error.message)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ id: data?.id }, { status: 201 })
+  const id = Array.isArray(data) ? data[0]?.id : data?.id
+  return NextResponse.json({ id, deduped: !id }, { status: 201 })
 }

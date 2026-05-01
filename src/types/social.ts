@@ -1,4 +1,11 @@
-export type LeadPlatform = 'facebook-group' | 'facebook-page' | 'instagram' | 'nextdoor' | 'messenger'
+export type LeadPlatform =
+  | 'facebook-group'
+  | 'facebook-page'
+  | 'instagram'
+  | 'nextdoor'
+  | 'messenger'
+  | 'google-maps'
+  | 'yelp'
 export type LeadStatus = 'new' | 'responded' | 'captured' | 'dismissed'
 export type LeadUrgency = 'high' | 'medium' | 'low'
 

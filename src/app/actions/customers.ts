@@ -109,6 +109,20 @@ export async function deleteCustomer(customerId: string): Promise<ActionResult<n
   return { ok: true, data: null }
 }
 
+// ─── Geocode an address (used by booking wizard to pre-compute coords) ───
+
+export async function geocodeAddressForBooking(
+  address: string,
+  city: string,
+): Promise<{ lat: number; lng: number } | null> {
+  await requireOwner()
+  const trimmed = `${address.trim()}, ${city.trim()}`
+  if (trimmed.length < 8) return null
+  const geo = await geocodeAddress(trimmed)
+  if (!geo) return null
+  return { lat: geo.lat, lng: geo.lng }
+}
+
 // ─── Send booking link via SMS ────────────────────────────────────────────
 
 const SendLinkSchema = z.object({

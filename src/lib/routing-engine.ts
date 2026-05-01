@@ -181,21 +181,38 @@ export function buildOptimizedRoutes(
   cleaners: Cleaner[],
   realLegs: RealLegOverrides = {},
 ): TeamRoute[] {
-  // Group cleaners into teams
+  // Group cleaners into teams (skip cleaners with no team)
   const teamCleaner = new Map<string, Cleaner[]>()
   for (const c of cleaners) {
+    if (!c.teamId) continue
     if (!teamCleaner.has(c.teamId)) teamCleaner.set(c.teamId, [])
     teamCleaner.get(c.teamId)!.push(c)
   }
 
-  // Assign jobs to teams (by first cleaner's teamId)
+  // Assign jobs to teams
+  // Priority: job.teamId (set by auto-assign) → cleaner lookup via cleanerIds[0]
   const teamJobs = new Map<string, Job[]>()
+  const unassigned: Job[] = []
+
   for (const job of jobs) {
     if (job.status === 'cancelled') continue
-    const c = cleaners.find(x => x.id === job.cleanerIds[0])
-    if (!c) continue
-    if (!teamJobs.has(c.teamId)) teamJobs.set(c.teamId, [])
-    teamJobs.get(c.teamId)!.push(job)
+    const teamId = job.teamId ?? cleaners.find(x => x.id === job.cleanerIds?.[0])?.teamId ?? null
+    if (teamId && teamCleaner.has(teamId)) {
+      if (!teamJobs.has(teamId)) teamJobs.set(teamId, [])
+      teamJobs.get(teamId)!.push(job)
+    } else {
+      unassigned.push(job)
+    }
+  }
+
+  // Round-robin assign unassigned jobs across available teams so they still appear
+  if (unassigned.length > 0 && teamCleaner.size > 0) {
+    const teamIds = [...teamCleaner.keys()]
+    unassigned.forEach((job, i) => {
+      const tid = teamIds[i % teamIds.length]
+      if (!teamJobs.has(tid)) teamJobs.set(tid, [])
+      teamJobs.get(tid)!.push(job)
+    })
   }
 
   const routes: TeamRoute[] = []
@@ -204,8 +221,10 @@ export function buildOptimizedRoutes(
     const jobs = teamJobs.get(teamId) ?? []
     if (jobs.length === 0) continue
 
-    const startLat = members[0].currentLat
-    const startLng = members[0].currentLng
+    // Use home area as route start; fall back to current GPS only when non-zero
+    const lead = members[0]
+    const startLat = (lead.currentLat !== 0 ? lead.currentLat : null) ?? lead.homeAreaLat
+    const startLng = (lead.currentLng !== 0 ? lead.currentLng : null) ?? lead.homeAreaLng
     const color = members[0].color
 
     let ordered = nnOptimize(jobs, startLat, startLng)

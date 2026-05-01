@@ -199,17 +199,20 @@ function MarkersLayer({ routes, livePositions, gpsTracking, gpsPos, selectedTeam
       const highlighted = !selectedTeamId || route.teamId === selectedTeamId
       const markerOpacity = highlighted ? 1.0 : 0.2
 
-      // Team start
-      const base = new google.maps.Marker({
-        position: { lat: route.startLat, lng: route.startLng },
-        map, icon: baseIcon(route.cleanerNames.map(n => n[0]).join(''), route.color),
-        title: route.cleanerNames.join(' & '),
-        opacity: markerOpacity,
-      })
-      markersRef.current.push(base)
+      // Team start (skip if position is unset / (0,0))
+      if (route.startLat !== 0 || route.startLng !== 0) {
+        const base = new google.maps.Marker({
+          position: { lat: route.startLat, lng: route.startLng },
+          map, icon: baseIcon(route.cleanerNames.map(n => n[0]).join(''), route.color),
+          title: route.cleanerNames.join(' & '),
+          opacity: markerOpacity,
+        })
+        markersRef.current.push(base)
+      }
 
-      // Stops
+      // Stops (skip any job with un-geocoded coordinates)
       for (const stop of route.stops) {
+        if (stop.job.lat === 0 && stop.job.lng === 0) continue
         const m = new google.maps.Marker({
           position: { lat: stop.job.lat, lng: stop.job.lng },
           map, icon: stopIcon(stop.sequence, route.color, stop.status),
@@ -256,13 +259,18 @@ function MarkersLayer({ routes, livePositions, gpsTracking, gpsPos, selectedTeam
   return null
 }
 
+function validPos(lat: number, lng: number) { return lat !== 0 || lng !== 0 }
+
 function MapFitBounds({ routes, fitKey }: { routes: TeamRoute[]; fitKey: string }) {
   const map = useMap()
   const fitted = useRef<string | null>(null)
   useEffect(() => {
     if (!map || routes.length === 0 || fitted.current === fitKey) return
     const b = new google.maps.LatLngBounds()
-    routes.forEach(r => { b.extend({ lat: r.startLat, lng: r.startLng }); r.stops.forEach(s => b.extend({ lat: s.job.lat, lng: s.job.lng })) })
+    routes.forEach(r => {
+      if (validPos(r.startLat, r.startLng)) b.extend({ lat: r.startLat, lng: r.startLng })
+      r.stops.forEach(s => { if (validPos(s.job.lat, s.job.lng)) b.extend({ lat: s.job.lat, lng: s.job.lng }) })
+    })
     if (!b.isEmpty()) { map.fitBounds(b, 60); fitted.current = fitKey }
   }, [map, routes, fitKey])
   return null

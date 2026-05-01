@@ -176,55 +176,72 @@ export interface RealLegMetrics {
 // the start position to stop #1, and so on.
 export type RealLegOverrides = Record<string, RealLegMetrics[] | undefined>
 
+function validCoord(lat: number, lng: number) {
+  return lat !== 0 || lng !== 0
+}
+
 export function buildOptimizedRoutes(
   jobs: Job[],
   cleaners: Cleaner[],
   realLegs: RealLegOverrides = {},
 ): TeamRoute[] {
-  // Group cleaners into teams (skip cleaners with no team)
+  // Group cleaners into teams.
+  // Cleaners whose teamId is empty/null are treated as a solo "team" keyed by
+  // their own ID so they still appear on the map.
   const teamCleaner = new Map<string, Cleaner[]>()
   for (const c of cleaners) {
-    if (!c.teamId) continue
-    if (!teamCleaner.has(c.teamId)) teamCleaner.set(c.teamId, [])
-    teamCleaner.get(c.teamId)!.push(c)
+    const key = c.teamId || c.id
+    if (!teamCleaner.has(key)) teamCleaner.set(key, [])
+    teamCleaner.get(key)!.push(c)
   }
 
-  // Assign jobs to teams
-  // Priority: job.teamId (set by auto-assign) → cleaner lookup via cleanerIds[0]
+  // Build a reverse map: cleaner ID → team key (for job lookup below)
+  const cleanerTeam = new Map<string, string>()
+  for (const [key, members] of teamCleaner) members.forEach(c => cleanerTeam.set(c.id, key))
+
+  // Assign jobs to teams.
+  // Priority: job.teamId → cleaner lookup via cleanerIds[0] → unassigned pool
   const teamJobs = new Map<string, Job[]>()
   const unassigned: Job[] = []
 
   for (const job of jobs) {
     if (job.status === 'cancelled') continue
-    const teamId = job.teamId ?? cleaners.find(x => x.id === job.cleanerIds?.[0])?.teamId ?? null
-    if (teamId && teamCleaner.has(teamId)) {
-      if (!teamJobs.has(teamId)) teamJobs.set(teamId, [])
-      teamJobs.get(teamId)!.push(job)
+    // Resolve the team key for this job
+    const key =
+      (job.teamId && teamCleaner.has(job.teamId) ? job.teamId : null) ??
+      (job.cleanerIds?.[0] ? cleanerTeam.get(job.cleanerIds[0]) ?? null : null)
+    if (key) {
+      if (!teamJobs.has(key)) teamJobs.set(key, [])
+      teamJobs.get(key)!.push(job)
     } else {
       unassigned.push(job)
     }
   }
 
-  // Round-robin assign unassigned jobs across available teams so they still appear
+  // Round-robin unassigned jobs across all teams so every job appears on the map
   if (unassigned.length > 0 && teamCleaner.size > 0) {
-    const teamIds = [...teamCleaner.keys()]
+    const keys = [...teamCleaner.keys()]
     unassigned.forEach((job, i) => {
-      const tid = teamIds[i % teamIds.length]
-      if (!teamJobs.has(tid)) teamJobs.set(tid, [])
-      teamJobs.get(tid)!.push(job)
+      const k = keys[i % keys.length]
+      if (!teamJobs.has(k)) teamJobs.set(k, [])
+      teamJobs.get(k)!.push(job)
     })
   }
 
   const routes: TeamRoute[] = []
 
-  for (const [teamId, members] of teamCleaner) {
-    const jobs = teamJobs.get(teamId) ?? []
+  for (const [teamKey, members] of teamCleaner) {
+    const jobs = teamJobs.get(teamKey) ?? []
     if (jobs.length === 0) continue
 
-    // Use home area as route start; fall back to current GPS only when non-zero
     const lead = members[0]
-    const startLat = (lead.currentLat !== 0 ? lead.currentLat : null) ?? lead.homeAreaLat
-    const startLng = (lead.currentLng !== 0 ? lead.currentLng : null) ?? lead.homeAreaLng
+    // Route start priority: home area → live GPS → first job location
+    const startLat = validCoord(lead.homeAreaLat, lead.homeAreaLng) ? lead.homeAreaLat
+                   : validCoord(lead.currentLat,  lead.currentLng)  ? lead.currentLat
+                   : jobs[0].lat
+    const startLng = validCoord(lead.homeAreaLat, lead.homeAreaLng) ? lead.homeAreaLng
+                   : validCoord(lead.currentLat,  lead.currentLng)  ? lead.currentLng
+                   : jobs[0].lng
     const color = members[0].color
 
     let ordered = nnOptimize(jobs, startLat, startLng)
@@ -233,7 +250,7 @@ export function buildOptimizedRoutes(
     // Build stops
     const stops: RouteStop[] = []
     let lat = startLat, lng = startLng, curMin = 8 * 60
-    const overrides = realLegs[teamId]
+    const overrides = realLegs[teamKey]
     const overridesUsable = overrides && overrides.length === ordered.length
 
     for (let i = 0; i < ordered.length; i++) {
@@ -276,7 +293,7 @@ export function buildOptimizedRoutes(
     const efficiency    = Math.min(Math.round((totalJobMin / Math.max(totalTime, 1)) * 100), 99)
 
     routes.push({
-      teamId, cleanerIds: members.map(c => c.id),
+      teamId: teamKey, cleanerIds: members.map(c => c.id),
       cleanerNames: members.map(c => c.name.split(' ')[0]),
       color, startLat, startLng, stops,
       totalDriveMin, totalJobMin,

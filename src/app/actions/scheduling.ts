@@ -250,17 +250,36 @@ export async function declineBookingRequest(requestId: string): Promise<void> {
   await requireOwner()
   const supabase = await createSupabaseServerClient()
 
-  // If a job was already created (auto-assign or manual accept), delete it too
+  // Fetch full request for job cleanup + decline email
   const { data: req } = await supabase
     .from('booking_requests')
-    .select('converted_job_id')
+    .select('converted_job_id, customer_name, customer_email, customer_phone, service_type, preferred_date, address')
     .eq('id', requestId)
     .maybeSingle()
+
   if (req?.converted_job_id) {
     await supabase.from('jobs').delete().eq('id', req.converted_job_id)
   }
 
   await supabase.from('booking_requests').update({ status: 'declined' as const }).eq('id', requestId)
+
+  // Notify customer via n8n — non-fatal
+  const n8nDeclineWebhook = process.env.N8N_BOOKING_DECLINED_WEBHOOK_URL
+  if (n8nDeclineWebhook && req?.customer_email) {
+    fetch(n8nDeclineWebhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customerName: req.customer_name,
+        customerEmail: req.customer_email,
+        customerPhone: req.customer_phone,
+        serviceType: req.service_type,
+        preferredDate: req.preferred_date,
+        address: req.address,
+      }),
+    }).catch(e => console.error('n8n booking declined webhook failed:', e))
+  }
+
   revalidatePath('/scheduling')
   revalidatePath('/dashboard')
   revalidatePath('/map')

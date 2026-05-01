@@ -117,6 +117,36 @@ type JobDraft = {
   notes: string
 }
 
+function getRecurringOccurrencesInWindow(
+  preferredDate: string,
+  cleaningFrequency: string | null,
+  windowStart: string,
+  windowEnd: string,
+): string[] {
+  if (!preferredDate) return []
+  const freqDays = cleaningFrequency === 'weekly' ? 7
+    : (cleaningFrequency === 'bi-weekly' || cleaningFrequency === 'biweekly') ? 14
+    : 0
+  if (freqDays === 0) {
+    return preferredDate >= windowStart && preferredDate <= windowEnd ? [preferredDate] : []
+  }
+  const startMs = new Date(windowStart + 'T12:00:00').getTime()
+  const endMs = new Date(windowEnd + 'T12:00:00').getTime()
+  const baseMs = new Date(preferredDate + 'T12:00:00').getTime()
+  const freqMs = freqDays * 86_400_000
+  if (baseMs > endMs) return []
+  let cur = baseMs
+  if (cur < startMs) {
+    cur += Math.ceil((startMs - cur) / freqMs) * freqMs
+  }
+  const results: string[] = []
+  while (cur <= endMs) {
+    results.push(new Date(cur).toISOString().split('T')[0])
+    cur += freqMs
+  }
+  return results
+}
+
 export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, confirmedBookings, teams: teamsList }: SchedulingData) {
   const { weekOffset, setWeekOffset, openBooking, bookingOpen } = useSchedulingStore()
   const weekDates = useMemo(() => getWeekDates(weekOffset), [weekOffset])
@@ -137,6 +167,7 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
   const [selectedTeams, setSelectedTeams] = useState<Set<string>>(new Set())
   const [scheduleTarget, setScheduleTarget] = useState<string | null>(null)
   const [pickedTeamId, setPickedTeamId] = useState<string | null>(null)
+  const [confirmDeclineId, setConfirmDeclineId] = useState<string | null>(null)
 
   const teams = useMemo(() => {
     const teamNameById = new Map(teamsList.map(t => [t.id, t.name]))
@@ -188,8 +219,12 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
   const confirmedByDay = useMemo(() => {
     const map: Record<string, BookingRequest[]> = {}
     weekDates.forEach(d => { map[fmtDate(d)] = [] })
+    const windowStart = fmtDate(weekDates[0])
+    const windowEnd = fmtDate(weekDates[6])
     confirmedBookings.forEach(b => {
-      if (b.preferredDate && map[b.preferredDate] !== undefined) map[b.preferredDate].push(b)
+      if (!b.preferredDate) return
+      const dates = getRecurringOccurrencesInWindow(b.preferredDate, b.cleaningFrequency, windowStart, windowEnd)
+      dates.forEach(dateStr => { if (map[dateStr] !== undefined) map[dateStr].push(b) })
     })
     return map
   }, [confirmedBookings, weekDates])
@@ -210,8 +245,13 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
   const monthConfirmedByDay = useMemo(() => {
     const map: Record<string, BookingRequest[]> = {}
     monthDates.forEach(d => { map[fmtDate(d)] = [] })
+    if (monthDates.length === 0) return map
+    const windowStart = fmtDate(monthDates[0])
+    const windowEnd = fmtDate(monthDates[monthDates.length - 1])
     confirmedBookings.forEach(b => {
-      if (b.preferredDate && map[b.preferredDate] !== undefined) map[b.preferredDate].push(b)
+      if (!b.preferredDate) return
+      const dates = getRecurringOccurrencesInWindow(b.preferredDate, b.cleaningFrequency, windowStart, windowEnd)
+      dates.forEach(dateStr => { if (map[dateStr] !== undefined) map[dateStr].push(b) })
     })
     return map
   }, [confirmedBookings, monthDates])
@@ -286,7 +326,7 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
   // Returns the first availability problem for the team, or {blocked:false} if clear.
   function teamAvailabilityAt(teamId: string, date: string | null, time: string | null, duration: number): AvailabilityBlock {
     if (!date || !time) return { blocked: false }
-    const dayName = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' })
+    const dayName = (['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const)[new Date(date + 'T12:00:00').getDay()]
     const teamCleaners = cleaners.filter(c => c.teamId === teamId)
     for (const c of teamCleaners) {
       const h = c.availableHours
@@ -539,14 +579,34 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
                       )}
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <button
-                        onClick={() => handleDecline(req.id)}
-                        disabled={busy}
-                        className="flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-[12px] font-medium text-ink-500 hover:border-rose-500/40 hover:text-rose-500 disabled:opacity-40 transition-colors"
-                      >
-                        <XCircle className="h-3.5 w-3.5" />
-                        Decline
-                      </button>
+                      {confirmDeclineId === req.id ? (
+                        <>
+                          <span className="text-[11.5px] text-ink-400 hidden sm:inline">Decline this request?</span>
+                          <button
+                            onClick={() => setConfirmDeclineId(null)}
+                            disabled={busy}
+                            className="rounded-lg border border-line px-2.5 py-1.5 text-[11.5px] font-medium text-ink-500 hover:text-ink-700 disabled:opacity-40 transition-colors"
+                          >
+                            No
+                          </button>
+                          <button
+                            onClick={() => { handleDecline(req.id); setConfirmDeclineId(null) }}
+                            disabled={busy}
+                            className="rounded-lg bg-rose-500 px-2.5 py-1.5 text-[11.5px] font-semibold text-white hover:bg-rose-600 disabled:opacity-50 transition-colors"
+                          >
+                            Yes, decline
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => { setConfirmDeclineId(req.id); setScheduleTarget(null) }}
+                          disabled={busy}
+                          className="flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-[12px] font-medium text-ink-500 hover:border-rose-500/40 hover:text-rose-500 disabled:opacity-40 transition-colors"
+                        >
+                          <XCircle className="h-3.5 w-3.5" />
+                          Decline
+                        </button>
+                      )}
                       {!isPicking ? (
                         <button
                           onClick={() => {

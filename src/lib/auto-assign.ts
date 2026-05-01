@@ -5,19 +5,50 @@ import type { Cleaner, Job } from '@/types'
 
 const DEFAULT_COORDS: [number, number] = [33.85, -118.33]
 
+function cleanForGeocode(address: string): string {
+  return address
+    .replace(/, USA$/i, '')
+    .replace(/(-[A-Za-z]+)(,)/, '$2')
+    .trim()
+}
+
 async function geocodeAddress(address: string, city: string | null): Promise<[number, number]> {
   const apiKey = process.env.GOOGLE_MAPS_API_KEY
-  if (!apiKey) return DEFAULT_COORDS
-  const query = [address, city].filter(Boolean).join(', ')
+  const query = cleanForGeocode([address, city].filter(Boolean).join(', '))
+
+  // Try Google Geocoding API first (server-side key, no referer restriction needed)
+  if (apiKey) {
+    try {
+      const res = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}`,
+        { cache: 'no-store' }
+      )
+      const data = await res.json()
+      const loc = data.results?.[0]?.geometry?.location as { lat: number; lng: number } | undefined
+      if (loc) return [loc.lat, loc.lng]
+    } catch {}
+  }
+
+  // Fallback: Nominatim (OpenStreetMap) — no key required
   try {
     const res = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${apiKey}`,
-      { cache: 'no-store' }
+      `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`,
+      { headers: { 'User-Agent': 'Kardama-FieldService/1.0' }, cache: 'no-store' }
     )
-    const data = await res.json()
-    const loc = data.results?.[0]?.geometry?.location as { lat: number; lng: number } | undefined
-    if (loc) return [loc.lat, loc.lng]
+    const data = await res.json() as Array<{ lat: string; lon: string }>
+    if (data[0]) return [parseFloat(data[0].lat), parseFloat(data[0].lon)]
+    // Second fallback: city+state only
+    const cityState = cleanForGeocode([city].filter(Boolean).join(', '))
+    if (cityState) {
+      const res2 = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(cityState)}`,
+        { headers: { 'User-Agent': 'Kardama-FieldService/1.0' }, cache: 'no-store' }
+      )
+      const data2 = await res2.json() as Array<{ lat: string; lon: string }>
+      if (data2[0]) return [parseFloat(data2[0].lat), parseFloat(data2[0].lon)]
+    }
   } catch {}
+
   return DEFAULT_COORDS
 }
 

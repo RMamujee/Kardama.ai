@@ -10,20 +10,27 @@ import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 const BAD_LAT = 33.85
 const BAD_LNG = -118.33
 
-async function googleGeocode(address: string): Promise<{ lat: number; lng: number } | null> {
+function cleanAddr(address: string) {
+  return address.replace(/, USA$/i, '').replace(/(-[A-Za-z]+)(,)/, '$2').trim()
+}
+
+async function geocode(address: string): Promise<{ lat: number; lng: number } | null> {
+  const q = cleanAddr(address)
   const key = process.env.GOOGLE_MAPS_API_KEY
-  if (!key) return null
-  try {
-    const res = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${key}`,
-      { cache: 'no-store' }
-    )
-    const data = await res.json()
-    const loc = data.results?.[0]?.geometry?.location as { lat: number; lng: number } | undefined
-    return loc ?? null
-  } catch {
-    return null
+  if (key) {
+    try {
+      const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(q)}&key=${key}`, { cache: 'no-store' })
+      const data = await res.json()
+      const loc = data.results?.[0]?.geometry?.location as { lat: number; lng: number } | undefined
+      if (loc) return loc
+    } catch {}
   }
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`, { headers: { 'User-Agent': 'Kardama-Admin/1.0' }, cache: 'no-store' })
+    const data = await res.json() as Array<{ lat: string; lon: string }>
+    if (data[0]) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }
+  } catch {}
+  return null
 }
 
 function isBad(lat: number, lng: number) {
@@ -46,7 +53,7 @@ export async function POST() {
   for (const job of jobs ?? []) {
     const { id, address, lat, lng } = job as { id: string; address: string; lat: number; lng: number }
     if (!isBad(Number(lat), Number(lng))) continue
-    const coords = await googleGeocode(address)
+    const coords = await geocode(address)
     const entry = { id, address, old: `${lat},${lng}`, new: coords ? `${coords.lat},${coords.lng}` : 'failed', ok: !!coords }
     if (coords) {
       await admin.from('jobs').update({ lat: coords.lat, lng: coords.lng }).eq('id', id)
@@ -59,7 +66,7 @@ export async function POST() {
   for (const cust of customers ?? []) {
     const { id, address, lat, lng } = cust as { id: string; address: string; lat: number; lng: number }
     if (!isBad(Number(lat), Number(lng))) continue
-    const coords = await googleGeocode(address)
+    const coords = await geocode(address)
     const entry = { id, address, old: `${lat},${lng}`, new: coords ? `${coords.lat},${coords.lng}` : 'failed', ok: !!coords }
     if (coords) {
       await admin.from('customers').update({ lat: coords.lat, lng: coords.lng }).eq('id', id)

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import { getCleaners, getTodayJobs } from '@/lib/data'
+import { getCleaners, getJobs } from '@/lib/data'
 import { buildOptimizedRoutes } from '@/lib/routing-engine'
 
 // POST /api/routes/compute  (owner-only)
@@ -92,7 +92,10 @@ export async function POST(req: Request) {
   const { data: profile } = await supabase.from('profiles').select('role').eq('user_id', user.id).single()
   if (profile?.role !== 'owner_operator') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const today = new Date().toISOString().split('T')[0]
+  const body = await req.json().catch(() => ({})) as { date?: string }
+  const date = body.date && /^\d{4}-\d{2}-\d{2}$/.test(body.date)
+    ? body.date
+    : new Date().toISOString().split('T')[0]
   const admin = getSupabaseAdminClient()
 
   const forceRecompute = req.headers.get('x-force') === '1'
@@ -102,7 +105,7 @@ export async function POST(req: Request) {
     const { data: existing } = await admin
       .from('daily_routes')
       .select('*')
-      .eq('route_date', today)
+      .eq('route_date', date)
 
     if (existing?.length) {
       const rows = existing as unknown as DailyRoute[]
@@ -118,8 +121,9 @@ export async function POST(req: Request) {
   }
 
   // Recompute: fetch data, build routes, call Google per team
-  const [cleaners, todayJobs] = await Promise.all([getCleaners(), getTodayJobs()])
-  const teamRoutes = buildOptimizedRoutes(todayJobs, cleaners)
+  const [cleaners, allJobs] = await Promise.all([getCleaners(), getJobs()])
+  const dateJobs = allJobs.filter(j => j.scheduledDate === date)
+  const teamRoutes = buildOptimizedRoutes(dateJobs, cleaners)
 
   const computed = await Promise.all(
     teamRoutes.map(async (route) => {
@@ -134,7 +138,7 @@ export async function POST(req: Request) {
 
       const row = {
         team_id:         route.teamId,
-        route_date:      today,
+        route_date:      date,
         stop_order:      route.stops.map(s => ({
           jobId: s.job.id, lat: s.job.lat, lng: s.job.lng,
           address: s.job.address, scheduledTime: s.job.scheduledTime,

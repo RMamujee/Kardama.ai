@@ -19,13 +19,13 @@ const LiveMapView = dynamic(
 
 interface Props {
   cleaners: Cleaner[]
-  todayJobs: Job[]
+  allJobs: Job[]
 }
 
-export function MapClient({ cleaners, todayJobs }: Props) {
+export function MapClient({ cleaners, allJobs }: Props) {
   return (
     <div className="h-[calc(100vh-60px)] -mx-5 -my-6 md:-mx-8 md:-my-7 lg:-mx-10 lg:-my-8">
-      <LiveMapView cleaners={cleaners} todayJobs={todayJobs} />
+      <LiveMapView cleaners={cleaners} allJobs={allJobs} />
     </div>
   )
 }

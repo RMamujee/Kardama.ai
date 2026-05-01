@@ -235,15 +235,15 @@ function MarkersLayer({ routes, livePositions, gpsTracking, gpsPos, selectedTeam
   return null
 }
 
-function MapFitBounds({ routes }: { routes: TeamRoute[] }) {
+function MapFitBounds({ routes, fitKey }: { routes: TeamRoute[]; fitKey: string }) {
   const map = useMap()
-  const fitted = useRef(false)
+  const fitted = useRef<string | null>(null)
   useEffect(() => {
-    if (!map || routes.length === 0 || fitted.current) return
+    if (!map || routes.length === 0 || fitted.current === fitKey) return
     const b = new google.maps.LatLngBounds()
     routes.forEach(r => { b.extend({ lat: r.startLat, lng: r.startLng }); r.stops.forEach(s => b.extend({ lat: s.job.lat, lng: s.job.lng })) })
-    if (!b.isEmpty()) { map.fitBounds(b, 60); fitted.current = true }
-  }, [map, routes])
+    if (!b.isEmpty()) { map.fitBounds(b, 60); fitted.current = fitKey }
+  }, [map, routes, fitKey])
   return null
 }
 
@@ -270,9 +270,9 @@ function GpsTrail({ trail }: { trail: [number, number][] }) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-interface LiveMapViewProps { cleaners: Cleaner[]; todayJobs: Job[] }
+interface LiveMapViewProps { cleaners: Cleaner[]; allJobs: Job[] }
 
-export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
+export function LiveMapView({ cleaners, allJobs }: LiveMapViewProps) {
   const [mounted, setMounted]             = useState(false)
   const [satellite, setSatellite]         = useState(false)
   const [showTraffic, setShowTraffic]     = useState(true)
@@ -283,12 +283,25 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
   const [routeSource, setRouteSource]     = useState<'cache' | 'computed' | null>(null)
   const [flyTarget, setFlyTarget]         = useState<{ lat: number; lng: number } | null>(null)
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null)
+  const [selectedDate, setSelectedDate]   = useState(() => todayStr())
   const [gpsPos, setGpsPos]               = useState<GpsPos | null>(null)
   const [gpsTrail, setGpsTrail]           = useState<[number, number][]>([])
   const [gpsTracking, setGpsTracking]     = useState(false)
   const [trackedAs, setTrackedAs]         = useState<string | null>(null)
   const [gpsError, setGpsError]           = useState<string | null>(null)
   const watchRef = useRef<number | null>(null)
+  const selectedDateRef = useRef(selectedDate)
+  useEffect(() => { selectedDateRef.current = selectedDate }, [selectedDate])
+
+  const isToday = selectedDate === todayStr()
+
+  const dateTabs = useMemo(() => Array.from({ length: 7 }, (_, i) => {
+    const d = new Date()
+    d.setDate(d.getDate() + i)
+    const iso = d.toISOString().split('T')[0]
+    const label = i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })
+    return { iso, label }
+  }), [])
 
   const [livePositions, setLivePositions] = useState<LivePos[]>(() =>
     cleaners.map(c => ({ id: c.id, initials: c.initials, color: c.color, name: c.name, currentLat: c.currentLat, currentLng: c.currentLng, status: c.status, currentJobId: c.currentJobId }))
@@ -310,8 +323,9 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
       }).subscribe()
     const routeCh = supabase.channel('daily-routes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_routes' }, payload => {
-        const r = payload.new as { team_id: string; segments: RealRoute['segments']; legs: RealRoute['legs'] }
-        if (r?.team_id) setRealRoutes(prev => ({ ...prev, [r.team_id]: { teamId: r.team_id, segments: r.segments, legs: r.legs } }))
+        const r = payload.new as { team_id: string; route_date: string; segments: RealRoute['segments']; legs: RealRoute['legs'] }
+        if (r?.team_id && r.route_date === selectedDateRef.current)
+          setRealRoutes(prev => ({ ...prev, [r.team_id]: { teamId: r.team_id, segments: r.segments, legs: r.legs } }))
       }).subscribe()
     return () => { supabase.removeChannel(cleanerCh); supabase.removeChannel(routeCh) }
   }, [mounted])
@@ -319,7 +333,12 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
   useEffect(() => {
     if (!mounted) return
     setLoadingRoutes(true)
-    fetch('/api/routes/compute', { method: 'POST' })
+    setRealRoutes({})
+    fetch('/api/routes/compute', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date: selectedDate }),
+    })
       .then(r => r.ok ? r.json() : null)
       .then((data: { routes: Array<{ teamId: string; segments: RealRoute['segments']; legs: RealRoute['legs'] }>; source: 'cache' | 'computed' } | null) => {
         if (!data?.routes) return
@@ -329,9 +348,19 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
         setRouteSource(data.source)
       })
       .finally(() => setLoadingRoutes(false))
-  }, [mounted])
+  }, [mounted, selectedDate])
 
-  const todayJobs = useMemo(() => jobs.map(j => overrides[j.id] === 'cancelled' ? { ...j, status: 'cancelled' as const } : j), [jobs, overrides])
+  function handleDateChange(date: string) {
+    setSelectedDate(date)
+    setSelectedTeamId(null)
+    if (date !== todayStr() && gpsTracking) stopGPS()
+  }
+
+  const dateJobs = useMemo(
+    () => allJobs.filter(j => j.scheduledDate === selectedDate),
+    [allJobs, selectedDate]
+  )
+  const todayJobs = useMemo(() => dateJobs.map(j => overrides[j.id] === 'cancelled' ? { ...j, status: 'cancelled' as const } : j), [dateJobs, overrides])
   const availableCleaners = useMemo(() => cleaners.filter(c => !unavailableTeamIds.has(c.teamId)), [cleaners, unavailableTeamIds])
   const availableTeamIdList = useMemo(() => [...new Set(availableCleaners.map(c => c.teamId))], [availableCleaners])
   const redistributedJobs = useMemo(() => {
@@ -380,7 +409,26 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
   if (!mounted) return null
 
   return (
-    <div className="flex h-full">
+    <div className="flex flex-col h-full">
+      {/* Date selector strip */}
+      <div className="flex items-center gap-1 px-4 py-2 border-b border-ink-200 bg-rail overflow-x-auto shrink-0">
+        {dateTabs.map(tab => (
+          <button
+            key={tab.iso}
+            onClick={() => handleDateChange(tab.iso)}
+            className={cn(
+              'px-3 py-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap transition-colors cursor-pointer',
+              selectedDate === tab.iso
+                ? 'bg-violet-500 text-white'
+                : 'text-ink-500 hover:bg-hover hover:text-ink-700'
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-1 min-h-0">
       <RoutingPanel
         routes={routes} cleaners={cleaners}
         unavailableTeamIds={unavailableTeamIds}
@@ -391,6 +439,8 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
         onFlyTo={(lat, lng) => setFlyTarget({ lat, lng })}
         selectedTeamId={selectedTeamId}
         onFocusTeam={id => setSelectedTeamId(prev => prev === id ? null : id)}
+        selectedDate={selectedDate}
+        isToday={isToday}
       />
 
       <div className="relative flex-1 overflow-hidden">
@@ -408,7 +458,7 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
           >
             <RoutePolylines routes={routes} realRoutes={realRoutes} selectedTeamId={selectedTeamId} />
             <TrafficLayer show={showTraffic} />
-            <MapFitBounds routes={routes} />
+            <MapFitBounds routes={routes} fitKey={selectedDate} />
             <FlyTo target={flyTarget} />
             <FlyToTeam routes={routes} teamId={selectedTeamId} />
             {gpsTrail.length > 1 && <GpsTrail trail={gpsTrail} />}
@@ -422,7 +472,11 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
             ? <div className="flex items-center gap-2 rounded-xl px-3 py-2 bg-card border border-ink-200 text-[12px] text-ink-400"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Routing…</div>
             : <button onClick={() => {
                 setLoadingRoutes(true)
-                fetch('/api/routes/compute', { method: 'POST', headers: { 'x-force': '1' } })
+                fetch('/api/routes/compute', {
+                  method: 'POST',
+                  headers: { 'x-force': '1', 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ date: selectedDate }),
+                })
                   .then(r => r.ok ? r.json() : null)
                   .then((data: { routes: Array<{ teamId: string; segments: RealRoute['segments']; legs: RealRoute['legs'] }> } | null) => {
                     if (!data?.routes) return
@@ -480,6 +534,7 @@ export function LiveMapView({ cleaners, todayJobs: jobs }: LiveMapViewProps) {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   )

@@ -392,6 +392,8 @@ interface Props {
   onFlyTo: (lat: number, lng: number) => void
   selectedTeamId: string | null
   onFocusTeam: (teamId: string) => void
+  selectedDate: string
+  isToday: boolean
 }
 
 // ─── RoutingPanel ─────────────────────────────────────────────────────────────
@@ -399,10 +401,11 @@ export function RoutingPanel({
   routes, cleaners, unavailableTeamIds, onToggleTeamAvailability,
   overrides, onSetStopStatus,
   gpsTracking, trackedCleaner, onStartGPS, onStopGPS, onFlyTo,
-  selectedTeamId, onFocusTeam,
+  selectedTeamId, onFocusTeam, selectedDate, isToday,
 }: Props) {
-  const today = new Date()
-  const dateLabel = today.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  const dateLabel = isToday
+    ? 'Today'
+    : new Date(selectedDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
 
   const totalJobs = routes.reduce((s, r) => s + r.stops.filter(x => x.status !== 'cancelled').length, 0)
   const totalKm   = routes.reduce((s, r) => s + r.totalKm, 0)
@@ -456,47 +459,49 @@ export function RoutingPanel({
         )}
       </div>
 
-      <div className="border-b border-ink-200 p-3">
-        {gpsTracking ? (
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <span className="gps-dot inline-block h-2 w-2 rounded-full bg-violet-500" />
-                <span className="text-[11px] font-medium text-violet-400">
-                  {trackedCleaner ? `Tracking ${cleaners.find(c => c.id === trackedCleaner)?.name.split(' ')[0]}` : 'GPS Active'}
-                </span>
-              </div>
-              <button onClick={onStopGPS}
-                className="flex items-center gap-1 rounded border border-rose-500/30 bg-rose-500/10 px-2 py-0.5 text-[11px] text-rose-500 hover:bg-rose-500/20 transition-colors">
-                <WifiOff className="h-2.5 w-2.5" /> Stop
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-1.5">
-            <button onClick={() => onStartGPS(null)}
-              className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-violet-500/10 border border-violet-500/20 px-3 py-1.5 text-[12px] font-medium text-violet-400 hover:bg-violet-500/20 transition-colors">
-              <Wifi className="h-3 w-3" /> Start GPS (this device)
-            </button>
-            <div className="grid grid-cols-2 gap-1">
-              {cleaners.map(c => (
-                <button key={c.id} onClick={() => onStartGPS(c.id)}
-                  className="flex items-center gap-1.5 rounded border border-ink-200 px-2 py-1 text-[11px] font-medium text-ink-500 hover:text-ink-700 hover:border-ink-300 transition-colors truncate">
-                  <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ background: c.color }} />
-                  {c.name.split(' ')[0]}
+      {isToday && (
+        <div className="border-b border-ink-200 p-3">
+          {gpsTracking ? (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <span className="gps-dot inline-block h-2 w-2 rounded-full bg-violet-500" />
+                  <span className="text-[11px] font-medium text-violet-400">
+                    {trackedCleaner ? `Tracking ${cleaners.find(c => c.id === trackedCleaner)?.name.split(' ')[0]}` : 'GPS Active'}
+                  </span>
+                </div>
+                <button onClick={onStopGPS}
+                  className="flex items-center gap-1 rounded border border-rose-500/30 bg-rose-500/10 px-2 py-0.5 text-[11px] text-rose-500 hover:bg-rose-500/20 transition-colors">
+                  <WifiOff className="h-2.5 w-2.5" /> Stop
                 </button>
-              ))}
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          ) : (
+            <div className="space-y-1.5">
+              <button onClick={() => onStartGPS(null)}
+                className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-violet-500/10 border border-violet-500/20 px-3 py-1.5 text-[12px] font-medium text-violet-400 hover:bg-violet-500/20 transition-colors">
+                <Wifi className="h-3 w-3" /> Start GPS (this device)
+              </button>
+              <div className="grid grid-cols-2 gap-1">
+                {cleaners.map(c => (
+                  <button key={c.id} onClick={() => onStartGPS(c.id)}
+                    className="flex items-center gap-1.5 rounded border border-ink-200 px-2 py-1 text-[11px] font-medium text-ink-500 hover:text-ink-700 hover:border-ink-300 transition-colors truncate">
+                    <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ background: c.color }} />
+                    {c.name.split(' ')[0]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
         {routes.length === 0 && unavailableTeamGroups.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 text-center">
             <MapPin className="h-8 w-8 text-ink-300 mb-2" />
-            <p className="text-[12px] text-ink-400">No routes for today</p>
-            <p className="text-[11px] text-ink-400 mt-1">Jobs scheduled for today will appear here</p>
+            <p className="text-[12px] text-ink-400">No routes for {dateLabel}</p>
+            <p className="text-[11px] text-ink-400 mt-1">Jobs scheduled for this day will appear here</p>
           </div>
         ) : (
           <>

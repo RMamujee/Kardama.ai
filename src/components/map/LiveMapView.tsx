@@ -369,7 +369,6 @@ export function LiveMapView({ cleaners, allJobs, customers }: LiveMapViewProps) 
   const [realRoutes, setRealRoutes]       = useState<Record<string, RealRoute | null>>({})
   const [loadingRoutes, setLoadingRoutes] = useState(false)
   const [routeSource, setRouteSource]     = useState<'cache' | 'computed' | null>(null)
-  const [seedingDemo, setSeedingDemo]     = useState(false)
   const [flyTarget, setFlyTarget]         = useState<{ lat: number; lng: number } | null>(null)
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null)
   const [selectedDate, setSelectedDate]   = useState(() => todayStr())
@@ -384,13 +383,16 @@ export function LiveMapView({ cleaners, allJobs, customers }: LiveMapViewProps) 
 
   const isToday = selectedDate === todayStr()
 
-  const dateTabs = useMemo(() => Array.from({ length: 7 }, (_, i) => {
+  // 7 days back + today + 7 days forward so past-scheduled jobs are reachable
+  const dateTabs = useMemo(() => Array.from({ length: 15 }, (_, i) => {
     const d = new Date()
-    d.setDate(d.getDate() + i)
+    d.setDate(d.getDate() + (i - 7))
     const iso = d.toISOString().split('T')[0]
-    const label = i === 0 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })
+    const label = i === 7 ? 'Today' : d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })
     return { iso, label }
   }), [])
+
+  const datesWithJobs = useMemo(() => new Set(allJobs.map(j => j.scheduledDate)), [allJobs])
 
   const [livePositions, setLivePositions] = useState<LivePos[]>(() =>
     cleaners.map(c => ({ id: c.id, initials: c.initials, color: c.color, name: c.name, currentLat: c.currentLat, currentLng: c.currentLng, status: c.status, currentJobId: c.currentJobId }))
@@ -443,31 +445,6 @@ export function LiveMapView({ cleaners, allJobs, customers }: LiveMapViewProps) 
     () => Object.values(realRoutes).some(r => r && r.segments.length > 0),
     [realRoutes]
   )
-
-  async function handleSeedDemo() {
-    setSeedingDemo(true)
-    try {
-      await fetch('/api/admin/seed-today', { method: 'POST' })
-      // Force recompute with fresh Google directions data
-      setLoadingRoutes(true)
-      setRealRoutes({})
-      const data = await fetch('/api/routes/compute', {
-        method: 'POST',
-        headers: { 'x-force': '1', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ date: selectedDate }),
-      }).then(r => r.ok ? r.json() : null) as { routes: Array<{ teamId: string; segments: RealRoute['segments']; legs: RealRoute['legs'] }> } | null
-      if (data?.routes) {
-        const map: Record<string, RealRoute | null> = {}
-        data.routes.forEach(r => { map[r.teamId] = { teamId: r.teamId, segments: r.segments, legs: r.legs } })
-        setRealRoutes(map)
-      }
-      // Reload page so allJobs (from Server Component) picks up the new seed jobs
-      window.location.reload()
-    } catch {
-      setSeedingDemo(false)
-      setLoadingRoutes(false)
-    }
-  }
 
   function handleDateChange(date: string) {
     setSelectedDate(date)
@@ -531,20 +508,29 @@ export function LiveMapView({ cleaners, allJobs, customers }: LiveMapViewProps) 
     <div className="flex flex-col h-full">
       {/* Date selector strip */}
       <div className="flex items-center gap-1 px-4 py-2 border-b border-ink-200 bg-rail overflow-x-auto shrink-0">
-        {dateTabs.map(tab => (
-          <button
-            key={tab.iso}
-            onClick={() => handleDateChange(tab.iso)}
-            className={cn(
-              'px-3 py-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap transition-colors cursor-pointer',
-              selectedDate === tab.iso
-                ? 'bg-violet-500 text-white'
-                : 'text-ink-500 hover:bg-hover hover:text-ink-700'
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
+        {dateTabs.map(tab => {
+          const hasJobs = datesWithJobs.has(tab.iso)
+          const isSelected = selectedDate === tab.iso
+          return (
+            <button
+              key={tab.iso}
+              onClick={() => handleDateChange(tab.iso)}
+              className={cn(
+                'relative px-3 py-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap transition-colors cursor-pointer',
+                isSelected
+                  ? 'bg-violet-500 text-white'
+                  : hasJobs
+                    ? 'text-ink-700 hover:bg-hover bg-violet-500/8'
+                    : 'text-ink-400 hover:bg-hover hover:text-ink-700'
+              )}
+            >
+              {tab.label}
+              {hasJobs && !isSelected && (
+                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-violet-400" />
+              )}
+            </button>
+          )
+        })}
       </div>
 
       <div className="flex flex-1 min-h-0">
@@ -562,8 +548,7 @@ export function LiveMapView({ cleaners, allJobs, customers }: LiveMapViewProps) 
         isToday={isToday}
         hasGoogleData={hasGoogleData}
         loadingRoutes={loadingRoutes}
-        onSeedDemo={isToday ? handleSeedDemo : undefined}
-        seedingDemo={seedingDemo}
+        datesWithJobs={datesWithJobs}
       />
 
       <div className="relative flex-1 overflow-hidden">

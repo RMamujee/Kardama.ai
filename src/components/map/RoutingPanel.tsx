@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 import {
   WifiOff, Wifi, Clock, ChevronDown, ChevronUp,
   MessageSquare, X, AlertTriangle, RotateCcw, Send, CheckCircle,
-  MapPin, DollarSign, Undo2, UserX, UserCheck, RefreshCw,
+  MapPin, DollarSign, Undo2, UserX, UserCheck,
 } from 'lucide-react'
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -374,8 +374,7 @@ interface Props {
   isToday: boolean
   hasGoogleData: boolean
   loadingRoutes: boolean
-  onSeedDemo?: () => void
-  seedingDemo?: boolean
+  datesWithJobs: Set<string>
 }
 
 // ─── RoutingPanel ─────────────────────────────────────────────────────────────
@@ -384,7 +383,7 @@ export function RoutingPanel({
   overrides, onSetStopStatus,
   gpsTracking, trackedCleaner, onStartGPS, onStopGPS, onFlyTo,
   selectedTeamId, onFocusTeam, selectedDate, isToday,
-  hasGoogleData, loadingRoutes, onSeedDemo, seedingDemo,
+  hasGoogleData, loadingRoutes, datesWithJobs,
 }: Props) {
   const dateLabel = isToday
     ? 'Today'
@@ -490,27 +489,29 @@ export function RoutingPanel({
 
       <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
         {routes.length === 0 && unavailableTeamGroups.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-center gap-3">
+          <div className="flex flex-col items-center justify-center h-48 text-center gap-3 px-4">
             <MapPin className="h-8 w-8 text-ink-300" />
             <div>
-              <p className="text-[12px] text-ink-400">No routes for {dateLabel}</p>
-              <p className="text-[11px] text-ink-400 mt-1">Jobs scheduled for this day will appear here</p>
+              <p className="text-[12px] text-ink-400">No jobs on {dateLabel}</p>
+              <p className="text-[11px] text-ink-400 mt-1">Select a date above that has jobs</p>
             </div>
-            {onSeedDemo && (
-              <button
-                onClick={onSeedDemo}
-                disabled={seedingDemo}
-                className={cn(
-                  'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[11px] font-semibold transition-colors',
-                  seedingDemo
-                    ? 'border-ink-200 text-ink-400 cursor-not-allowed'
-                    : 'border-violet-500/30 bg-violet-500/10 text-violet-400 hover:bg-violet-500/20'
-                )}
-              >
-                <RefreshCw className={cn('h-3 w-3', seedingDemo && 'animate-spin')} />
-                {seedingDemo ? 'Loading…' : 'Load demo routes'}
-              </button>
-            )}
+            {(() => {
+              const others = [...datesWithJobs]
+                .filter(d => d !== selectedDate)
+                .sort()
+                .slice(0, 5)
+              if (!others.length) return null
+              return (
+                <div className="text-left w-full">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-ink-400 mb-1.5">Jobs scheduled on</p>
+                  {others.map(d => (
+                    <p key={d} className="text-[11px] text-violet-400 font-medium">
+                      {new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                    </p>
+                  ))}
+                </div>
+              )
+            })()}
           </div>
         ) : (
           <>

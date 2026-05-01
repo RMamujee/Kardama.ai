@@ -369,6 +369,8 @@ export function LiveMapView({ cleaners, allJobs, customers }: LiveMapViewProps) 
   const [realRoutes, setRealRoutes]       = useState<Record<string, RealRoute | null>>({})
   const [loadingRoutes, setLoadingRoutes] = useState(false)
   const [routeSource, setRouteSource]     = useState<'cache' | 'computed' | null>(null)
+  const [diagData, setDiagData]           = useState<Record<string, unknown> | null>(null)
+  const [diagLoading, setDiagLoading]     = useState(false)
   const [flyTarget, setFlyTarget]         = useState<{ lat: number; lng: number } | null>(null)
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null)
   const [selectedDate, setSelectedDate]   = useState(() => todayStr())
@@ -575,6 +577,76 @@ export function LiveMapView({ cleaners, allJobs, customers }: LiveMapViewProps) 
           </Map>
         </APIProvider>
 
+        {/* Diagnostic overlay */}
+        {diagData && (
+          <div className="absolute top-4 left-4 z-[1001] w-80 rounded-xl border border-ink-200 bg-card shadow-xl text-[11px] overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-ink-200 bg-soft">
+              <span className="font-bold text-ink-700 text-[12px]">Route Diagnostic</span>
+              <button onClick={() => setDiagData(null)} className="text-ink-400 hover:text-ink-700"><X className="h-3.5 w-3.5" /></button>
+            </div>
+            <div className="p-3 space-y-2 overflow-y-auto max-h-96">
+              {/* Google status */}
+              {(() => {
+                const g = diagData.google as Record<string, unknown>
+                const ok = g.status === 'OK'
+                return (
+                  <div className={cn('rounded-lg p-2', ok ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-rose-500/10 border border-rose-500/20')}>
+                    <p className={cn('font-bold', ok ? 'text-emerald-500' : 'text-rose-500')}>
+                      Google Directions: {String(g.status)}
+                    </p>
+                    {g.error ? <p className="text-rose-400 mt-0.5">{String(g.error)}</p> : null}
+                    <p className="text-ink-400 mt-0.5">
+                      Server key: {g.serverKeyPresent ? '✓' : '✗'} · Public key: {g.publicKeyPresent ? '✓' : '✗'}
+                    </p>
+                  </div>
+                )
+              })()}
+              {/* DB state */}
+              {(() => {
+                const db = diagData.db as Record<string, unknown>
+                const byDate = db.jobsByDate as Record<string, number>
+                return (
+                  <div className="rounded-lg p-2 bg-soft border border-ink-200">
+                    <p className="font-bold text-ink-700">Database</p>
+                    <p className="text-ink-500">{String(db.cleanerCount)} cleaners · {String(db.jobsForDate)} jobs on {String(diagData.date)}</p>
+                    {Object.keys(byDate).length > 0 && (
+                      <div className="mt-1">
+                        <p className="text-ink-400 mb-0.5">All job dates:</p>
+                        {Object.entries(byDate).sort().map(([d, n]) => (
+                          <p key={d} className={cn('text-ink-500', d === diagData.date && 'font-bold text-violet-400')}>{d}: {n} job{n > 1 ? 's' : ''}</p>
+                        ))}
+                      </div>
+                    )}
+                    {(db.cleanerCount as number) > 0 && (
+                      <div className="mt-1">
+                        <p className="text-ink-400 mb-0.5">Cleaners:</p>
+                        {(db.cleaners as Array<{ id: string; name: string; teamId: string | null }>).map(c => (
+                          <p key={c.id} className="text-ink-500">{c.name} — teamId: {c.teamId || '(none)'}</p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+              {/* Routing */}
+              {(() => {
+                const r = diagData.routing as Record<string, unknown>
+                return (
+                  <div className={cn('rounded-lg p-2 border', (r.routeCount as number) > 0 ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-amber-500/10 border-amber-500/20')}>
+                    <p className="font-bold text-ink-700">Routing engine</p>
+                    <p className={(r.routeCount as number) > 0 ? 'text-emerald-500' : 'text-amber-500'}>
+                      {String(r.routeCount)} route{(r.routeCount as number) !== 1 ? 's' : ''} built for this date
+                    </p>
+                    {(r.routes as Array<{ teamId: string; stopCount: number }>).map(rt => (
+                      <p key={rt.teamId} className="text-ink-500">{rt.teamId}: {rt.stopCount} stops</p>
+                    ))}
+                  </div>
+                )
+              })()}
+            </div>
+          </div>
+        )}
+
         {/* Controls */}
         <div className="absolute bottom-6 right-4 z-[1000] flex flex-col items-end gap-2">
           {loadingRoutes
@@ -600,6 +672,19 @@ export function LiveMapView({ cleaners, allJobs, customers }: LiveMapViewProps) 
               ↺ Routes
             </button>
           }
+          <button
+            onClick={() => {
+              setDiagLoading(true)
+              fetch(`/api/admin/route-diag?date=${selectedDate}`)
+                .then(r => r.ok ? r.json() : null)
+                .then(d => { if (d) setDiagData(d) })
+                .finally(() => setDiagLoading(false))
+            }}
+            disabled={diagLoading}
+            className="px-[14px] py-[7px] text-[12px] font-semibold cursor-pointer rounded-xl border border-ink-200 bg-card text-ink-400 hover:text-ink-700 shadow-md transition-colors"
+            title="Show routing diagnostic">
+            {diagLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Diag'}
+          </button>
           <div className="flex overflow-hidden rounded-xl border border-ink-200 shadow-md">
             {(['Map', 'Satellite'] as const).map((label, i) => (
               <button key={label} onClick={() => setSatellite(label === 'Satellite')}

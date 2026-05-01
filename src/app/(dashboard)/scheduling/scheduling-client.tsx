@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useMemo, useTransition } from 'react'
+import React, { useState, useMemo, useTransition, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Plus, Sparkles, Inbox, CheckCircle2, XCircle, Clock, Pencil, Trash2, Users, AlertCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -30,8 +30,20 @@ const TEAM_COLORS: Record<number, { bg: string; text: string; border: string }> 
   5: { bg: 'bg-teal-500/12',    text: 'text-teal-600',    border: 'border-teal-500/30' },
 }
 
+const TEAM_COLORS_SOLID: Record<number, string> = {
+  1: '#0ea5e9',
+  2: '#8b5cf6',
+  3: '#f97316',
+  4: '#d946ef',
+  5: '#14b8a6',
+}
+
 function teamBlockStyle(color: string): React.CSSProperties {
   return { backgroundColor: `${color}22`, borderColor: `${color}55`, color }
+}
+
+function solidBarStyle(color: string): React.CSSProperties {
+  return { backgroundColor: color, color: 'white', borderColor: color }
 }
 
 const SERVICE_OPTIONS = [
@@ -168,6 +180,11 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
   const [scheduleTarget, setScheduleTarget] = useState<string | null>(null)
   const [pickedTeamId, setPickedTeamId] = useState<string | null>(null)
   const [confirmDeclineId, setConfirmDeclineId] = useState<string | null>(null)
+  const [selectedDay, setSelectedDay] = useState<string | null>(() => fmtDate(new Date()))
+
+  useEffect(() => {
+    setSelectedDay(monthOffset === 0 ? fmtDate(new Date()) : null)
+  }, [monthOffset])
 
   const teams = useMemo(() => {
     const teamNameById = new Map(teamsList.map(t => [t.id, t.name]))
@@ -748,86 +765,201 @@ export function SchedulingClient({ cleaners, customers, jobs, bookingRequests, c
         </div>
       )}
 
-      {/* Month Calendar */}
+      {/* Month Calendar — TimeTree-style */}
       {view === 'month' && (
-        <div className="card overflow-hidden">
-          {/* Day labels */}
-          <div className="grid grid-cols-7 border-b border-line">
-            {DAY_LABELS.map(d => (
-              <div key={d} className="p-2.5 text-center text-[11px] font-medium uppercase tracking-[0.06em] text-ink-400 border-r border-line last:border-0">
-                {d}
+        <>
+          <div className="card overflow-hidden">
+            {/* Day labels */}
+            <div className="grid grid-cols-7 border-b border-line">
+              {DAY_LABELS.map((d, i) => (
+                <div
+                  key={d}
+                  className={cn(
+                    'p-2.5 text-center text-[11px] font-medium uppercase tracking-[0.06em] border-r border-line last:border-0',
+                    i === 0 ? 'text-rose-400' : i === 6 ? 'text-sky-400' : 'text-ink-400',
+                  )}
+                >
+                  {d}
+                </div>
+              ))}
+            </div>
+            {/* Weeks */}
+            {Array.from({ length: monthDates.length / 7 }, (_, weekIdx) => (
+              <div key={weekIdx} className="grid grid-cols-7 border-b border-line last:border-0">
+                {monthDates.slice(weekIdx * 7, weekIdx * 7 + 7).map((date, dayIdx) => {
+                  const dateStr = fmtDate(date)
+                  const dayJobs = monthJobsByDay[dateStr] ?? []
+                  const dayConfirmed = monthConfirmedByDay[dateStr] ?? []
+                  const isCurrentMonth = date.getMonth() === currentMonthDate.getMonth()
+                  const isToday = dateStr === today
+                  const isSelected = dateStr === selectedDay
+                  const totalItems = dayJobs.length + dayConfirmed.length
+                  const confirmedShown = Math.min(dayConfirmed.length, 2)
+                  const jobsShown = Math.min(dayJobs.length, 3 - confirmedShown)
+                  return (
+                    <div
+                      key={dayIdx}
+                      onClick={() => setSelectedDay(prev => prev === dateStr ? null : dateStr)}
+                      className={cn(
+                        'min-h-[112px] p-2 border-r border-line last:border-0 flex flex-col gap-1.5 cursor-pointer transition-colors',
+                        !isCurrentMonth && 'opacity-35',
+                        isSelected
+                          ? 'bg-mint-500/[0.07]'
+                          : isToday
+                            ? 'bg-mint-500/[0.03]'
+                            : 'hover:bg-soft/40',
+                      )}
+                    >
+                      <div className="flex-shrink-0">
+                        <span className={cn(
+                          'num inline-flex h-[22px] w-[22px] items-center justify-center rounded-full text-[12px] font-semibold',
+                          isToday
+                            ? 'bg-mint-500 text-white'
+                            : isSelected
+                              ? 'ring-1 ring-mint-500/50 text-mint-600'
+                              : dayIdx === 0
+                                ? 'text-rose-500'
+                                : dayIdx === 6
+                                  ? 'text-sky-500'
+                                  : 'text-ink-700',
+                        )}>
+                          {date.getDate()}
+                        </span>
+                      </div>
+                      <div className="flex flex-col gap-[3px] min-w-0">
+                        {dayConfirmed.slice(0, confirmedShown).map(booking => {
+                          const color = TEAM_COLORS_SOLID[booking.assignedTeam ?? 0] ?? '#94a3b8'
+                          return (
+                            <button
+                              key={booking.id}
+                              onClick={(e) => { e.stopPropagation(); selectBooking(booking) }}
+                              className="w-full text-left rounded-[3px] px-1.5 py-[3px] text-[10.5px] font-semibold truncate leading-[1.4]"
+                              style={solidBarStyle(color)}
+                            >
+                              T{booking.assignedTeam} · {booking.address.split(',')[0]}
+                            </button>
+                          )
+                        })}
+                        {dayJobs.slice(0, jobsShown).map(job => {
+                          const teamColor = cleaners.find(c => job.cleanerIds.includes(c.id))?.color ?? '#94a3b8'
+                          return (
+                            <button
+                              key={job.id}
+                              onClick={(e) => { e.stopPropagation(); selectJob(job) }}
+                              className="w-full text-left rounded-[3px] px-1.5 py-[3px] text-[10.5px] font-semibold truncate leading-[1.4]"
+                              style={solidBarStyle(teamColor)}
+                            >
+                              {formatTime(job.scheduledTime)} · {job.address.split(',')[0]}
+                            </button>
+                          )
+                        })}
+                        {totalItems > confirmedShown + jobsShown && (
+                          <p className="text-[10px] text-ink-400 pl-1">+{totalItems - confirmedShown - jobsShown} more</p>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             ))}
           </div>
-          {/* Weeks */}
-          {Array.from({ length: monthDates.length / 7 }, (_, weekIdx) => (
-            <div key={weekIdx} className="grid grid-cols-7 border-b border-line last:border-0">
-              {monthDates.slice(weekIdx * 7, weekIdx * 7 + 7).map((date, dayIdx) => {
-                const dateStr = fmtDate(date)
-                const dayJobs = monthJobsByDay[dateStr] ?? []
-                const isCurrentMonth = date.getMonth() === currentMonthDate.getMonth()
-                const isToday = dateStr === today
-                return (
-                  <div
-                    key={dayIdx}
-                    className={cn(
-                      'min-h-[96px] p-2 border-r border-line last:border-0 flex flex-col gap-1',
-                      !isCurrentMonth && 'opacity-35',
-                      isToday && 'bg-mint-500/[0.04]',
-                    )}
-                  >
-                    <div className="flex-shrink-0">
-                      <span className={cn(
-                        'num inline-flex h-[22px] w-[22px] items-center justify-center rounded-full text-[12px] font-semibold',
-                        isToday ? 'bg-mint-500 text-white' : 'text-ink-700',
-                      )}>
-                        {date.getDate()}
-                      </span>
+
+          {/* Day Agenda — TimeTree-style bottom sheet */}
+          {selectedDay && (() => {
+            const agendaDate = new Date(selectedDay + 'T12:00:00')
+            const dayJobs = monthJobsByDay[selectedDay] ?? []
+            const dayBookings = monthConfirmedByDay[selectedDay] ?? []
+            type AgendaItem = {
+              key: string
+              time: string
+              color: string
+              title: string
+              subtitle: string
+              onClick: () => void
+            }
+            const items: AgendaItem[] = []
+            for (const b of dayBookings) {
+              const color = TEAM_COLORS_SOLID[b.assignedTeam ?? 0] ?? '#94a3b8'
+              items.push({
+                key: `b-${b.id}`,
+                time: b.preferredTime ?? '08:00',
+                color,
+                title: b.address.split(',')[0],
+                subtitle: `${getServiceLabel(b.serviceType)} · Team ${b.assignedTeam ?? '?'} · ${b.customerName}`,
+                onClick: () => selectBooking(b),
+              })
+            }
+            for (const j of dayJobs) {
+              const cleaner = cleaners.find(c => j.cleanerIds.includes(c.id))
+              const teamName = cleaner ? (teams.find(t => t.teamId === cleaner.teamId)?.teamName ?? 'Team') : 'Unassigned'
+              items.push({
+                key: `j-${j.id}`,
+                time: j.scheduledTime,
+                color: cleaner?.color ?? '#94a3b8',
+                title: j.address.split(',')[0],
+                subtitle: `${getServiceLabel(j.serviceType)} · ${teamName} · ${j.estimatedDuration} min`,
+                onClick: () => selectJob(j),
+              })
+            }
+            items.sort((a, b) => a.time.localeCompare(b.time))
+            return (
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+                <div className="card overflow-hidden">
+                  <div className="flex items-center justify-between border-b border-line px-5 py-4">
+                    <div>
+                      <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-ink-400">
+                        {agendaDate.toLocaleDateString('en-US', { weekday: 'long' })}
+                      </p>
+                      <h2 className="text-[15px] font-semibold text-ink-900 tracking-[-0.01em] mt-0.5">
+                        {agendaDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                      </h2>
                     </div>
-                    <div className="flex flex-col gap-0.5 min-w-0">
-                      {(monthConfirmedByDay[dateStr] ?? []).slice(0, 2).map(booking => {
-                        const tc = TEAM_COLORS[booking.assignedTeam ?? 0]
-                        if (!tc) return null
-                        return (
-                          <button
-                            key={booking.id}
-                            onClick={() => selectBooking(booking)}
-                            className={cn(
-                              'w-full text-left rounded-[4px] border px-1.5 py-[2px] text-[10.5px] font-semibold truncate leading-[1.4]',
-                              tc.bg, tc.text, tc.border,
-                              selectedBooking?.id === booking.id && 'ring-1 ring-current/60',
-                            )}
-                          >
-                            T{booking.assignedTeam} · {booking.address.split(',')[0]}
-                          </button>
-                        )
-                      })}
-                      {dayJobs.slice(0, 2).map(job => {
-                        const teamColor = cleaners.find(c => job.cleanerIds.includes(c.id))?.color
-                        return (
-                          <button
-                            key={job.id}
-                            onClick={() => selectJob(job)}
-                            className={cn(
-                              'w-full text-left rounded-[4px] border px-1.5 py-[2px] text-[10.5px] font-semibold truncate leading-[1.4]',
-                              selectedJob?.id === job.id && 'ring-1 ring-white/40',
-                            )}
-                            style={teamColor ? teamBlockStyle(teamColor) : undefined}
-                          >
-                            {formatTime(job.scheduledTime)} · {job.address.split(',')[0]}
-                          </button>
-                        )
-                      })}
-                      {((monthConfirmedByDay[dateStr] ?? []).length + dayJobs.length > 4) && (
-                        <p className="text-[10px] text-ink-400 pl-1">+{(monthConfirmedByDay[dateStr] ?? []).length + dayJobs.length - 4} more</p>
+                    <div className="flex items-center gap-3">
+                      {items.length > 0 && (
+                        <span className="text-[11.5px] font-medium text-ink-400">
+                          {items.length} {items.length === 1 ? 'job' : 'jobs'}
+                        </span>
                       )}
+                      <button
+                        onClick={() => setSelectedDay(null)}
+                        className="text-[12px] text-ink-400 hover:text-ink-700 bg-transparent border-0 cursor-pointer transition-colors"
+                      >
+                        Close
+                      </button>
                     </div>
                   </div>
-                )
-              })}
-            </div>
-          ))}
-        </div>
+                  {items.length === 0 ? (
+                    <div className="p-10 text-center">
+                      <p className="text-[12.5px] text-ink-400">No jobs scheduled for this day.</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-line">
+                      {items.map(item => (
+                        <button
+                          key={item.key}
+                          onClick={item.onClick}
+                          className="w-full px-5 py-3.5 flex items-center gap-4 hover:bg-soft/50 transition-colors text-left"
+                        >
+                          <div className="w-[64px] flex-shrink-0">
+                            <p className="num text-[13px] font-semibold text-ink-900 leading-tight">
+                              {fmtDisplayTime(item.time)}
+                            </p>
+                          </div>
+                          <div className="w-[3px] self-stretch rounded-full flex-shrink-0" style={{ background: item.color, minHeight: 32 }} />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[13px] font-semibold text-ink-900 truncate">{item.title}</p>
+                            <p className="text-[11.5px] text-ink-500 truncate mt-0.5">{item.subtitle}</p>
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-ink-300 flex-shrink-0" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )
+          })()}
+        </>
       )}
 
       {/* Week Calendar */}

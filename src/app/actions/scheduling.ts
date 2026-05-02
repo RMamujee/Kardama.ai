@@ -4,6 +4,7 @@ import { requireOwner } from '@/lib/supabase/dal'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { sendSms } from '@/lib/twilio'
 import { SERVICE_PRICES, SERVICE_DURATIONS } from '@/lib/services'
+import { signToken } from '@/lib/booking-tokens'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 function genId(prefix: string) {
@@ -288,8 +289,55 @@ export async function declineBookingRequest(requestId: string): Promise<void> {
 export async function deleteJob(jobId: string): Promise<void> {
   await requireOwner()
   const supabase = await createSupabaseServerClient()
+
+  // Pull job + customer details before delete so we can notify the customer.
+  const { data: job } = await supabase
+    .from('jobs')
+    .select('customer_id, scheduled_date, scheduled_time, address, service_type')
+    .eq('id', jobId)
+    .maybeSingle()
+
+  type CustomerLite = { name: string | null; email: string | null; phone: string | null }
+  let customer: CustomerLite | null = null
+  if (job?.customer_id) {
+    const { data } = await supabase
+      .from('customers')
+      .select('name, email, phone')
+      .eq('id', job.customer_id as string)
+      .maybeSingle()
+    customer = (data as CustomerLite | null) ?? null
+  }
+
   const { error } = await supabase.from('jobs').delete().eq('id', jobId)
   if (error) throw new Error(error.message)
+
+  // Notify customer via n8n — non-fatal, mirrors the declineBookingRequest pattern.
+  const n8nCancelWebhook = process.env.N8N_BOOKING_CANCELLED_WEBHOOK_URL
+  if (n8nCancelWebhook && job && customer?.email) {
+    let rebookLink: string | null = null
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+        ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://kardama.ai')
+      rebookLink = `${baseUrl}/book/${signToken(job.customer_id as string)}`
+    } catch (e) {
+      console.error('[deleteJob] token signing failed; webhook will fire without rebookLink:', e)
+    }
+    fetch(n8nCancelWebhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customerName: customer.name,
+        customerEmail: customer.email,
+        customerPhone: customer.phone,
+        serviceType: job.service_type,
+        scheduledDate: job.scheduled_date,
+        scheduledTime: job.scheduled_time,
+        address: job.address,
+        rebookLink,
+      }),
+    }).catch(e => console.error('n8n booking cancelled webhook failed:', e))
+  }
+
   revalidatePath('/scheduling')
   revalidatePath('/dashboard')
   revalidatePath('/map')

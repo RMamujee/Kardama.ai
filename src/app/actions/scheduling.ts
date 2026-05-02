@@ -251,34 +251,79 @@ export async function declineBookingRequest(requestId: string): Promise<void> {
   await requireOwner()
   const supabase = await createSupabaseServerClient()
 
-  // Fetch full request for job cleanup + decline email
+  // Fetch full request for job cleanup + decline/cancel email
   const { data: req } = await supabase
     .from('booking_requests')
     .select('converted_job_id, customer_name, customer_email, customer_phone, service_type, preferred_date, address')
     .eq('id', requestId)
     .maybeSingle()
 
+  // If the request was already converted to a real job, grab its scheduled
+  // details before deleting so the cancellation email can include them.
+  type JobLite = { customer_id: string | null; scheduled_date: string | null; scheduled_time: string | null; address: string | null }
+  let cancelledJob: JobLite | null = null
   if (req?.converted_job_id) {
+    const { data } = await supabase
+      .from('jobs')
+      .select('customer_id, scheduled_date, scheduled_time, address')
+      .eq('id', req.converted_job_id as string)
+      .maybeSingle()
+    cancelledJob = (data as JobLite | null) ?? null
     await supabase.from('jobs').delete().eq('id', req.converted_job_id)
   }
 
   await supabase.from('booking_requests').update({ status: 'declined' as const }).eq('id', requestId)
 
-  // Notify customer via n8n — non-fatal
-  const n8nDeclineWebhook = process.env.N8N_BOOKING_DECLINED_WEBHOOK_URL
-  if (n8nDeclineWebhook && req?.customer_email) {
-    fetch(n8nDeclineWebhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        customerName: req.customer_name,
-        customerEmail: req.customer_email,
-        customerPhone: req.customer_phone,
-        serviceType: req.service_type,
-        preferredDate: req.preferred_date,
-        address: req.address,
-      }),
-    }).catch(e => console.error('n8n booking declined webhook failed:', e))
+  // Branch: confirmed booking being cancelled vs pending request being declined.
+  // A confirmed booking had a real appointment scheduled — we want a cancellation
+  // email with rebookLink. A pending request never made it onto the schedule —
+  // the existing decline copy ("we can't take your booking") still applies.
+  if (req?.customer_email) {
+    if (cancelledJob) {
+      const n8nCancelWebhook = process.env.N8N_BOOKING_CANCELLED_WEBHOOK_URL
+      if (n8nCancelWebhook) {
+        let rebookLink: string | null = null
+        try {
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+            ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://kardama.ai')
+          if (cancelledJob.customer_id) {
+            rebookLink = `${baseUrl}/book/${signToken(cancelledJob.customer_id)}`
+          }
+        } catch (e) {
+          console.error('[declineBookingRequest] token signing failed; webhook fires without rebookLink:', e)
+        }
+        fetch(n8nCancelWebhook, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerName: req.customer_name,
+            customerEmail: req.customer_email,
+            customerPhone: req.customer_phone,
+            serviceType: req.service_type,
+            scheduledDate: cancelledJob.scheduled_date,
+            scheduledTime: cancelledJob.scheduled_time,
+            address: cancelledJob.address ?? req.address,
+            rebookLink,
+          }),
+        }).catch(e => console.error('n8n booking cancelled webhook failed:', e))
+      }
+    } else {
+      const n8nDeclineWebhook = process.env.N8N_BOOKING_DECLINED_WEBHOOK_URL
+      if (n8nDeclineWebhook) {
+        fetch(n8nDeclineWebhook, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerName: req.customer_name,
+            customerEmail: req.customer_email,
+            customerPhone: req.customer_phone,
+            serviceType: req.service_type,
+            preferredDate: req.preferred_date,
+            address: req.address,
+          }),
+        }).catch(e => console.error('n8n booking declined webhook failed:', e))
+      }
+    }
   }
 
   revalidatePath('/scheduling')

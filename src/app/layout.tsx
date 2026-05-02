@@ -39,6 +39,8 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: 'Kardama — Field Service Console',
   description: 'Operations console for cleaning businesses',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: { capable: true, title: 'Kardama', statusBarStyle: 'black-translucent' },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

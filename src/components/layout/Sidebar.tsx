@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, CalendarDays, Map, DollarSign, Megaphone,
   Users, UserCheck, BarChart3, MessageSquare, Send, Bell,
-  MessagesSquare, LogOut, type LucideIcon,
+  MessagesSquare, LogOut, Bot, type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useChatStore } from '@/store/useChatStore'
@@ -26,6 +26,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: 'Customers', href: '/customers', icon: Users },
       { label: 'Team',      href: '/team',      icon: UserCheck },
+      { label: 'SMS Inbox', href: '/sms-inbox', icon: Bot },
       { label: 'Chats',     href: '/chats',     icon: MessagesSquare },
       { label: 'Payments',  href: '/payments',  icon: DollarSign },
     ],
